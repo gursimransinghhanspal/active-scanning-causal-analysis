@@ -41,30 +41,30 @@ def prepare_and_get_command_format_string():
 	          '-e frame.number' + space + \
 	          '-e frame.time_epoch' + space + \
 	          '-e frame.len' + space + \
-	          '-e radiotap.channel.freq' + space + \
-	          '-e radiotap.mactime' + space + \
-	          '-e radiotap.datarate' + space + \
-	          '-e wlan.fc.type_subtype' + space + \
-	          '-e wlan_mgt.ssid' + space + \
-	          '-e wlan.bssid' + space + \
-	          '-e wlan_mgt.ds.current_channel' + space + \
-	          '-e wlan_mgt.qbss.scount' + space + \
-	          '-e wlan.fc.retry' + space + \
-	          '-e wlan.fc.pwrmgt' + space + \
-	          '-e wlan.fc.moredata' + space + \
-	          '-e wlan.fc.frag' + space + \
 	          '-e wlan.duration' + space + \
+	          '-e wlan.bssid' + space + \
 	          '-e wlan.ra' + space + \
 	          '-e wlan.ta' + space + \
 	          '-e wlan.sa' + space + \
 	          '-e wlan.da' + space + \
 	          '-e wlan.seq' + space + \
-	          '-e wlan.qos.priority' + space + \
-	          '-e wlan.qos.amsdupresent' + space + \
-	          '-e wlan.fc.type' + space + \
+	          '-e wlan_mgt.ssid' + space + \
+	          '-e wlan_mgt.ds.current_channel' + space + \
+	          '-e wlan_mgt.qbss.scount' + space + \
 	          '-e wlan_mgt.fixed.reason_code' + space + \
 	          '-e wlan_mgt.fixed.status_code' + space + \
+	          '-e wlan.fc.type' + space + \
+	          '-e wlan.fc.type_subtype' + space + \
+	          '-e wlan.fc.retry' + space + \
+	          '-e wlan.fc.pwrmgt' + space + \
+	          '-e wlan.fc.moredata' + space + \
+	          '-e wlan.fc.frag' + space + \
 	          '-e wlan.fc.ds' + space + \
+	          '-e wlan.qos.priority' + space + \
+	          '-e wlan.qos.amsdupresent' + space + \
+	          '-e radiotap.channel.freq' + space + \
+	          '-e radiotap.mactime' + space + \
+	          '-e radiotap.datarate' + space + \
 	          '-e radiotap.dbm_antsignal' + space + \
 	          '-r ' + '\'{0}\' ' + '>> \'{1}\''
 	return command
@@ -84,8 +84,9 @@ def prepare_and_get_csv_header(command_format_string: str):
 		if split_command[i - 1] == '-e':
 			csv_header.append(split_command[i])
 
-	# for some reason the last column is always duplicated in the output
-	csv_header.append(csv_header[-1])
+	# for some reason the last column was always duplicated in the output (on apple macbook)
+	# not happening on linux ??
+	# csv_header.append(csv_header[-1] + '2')
 
 	# join the list to form a comma separated string. also add `newline` char
 	csv_header_string = str.join(',', csv_header)

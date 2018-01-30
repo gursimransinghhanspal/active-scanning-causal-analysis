@@ -469,5 +469,9 @@ for idx, file in enumerate(raw_csv_files):
 	outputDF.to_csv(output_csvfile, sep = ',')
 
 
+def main():
+	pass
+
+
 if __name__ == '__main__':
 	main()
