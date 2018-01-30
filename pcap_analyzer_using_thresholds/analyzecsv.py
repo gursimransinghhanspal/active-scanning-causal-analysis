@@ -1,6 +1,7 @@
 import os
 
 import pandas
+import threading
 
 
 def get_tag_for_cause(cause):
@@ -41,31 +42,52 @@ def merge_dicts(*dict_args):
 	return result
 
 
-'''
-for every episode, calculate mean and SD of SSI value
-if (mean < -72dBm) and (SD > 12dB)
-'''
+def low_rssi(df, first_episode_idx, last_episode_idx, client_mac_address = None):
+	"""
+	for every episode, calculate mean and std. deviation of RSSI value
+	if (mean < -72dBm) and (sd > 12dB)
+	"""
 
+	output = {
+		'ssi.mean': [],
+		'ssi.sd': [],
+		'cause.lowrssi': [],
+		'start.time': [],
+		'end.time': [],
+		'duration.time': []
+	}
 
-def low_rssi(df, minEpisode, maxEpisode, client):
-	# print('Low RSSI Causal Analysis...')
-	output = {'ssi.mean': [], 'ssi.sd': [], 'cause.lowrssi': [], 'start.time': [], 'end.time': [], 'duration.time': []}
-	for i in range(minEpisode, maxEpisode + 1):
+	for i in range(first_episode_idx, last_episode_idx + 1):
+
+		# filter:
+		#   - packets belonging to episode `i`
 		dfH = df[(df['episode'] == i)]
-		dfE = df[(df['episode'] == i) & ((df['wlan.ta'] == client) | (df['wlan.sa'] == client))]
-		ssiMean = dfE['radiotap.dbm_antsignal'].mean()
-		ssiSD = dfE['radiotap.dbm_antsignal'].std()
+
+		# filter-2:
+		#   - packets belonging to episode `i`
+		#   - either transmitter address == client mac OR source address == client mac
+		dfE = df[
+			(df['episode'] == i) &
+			((df['wlan.ta'] == client) | (df['wlan.sa'] == client))
+		]
+
+		# calculate 'mean' and 'standard deviation' from filter-2's `radiotap.dbm_antsignal` column
+		rssi_mean = dfE['radiotap.dbm_antsignal'].mean()
+		rssi_stddev = dfE['radiotap.dbm_antsignal'].std()
+
+		# apply the threshold (!!!)
 		cause = 'False'
-		if (ssiMean < -72 and ssiSD > 12):
+		if rssi_mean < -72 and rssi_stddev > 12:
 			cause = 'True'
+
 
 		startTime = (dfH.head(1))['frame.time_epoch']
 		endTime = (dfH.tail(1))['frame.time_epoch']
 		output['start.time'].append(float(startTime))
 		output['end.time'].append(float(endTime))
 		output['duration.time'].append((float(endTime) - float(startTime)) / 60)
-		output['ssi.mean'].append(ssiMean)
-		output['ssi.sd'].append(ssiSD)
+		output['ssi.mean'].append(rssi_mean)
+		output['ssi.sd'].append(rssi_stddev)
 		output['cause.lowrssi'].append(cause)
 	return output
 
@@ -369,9 +391,35 @@ def defineEpisodes(df):
 	return df
 
 
-def filterData(df, client):
-	df = df[(df['wlan.ra'] == client) | (df['wlan.ta'] == client) | (df['wlan.sa'] == client) | (
-			df['wlan.da'] == client) | (df['wlan.fc.type_subtype'] == 8)]
+def filter_data(df, client_mac_address = None):
+	"""
+	Filters the data-frame on the following:
+		- receiver address == client mac
+		- transmitter address == client mac
+		- source address == client mac
+		- destination address == client mac
+		- packet subtype == beacon
+
+	If client mac is not available, filters on:
+		- packet subtype == beacon
+
+	# TODO shouldn't it be probe-request(4) instead of beacon(8) ??
+	# TODO consider the case of no client filter, no episode is selected because `define_episodes`
+	# TODO filters on subtype == 4 (probe-requests)
+	"""
+
+	if client_mac_address is None:
+		df = df[
+			(df['wlan.fc.type_subtype'] == 8)
+		]
+	else:
+		df = df[
+			(df['wlan.ra'] == client_mac_address) |
+			(df['wlan.ta'] == client_mac_address) |
+			(df['wlan.sa'] == client_mac_address) |
+			(df['wlan.da'] == client_mac_address) |
+			(df['wlan.fc.type_subtype'] == 8)
+			]
 	return df
 
 
@@ -380,32 +428,12 @@ def filterData(df, client):
 # get current directory
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 # raw csv directory
-RAW_CSV_DIR = os.path.join(PROJECT_DIR, 'raw_csv_files')
+RAW_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'raw_csv_files')
 # analyzed csv directory
-ANALYZED_CSV_DIR = os.path.join(PROJECT_DIR, 'analyzed_csv_files')
+ANALYZED_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'analyzed_csv_files')
 
 # Supported Extensions - only files with supported extensions shall be read
 SUPPORTED_EXTS = ['.csv', ]
-
-# create directories if don't exist
-if not os.path.exists(RAW_CSV_DIR) or not os.path.isdir(RAW_CSV_DIR):
-	os.mkdir(RAW_CSV_DIR)
-if not os.path.exists(ANALYZED_CSV_DIR) or not os.path.isdir(ANALYZED_CSV_DIR):
-	os.mkdir(ANALYZED_CSV_DIR)
-
-# make sure ANALYZED_CSV_DIR is empty
-if len(os.listdir(ANALYZED_CSV_DIR)) != 0:
-	print(ANALYZED_CSV_DIR, 'is not empty! Please empty the directory and try again.')
-	exit(0)
-
-# read all raw csv files
-raw_csv_files = list()
-for file in os.listdir(RAW_CSV_DIR):
-	if os.path.splitext(file)[1] in SUPPORTED_EXTS:
-		raw_csv_files.append(file)
-
-# sort by name
-raw_csv_files.sort()
 
 # --------  SETUP  ---------
 csv_delimiter = ','
@@ -414,19 +442,111 @@ csv_delimiter = ','
 # client = '44:6d:57:31:40:6f'
 client = 'c0:ee:fb:30:d7:17'
 
-for idx, file in enumerate(raw_csv_files):
 
-	# filter raw csv file
-	raw_file = os.path.join(RAW_CSV_DIR, file)
-	print(raw_file)
+# for idx, file in enumerate(raw_csv_files):
+#
+# 	# filter raw csv file
+# 	raw_file = os.path.join(RAW_CSV_FILES_DIR, file)
+# 	print(raw_file)
+#
+# 	df = pandas.read_csv(raw_file, sep = csv_delimiter, header = 0, index_col = False)
+# 	df = filter_data(df, client)
+# 	df = defineEpisodes(df)
+# 	# df.to_csv('csv/'+initfile+'_modif.csv', sep=',')
+#
+# 	# save filtered csv here if required!
+#
+# 	minE = int((df.head(1))['episode'])
+# 	maxE = int((df.tail(1))['episode'])
+#
+# 	# apply proper tags
+# 	tag1 = low_rssi(df, minE, maxE, client)
+# 	tag2 = dataFrameLosses(df, minE, maxE, client)
+# 	tag3 = powerStateLowToHigh(df, minE, maxE, client)
+# 	tag4 = powerStateLowToHighV2(df, minE, maxE, client)
+# 	tag5 = apDeauth(df, minE, maxE, client)
+# 	tag6 = clientDeauth(df, minE, maxE, client)
+# 	tag7 = beaconLoss(df, minE, maxE, client)
+# 	tag8 = unsuccessAssocBlah(df, minE, maxE, client)
+# 	tag9 = successAssocBlah(df, minE, maxE, client)
+# 	tag10 = class3Frames(df, minE, maxE)
+# 	finalResult = merge_dicts(tag1, tag2, tag3, tag4, tag5, tag6, tag7, tag8, tag9, tag10)
+#
+# 	finalResult['cause'] = ['' for x in range(len(finalResult['cause.apsideproc']))]
+#
+# 	drops = []
+# 	for key, value in finalResult.items():
+# 		if 'cause.' in key:
+# 			for i in range(0, len(value)):
+# 				if 'True' in value[i]:
+# 					if finalResult['cause'][i] is None:
+# 						finalResult['cause'][i] = get_tag_for_cause(key)
+# 					else:
+# 						finalResult['cause'][i] += get_tag_for_cause(key)
+# 				else:
+# 					finalResult['cause'][i] += ''
+# 			drops.append(key)
+#
+# 	outputDF = pandas.DataFrame(finalResult)
+#
+# 	for i in drops:
+# 		outputDF = outputDF.drop(i, axis = 1)
+#
+# 	# store final output
+# 	output_csvname = os.path.basename(file)
+# 	output_csvfile = os.path.join(ANALYZED_CSV_FILES_DIR, output_csvname)
+# 	outputDF.to_csv(output_csvfile, sep = ',')
 
-	df = pandas.read_csv(raw_file, sep = csv_delimiter, header = 0, index_col = False)
-	df = filterData(df, client)
+
+def prepare_environment():
+	# create directories if they don't exist
+	if not os.path.exists(RAW_CSV_FILES_DIR) or not os.path.isdir(RAW_CSV_FILES_DIR):
+		os.mkdir(RAW_CSV_FILES_DIR)
+	if not os.path.exists(ANALYZED_CSV_FILES_DIR) or not os.path.isdir(ANALYZED_CSV_FILES_DIR):
+		os.mkdir(ANALYZED_CSV_FILES_DIR)
+
+	# make sure RAW_CSV_FILES_DIR is not empty
+	if len(os.listdir(RAW_CSV_FILES_DIR)) == 0:
+		print('"{:s}" is empty! Please create raw csv files using `pcaptocsv.py` and try again!'.format(
+			RAW_CSV_FILES_DIR))
+		exit(0)
+	# make sure ANALYZED_CSV_FILES_DIR is empty
+	if len(os.listdir(ANALYZED_CSV_FILES_DIR)) != 0:
+		print('"{:s}" is not empty! Please empty the directory and try again!'.format(ANALYZED_CSV_FILES_DIR))
+		exit(0)
+
+
+def get_raw_csv_file_names():
+	"""
+	Read all the file names present in the RAW_CSV_FILES_DIR
+	"""
+
+	raw_csv_file_names = list()
+	for file in os.listdir(RAW_CSV_FILES_DIR):
+		if os.path.splitext(file)[1] in SUPPORTED_EXTS:
+			raw_csv_file_names.append(file)
+
+	# sort so that we always read in a predefined order
+	raw_csv_file_names.sort()
+	return raw_csv_file_names
+
+
+def analyze_raw_csv_file(index: int, raw_csv_name: str):
+	"""
+	Analyze a raw csv file and generate a processed csv file that can be used for machine learning.
+	"""
+
+	# raw csv file
+	raw_csv_file = os.path.join(RAW_CSV_FILES_DIR, raw_csv_name)
+	# read the raw csv file
+	df = pandas.read_csv(raw_csv_name, sep = csv_delimiter, header = 0, index_col = False)
+
+	# filter
+	df = filter_data(df, client)
+	# define episodes
 	df = defineEpisodes(df)
-	# df.to_csv('csv/'+initfile+'_modif.csv', sep=',')
 
-	# save filtered csv here if required!
-
+	# episode count/bounds
 	minE = int((df.head(1))['episode'])
 	maxE = int((df.tail(1))['episode'])
 
@@ -464,13 +584,38 @@ for idx, file in enumerate(raw_csv_files):
 		outputDF = outputDF.drop(i, axis = 1)
 
 	# store final output
-	output_csvname = os.path.basename(file)
-	output_csvfile = os.path.join(ANALYZED_CSV_DIR, output_csvname)
+	output_csvname = os.path.basename(raw_csv_file)
+	output_csvfile = os.path.join(ANALYZED_CSV_FILES_DIR, output_csvname)
 	outputDF.to_csv(output_csvfile, sep = ',')
 
 
+def analyze_raw_csv_files(raw_csv_file_names: list, use_multithreading: bool):
+	"""
+	Analyze the raw csv files and generate processed csv files that can be used for machine learning.
+	"""
+
+	threads = list()
+	for idx, raw_csv_name in enumerate(raw_csv_file_names):
+		# create a thread for each file
+		thread = threading.Thread(target = analyze_raw_csv_file, args = (idx, raw_csv_name))
+
+		# if not using multi-threading just wait for the thread to finish
+		# else append thread reference to a list
+		if not use_multithreading:
+			thread.join()
+		else:
+			threads.append(thread)
+
+	# if using multi-threading wait for all threads to finish
+	# else - this list should be empty, so instantly return
+	for thread in threads:
+		thread.join()
+
+
 def main():
-	pass
+	prepare_environment()
+	raw_csv_file_names = get_raw_csv_file_names()
+	analyze_raw_csv_files(raw_csv_file_names, use_multithreading = True)
 
 
 if __name__ == '__main__':

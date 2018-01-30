@@ -8,7 +8,7 @@ PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 # the captured files directory
 CAPTURE_FILES_DIR = os.path.join(PROJECT_DIR, 'capture_files')
 # the raw csv files directory
-RAW_CSV_DIR = os.path.join(PROJECT_DIR, 'raw_csv_files')
+RAW_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'raw_csv_files')
 
 # Supported Extensions - only files with supported extensions shall be read
 SUPPORTED_EXTS = ['.pcap', '.pcapng', '.cap', ]
@@ -18,16 +18,16 @@ def prepare_environment():
 	# create directories if they don't exist
 	if not os.path.exists(CAPTURE_FILES_DIR) or not os.path.isdir(CAPTURE_FILES_DIR):
 		os.mkdir(CAPTURE_FILES_DIR)
-	if not os.path.exists(RAW_CSV_DIR) or not os.path.isdir(RAW_CSV_DIR):
-		os.mkdir(RAW_CSV_DIR)
+	if not os.path.exists(RAW_CSV_FILES_DIR) or not os.path.isdir(RAW_CSV_FILES_DIR):
+		os.mkdir(RAW_CSV_FILES_DIR)
 
 	# make sure CAPTURE_FILES_DIR is not empty
 	if len(os.listdir(CAPTURE_FILES_DIR)) == 0:
 		print('"{:s}" is empty! Please add some capture files and try again!'.format(CAPTURE_FILES_DIR))
 		exit(0)
 	# make sure RAW_CSV_DIR is empty
-	if len(os.listdir(RAW_CSV_DIR)) != 0:
-		print('"{:s}" is not empty! Please empty the directory and try again!'.format(RAW_CSV_DIR))
+	if len(os.listdir(RAW_CSV_FILES_DIR)) != 0:
+		print('"{:s}" is not empty! Please empty the directory and try again!'.format(RAW_CSV_FILES_DIR))
 		exit(0)
 
 
@@ -96,7 +96,7 @@ def prepare_and_get_csv_header(command_format_string: str):
 
 def get_capture_file_names():
 	"""
-	Read all the files present in the CAPTURE_FILES_DIR
+	Read all the file names present in the CAPTURE_FILES_DIR
 	"""
 
 	capture_file_names = list()
@@ -124,7 +124,7 @@ def generate_output_csv_files(capture_file_names: list, command_format_string: s
 		# capture file
 		capture_file = os.path.join(CAPTURE_FILES_DIR, capture_name)
 		# csv file
-		csv_file = os.path.join(RAW_CSV_DIR, csv_name)
+		csv_file = os.path.join(RAW_CSV_FILES_DIR, csv_name)
 
 		# print progress
 		print('starting sub-process for file: {:s}...'.format(capture_name))

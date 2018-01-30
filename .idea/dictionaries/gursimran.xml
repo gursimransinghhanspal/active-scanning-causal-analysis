@@ -14,13 +14,16 @@
       <w>macbook</w>
       <w>mactime</w>
       <w>moredata</w>
+      <w>multithreading</w>
       <w>pcap</w>
       <w>pcapng</w>
       <w>pcaps</w>
+      <w>pcaptocsv</w>
       <w>powerstate</w>
       <w>pwrmgt</w>
       <w>qbss</w>
       <w>radiotap</w>
+      <w>rssi</w>
       <w>scount</w>
       <w>ssid</w>
       <w>subprocesses</w>
