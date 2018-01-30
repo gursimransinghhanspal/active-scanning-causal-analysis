@@ -3,7 +3,13 @@ import os
 import pandas
 
 
-def getTag(cause):
+def get_tag_for_cause(cause):
+	"""
+	Associates a `tag` corresponding to every cause. This tag is added to the output csv file.
+	:param cause:
+	:return:
+	"""
+
 	string = 'X'
 	if cause == 'cause.unsuccessAssoc':
 		string = 'a'
@@ -41,7 +47,7 @@ if (mean < -72dBm) and (SD > 12dB)
 '''
 
 
-def lowRssi(df, minEpisode, maxEpisode, client):
+def low_rssi(df, minEpisode, maxEpisode, client):
 	# print('Low RSSI Causal Analysis...')
 	output = {'ssi.mean': [], 'ssi.sd': [], 'cause.lowrssi': [], 'start.time': [], 'end.time': [], 'duration.time': []}
 	for i in range(minEpisode, maxEpisode + 1):
@@ -374,11 +380,11 @@ def filterData(df, client):
 # get current directory
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 # raw csv directory
-RAW_CSV_DIR = os.path.join(PROJECT_DIR, 'raw_csv')
+RAW_CSV_DIR = os.path.join(PROJECT_DIR, 'raw_csv_files')
 # analyzed csv directory
-ANALYZED_CSV_DIR = os.path.join(PROJECT_DIR, 'analyzed_csv')
+ANALYZED_CSV_DIR = os.path.join(PROJECT_DIR, 'analyzed_csv_files')
 
-# Supported Extensions
+# Supported Extensions - only files with supported extensions shall be read
 SUPPORTED_EXTS = ['.csv', ]
 
 # create directories if don't exist
@@ -425,7 +431,7 @@ for idx, file in enumerate(raw_csv_files):
 	maxE = int((df.tail(1))['episode'])
 
 	# apply proper tags
-	tag1 = lowRssi(df, minE, maxE, client)
+	tag1 = low_rssi(df, minE, maxE, client)
 	tag2 = dataFrameLosses(df, minE, maxE, client)
 	tag3 = powerStateLowToHigh(df, minE, maxE, client)
 	tag4 = powerStateLowToHighV2(df, minE, maxE, client)
@@ -445,9 +451,9 @@ for idx, file in enumerate(raw_csv_files):
 			for i in range(0, len(value)):
 				if 'True' in value[i]:
 					if finalResult['cause'][i] is None:
-						finalResult['cause'][i] = getTag(key)
+						finalResult['cause'][i] = get_tag_for_cause(key)
 					else:
-						finalResult['cause'][i] += getTag(key)
+						finalResult['cause'][i] += get_tag_for_cause(key)
 				else:
 					finalResult['cause'][i] += ''
 			drops.append(key)
@@ -461,3 +467,7 @@ for idx, file in enumerate(raw_csv_files):
 	output_csvname = os.path.basename(file)
 	output_csvfile = os.path.join(ANALYZED_CSV_DIR, output_csvname)
 	outputDF.to_csv(output_csvfile, sep = ',')
+
+
+if __name__ == '__main__':
+	main()

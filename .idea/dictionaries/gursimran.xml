@@ -3,19 +3,28 @@
     <words>
       <w>amsdupresent</w>
       <w>antsignal</w>
+      <w>apsideproc</w>
+      <w>beaconloss</w>
       <w>bssid</w>
+      <w>clientdeauth</w>
+      <w>dataframeloss</w>
       <w>datarate</w>
       <w>exts</w>
+      <w>lowrssi</w>
       <w>mactime</w>
       <w>moredata</w>
       <w>pcap</w>
+      <w>pcapng</w>
       <w>pcaps</w>
+      <w>powerstate</w>
       <w>pwrmgt</w>
       <w>qbss</w>
       <w>radiotap</w>
       <w>scount</w>
       <w>ssid</w>
+      <w>subprocesses</w>
       <w>tshark</w>
+      <w>unsuccess</w>
       <w>wlan</w>
     </words>
   </dictionary>
