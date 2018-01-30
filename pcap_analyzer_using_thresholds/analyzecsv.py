@@ -86,8 +86,10 @@ def dataFrameLosses(df, minEpisode, maxEpisode, client):
 		dfE_b.append(dfE_a[(dfE_a['wlan.ta'] == client)])
 		numFCNoRetry = len(dfE_b)
 
-		# numFCRetry = len(dfE[(dfE['wlan.fc.retry'] == 1) & ((dfE['wlan.sa'] == client) | (dfE['wlan.ta'] == client))])
-		# numFCNoRetry = len(dfE[(dfE['wlan.fc.retry'] == 0) & ((dfE['wlan.sa'] == client) | (dfE['wlan.ta'] == client))])
+		# numFCRetry = len(dfE[(dfE['wlan.fc.retry'] == 1) & ((dfE['wlan.sa'] == client) | (dfE['wlan.ta'] ==
+		# client))])
+		# numFCNoRetry = len(dfE[(dfE['wlan.fc.retry'] == 0) & ((dfE['wlan.sa'] == client) | (dfE['wlan.ta'] ==
+		# client))])
 
 		if numFCRetry + numFCNoRetry > 0:
 			metric = float(numFCRetry) / float(numFCRetry + numFCNoRetry)
@@ -239,7 +241,6 @@ def powerStateLowToHighV2(df, minEpisode, maxEpisode, client):
 			output['cause.powerstateV2'].append('True')
 			continue
 
-
 		startEpoch = dfE.head(1)['frame.time_epoch']
 		endEpoch = dfE.tail(1)['frame.time_epoch']
 		timeWindow = float(endEpoch) - float(startEpoch)
@@ -266,18 +267,18 @@ def unsuccessAssocBlah(df, minEpisode, maxEpisode, client):
 		# deauthCount = len(dfE)
 		#
 		# dfE2 = df[(df['episode'] == i) & ((df['wlan.fc.type_subtype'] == 1) | (df['wlan.fc.type_subtype'] == 3)) & (
-		# 		df['wlan_mgt.fixed.status_code'] != 0) & (df['wlan.da'] == client)]
+		#       df['wlan_mgt.fixed.status_code'] != 0) & (df['wlan.da'] == client)]
 		# failureAssocCount = len(dfE2)
 		#
 		# cause = 'False'
 		# if (deauthCount > 0 and failureAssocCount == 0):
-		# 	cause = 'True'
+		#   cause = 'True'
 
 		# output['unsuccessAssoc.deauth.count'].append(deauthCount)
 		# output['failure.assoc.count'].append(failureAssocCount)
 		output['failure.assoc.count'].append(0)
 		# output['cause.unsuccessAssoc'].append(cause)
-		output['cause.unsuccessAssoc'].append('True')
+		output['cause.unsuccessAssoc'].append('False')
 	return output
 
 
@@ -290,12 +291,12 @@ def successAssocBlah(df, minEpisode, maxEpisode, client):
 		# deauthCount = len(dfE)
 		#
 		# dfE2 = df[(df['episode'] == i) & ((df['wlan.fc.type_subtype'] == 1) | (df['wlan.fc.type_subtype'] == 3)) & (
-		# 		df['wlan_mgt.fixed.status_code'] == 0) & (df['wlan.da'] == client)]
+		#       df['wlan_mgt.fixed.status_code'] == 0) & (df['wlan.da'] == client)]
 		# successAssocCount = len(dfE2)
 		#
 		# cause = 'False'
 		# if (deauthCount == 0 and successAssocCount > 0):
-		# 	cause = 'True'
+		#   cause = 'True'
 
 		# output['successAssoc.deauth.count'].append(deauthCount)
 		# output['success.assoc.count'].append(successAssocCount)
@@ -324,7 +325,7 @@ def class3Frames(df, minEpisode, maxEpisode):
 	return output
 
 
-''' 
+'''
 consider only a single client
 associate each packet captured with an episodeID (starting from 1, incremental)
 so a pcap with {bla,bla,bla,preq1(0.5),preq2(0.6),bla,bla,preq3(1.7),preq4(2.8),bla,bla} becomes
@@ -345,7 +346,7 @@ def defineEpisodes(df):
 		currentPReqEpoch = float(row['frame.time_epoch'])
 		if abs(lastPReqEpoch - currentPReqEpoch) > 1:
 			pReqEpisodeStartIndex.append(currentPReqEpoch)
-			lastPReqEpoch = currentPReqEpoch
+		lastPReqEpoch = currentPReqEpoch
 
 	pReqEpisodeStartIndex.sort()
 	lastIndex = 0
@@ -363,11 +364,8 @@ def defineEpisodes(df):
 
 
 def filterData(df, client):
-	df2 = df[(df['wlan.ra'] == client)]
-	df2.append(df[(df['wlan.ta'] == client)])
-	df2.append(df[(df['wlan.sa'] == client)])
-	df2.append(df[(df['wlan.da'] == client)])
-	df2.append(df[(df['wlan.fc.type_subtype']) == 8])
+	df = df[(df['wlan.ra'] == client) | (df['wlan.ta'] == client) | (df['wlan.sa'] == client) | (
+			df['wlan.da'] == client) | (df['wlan.fc.type_subtype'] == 8)]
 	return df
 
 
@@ -404,7 +402,6 @@ for file in os.listdir(RAW_CSV_DIR):
 raw_csv_files.sort()
 
 # --------  SETUP  ---------
-
 csv_delimiter = ','
 # client = '18:34:51:35:e6:a3'
 # client = '84:3a:4b:d9:35:54'
@@ -415,10 +412,12 @@ for idx, file in enumerate(raw_csv_files):
 
 	# filter raw csv file
 	raw_file = os.path.join(RAW_CSV_DIR, file)
+	print(raw_file)
 
 	df = pandas.read_csv(raw_file, sep = csv_delimiter, header = 0, index_col = False)
 	df = filterData(df, client)
 	df = defineEpisodes(df)
+	# df.to_csv('csv/'+initfile+'_modif.csv', sep=',')
 
 	# save filtered csv here if required!
 

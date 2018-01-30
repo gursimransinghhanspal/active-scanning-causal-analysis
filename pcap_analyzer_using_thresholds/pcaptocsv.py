@@ -24,12 +24,37 @@ if len(os.listdir(RAW_CSV_DIR)) != 0:
 
 # use t-shark
 #   - create csv from pcaps with the same name
-command = 'tshark -E separator=, -T fields -e frame.number -e frame.time_epoch -e frame.len -e radiotap.channel.freq ' \
-          '-e radiotap.mactime -e radiotap.datarate -e wlan.fc.type_subtype -e wlan.bssid ' \
-          '-e wlan.fc.retry -e wlan.fc.pwrmgt ' \
-          '-e wlan.fc.moredata -e wlan.fc.frag -e wlan.duration -e wlan.ra -e wlan.ta -e wlan.sa -e wlan.da ' \
-          '-e wlan.seq -e wlan.qos.priority -e wlan.qos.amsdupresent -e wlan.fc.type ' \
-          '-e wlan.fc.ds -e radiotap.dbm_antsignal -r ' + '\'{0}\' ' + '>> \'{1}\''
+space = ' '
+command = 'tshark -E separator=, -T fields' + space + \
+          '-e frame.number' + space + \
+          '-e frame.time_epoch' + space + \
+          '-e frame.len' + space + \
+          '-e radiotap.channel.freq' + space + \
+          '-e radiotap.mactime' + space + \
+          '-e radiotap.datarate' + space + \
+          '-e wlan.fc.type_subtype' + space + \
+          '-e wlan_mgt.ssid' + space + \
+          '-e wlan.bssid' + space + \
+          '-e wlan_mgt.ds.current_channel' + space + \
+          '-e wlan_mgt.qbss.scount' + space + \
+          '-e wlan.fc.retry' + space + \
+          '-e wlan.fc.pwrmgt' + space + \
+          '-e wlan.fc.moredata' + space + \
+          '-e wlan.fc.frag' + space + \
+          '-e wlan.duration' + space + \
+          '-e wlan.ra' + space + \
+          '-e wlan.ta' + space + \
+          '-e wlan.sa' + space + \
+          '-e wlan.da' + space + \
+          '-e wlan.seq' + space + \
+          '-e wlan.qos.priority' + space + \
+          '-e wlan.qos.amsdupresent' + space + \
+          '-e wlan.fc.type' + space + \
+          '-e wlan_mgt.fixed.reason_code' + space + \
+          '-e wlan_mgt.fixed.status_code' + space + \
+          '-e wlan.fc.ds' + space + \
+          '-e radiotap.dbm_antsignal' + space + \
+          '-r ' + '\'{0}\' ' + '>> \'{1}\''
 
 # create csv header
 args = command.split(' ')
@@ -57,9 +82,6 @@ def main():
 		csvname = basename + '.csv'
 		pcapfile = os.path.join(PCAPS_DIR, pcapname)
 		csvfile = os.path.join(RAW_CSV_DIR, csvname)
-
-		hardname = 'DFL_Exp' + str(idx + 1) + '-c0_ee_fb_30_d7_17.csv'
-		csvfile = os.path.join(RAW_CSV_DIR, hardname)
 
 		# create file and add header on top
 		with open(csvfile, 'w') as file:
