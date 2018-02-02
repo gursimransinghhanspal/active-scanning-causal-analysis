@@ -1,7 +1,7 @@
 import os
+import threading
 
 import pandas
-import threading
 
 
 def get_tag_for_cause(cause):
@@ -65,11 +65,17 @@ def low_rssi(df, first_episode_idx, last_episode_idx, client_mac_address = None)
 
 		# filter-2:
 		#   - packets belonging to episode `i`
-		#   - either transmitter address == client mac OR source address == client mac
-		dfE = df[
-			(df['episode'] == i) &
-			((df['wlan.ta'] == client) | (df['wlan.sa'] == client))
-		]
+		#   - either `transmitter address` == client mac OR `source address` == client mac
+		#     (only if client mac is available)
+		if client_mac_address is not None:
+			dfE = df[
+				(df['episode'] == i) &
+				((df['wlan.ta'] == client_mac_address) | (df['wlan.sa'] == client_mac_address))
+				]
+		else:
+			dfE = df[
+				(df['episode'] == i)
+			]
 
 		# calculate 'mean' and 'standard deviation' from filter-2's `radiotap.dbm_antsignal` column
 		rssi_mean = dfE['radiotap.dbm_antsignal'].mean()
@@ -79,7 +85,6 @@ def low_rssi(df, first_episode_idx, last_episode_idx, client_mac_address = None)
 		cause = 'False'
 		if rssi_mean < -72 and rssi_stddev > 12:
 			cause = 'True'
-
 
 		startTime = (dfH.head(1))['frame.time_epoch']
 		endTime = (dfH.tail(1))['frame.time_epoch']
@@ -419,7 +424,7 @@ def filter_data(df, client_mac_address = None):
 			(df['wlan.sa'] == client_mac_address) |
 			(df['wlan.da'] == client_mac_address) |
 			(df['wlan.fc.type_subtype'] == 8)
-			]
+		]
 	return df
 
 
