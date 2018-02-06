@@ -1,5 +1,4 @@
 import os
-import threading
 
 import numpy as np
 import pandas as pd
@@ -518,13 +517,18 @@ def rbs__class_3_frames(dataframe, episode_min_idx, episode_max_idx):
 	return output
 
 
-def define_episodes_from_frames(dataframe: pd.DataFrame):
+def define_episodes_from_frames(dataframe: pd.DataFrame, raw_csv_file):
 	"""
 	Bundle frames into episodes by assigning a `episode` field to each frame.
 	"""
 
 	# filter: packet type = `probe request`
 	_df_preqs = dataframe[dataframe['wlan.fc.type_subtype'] == 4]
+
+	if len(_df_preqs) == 0:
+		print("ERROR! {:s} - (define_episodes_from_frames) `_df_preqs` length is 0!!!".format(raw_csv_file))
+		return None
+
 	# reverse the probe request dataframe
 	_df_reverse: pd.DataFrame = _df_preqs.iloc[::-1]
 
@@ -537,6 +541,10 @@ def define_episodes_from_frames(dataframe: pd.DataFrame):
 			episode_start_epochs.append(current_epoch)
 		last_epoch = current_epoch
 	episode_start_epochs.sort()
+
+	if len(episode_start_epochs) == 0:
+		print("ERROR! {:s} - (define_episodes_from_frames) `episode_start_epochs` length is 0!!!".format(raw_csv_file))
+		return None
 
 	# add `episode` field to each frame
 	last_epoch = 0
@@ -553,7 +561,7 @@ def define_episodes_from_frames(dataframe: pd.DataFrame):
 	return dataframe
 
 
-def filter_frames(dataframe: pd.DataFrame, clients: list):
+def filter_frames(dataframe: pd.DataFrame, clients: list, raw_csv_file):
 	"""
 	Filter out the rows (frames) that are not relevant to the process.
 	"""
@@ -571,6 +579,11 @@ def filter_frames(dataframe: pd.DataFrame, clients: list):
 		 (dataframe['wlan.ta'].isin(clients)) |
 		 (dataframe['wlan.fc.type_subtype'] == 8))
 	]
+
+	if len(_df) == 0:
+		print("ERROR! {:s} - (filter_frames) `_df` length is 0!!!".format(raw_csv_file))
+		return None
+
 	return _df
 
 
@@ -702,11 +715,15 @@ def analyze_raw_csv_file(index: int, raw_csv_name: str):
 	# ### Processing ###
 
 	# 1. filter frames (based on clients)
-	dataframe = filter_frames(dataframe, clients)
+	dataframe = filter_frames(dataframe, clients, raw_csv_file)
+	if dataframe is None:
+		return
 	# print("2. filter:", dataframe.shape)
 
 	# 2. define episodes
-	dataframe = define_episodes_from_frames(dataframe)
+	dataframe = define_episodes_from_frames(dataframe, raw_csv_file)
+	if dataframe is None:
+		return
 	# print("3. define episodes:", dataframe.shape)
 
 	# episode count/bounds
@@ -763,35 +780,19 @@ def analyze_raw_csv_file(index: int, raw_csv_name: str):
 	output_dataframe.to_csv(output_csvfile, sep = ',')
 
 
-def analyze_raw_csv_files(raw_csv_file_names: list, use_multithreading: bool):
+def analyze_raw_csv_files(raw_csv_file_names: list):
 	"""
 	Analyze the raw csv files and generate processed csv files that can be used for machine learning.
 	"""
 
-	threads = list()
 	for idx, raw_csv_name in enumerate(raw_csv_file_names):
-		# create a thread for each file
-		thread = threading.Thread(target = analyze_raw_csv_file, args = (idx, raw_csv_name))
-		print('starting thread for file: {:s}...'.format(raw_csv_name))
-		thread.start()
-
-		# if not using multi-threading just wait for the thread to finish
-		# else append thread reference to a list
-		if not use_multithreading:
-			thread.join()
-		else:
-			threads.append(thread)
-
-	# if using multi-threading wait for all threads to finish
-	# else - this list should be empty, so instantly return
-	for thread in threads:
-		thread.join()
+		analyze_raw_csv_file(idx, raw_csv_name)
 
 
 def main():
 	prepare_environment()
 	raw_csv_file_names = get_raw_csv_file_names()
-	analyze_raw_csv_files(raw_csv_file_names, use_multithreading = False)
+	analyze_raw_csv_files(raw_csv_file_names)
 
 
 if __name__ == '__main__':
