@@ -1,9 +1,13 @@
 import os
+import threading
 
-import pandas
+import numpy as np
+import pandas as pd
+
+np.abs(1)
 
 
-def getTag(cause):
+def get_tag_for_cause(cause):
 	string = 'X'
 	if cause == 'cause.unsuccessAssoc':
 		string = 'a'
@@ -28,82 +32,286 @@ def getTag(cause):
 	return string
 
 
-def merge_dicts(*dict_args):
+def merge_dictionaries(*dict_args):
 	result = {}
 	for dictionary in dict_args:
 		result.update(dictionary)
 	return result
 
 
-'''
-for every episode, calculate mean and SD of SSI value
-if (mean < -72dBm) and (SD > 12dB)
-'''
+def rbs__low_rssi(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	"""
+	For every episode, calculate `mean` and `standard deviation` for rssi value.
+	check: `mean` < -72dB and `std dev` > 12dB
+	"""
+
+	output_dict = {
+		'ssi.mean': [],
+		'ssi.sd': [],
+		'cause.lowrssi': [],
+		'start.time': [],
+		'end.time': [],
+		'duration.time': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		_df_episode = dataframe[
+			(dataframe['episode'] == episode_idx)
+		]
+
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - either source address or transmitter address should be in `clients`
+		_df_client_episode = _df_episode[
+			(_df_episode['wlan.sa'].isin(clients) | _df_episode['wlan.ta'].isin(clients))
+		]
+
+		# calculate `mean` and `std dev`
+		rssi_mean = _df_client_episode['radiotap.dbm_antsignal'].mean()
+		rssi_stddev = _df_client_episode['radiotap.dbm_antsignal'].std()
+
+		# check metric
+		cause = str(False)
+		if rssi_mean < -72 and rssi_stddev > 12:
+			cause = str(True)
+
+		# append data to output dictionary
+		start_epoch = float((_df_episode.head(1))['frame.time_epoch'])
+		end_epoch = float((_df_episode.tail(1))['frame.time_epoch'])
+
+		output_dict['ssi.mean'].append(rssi_mean)
+		output_dict['ssi.sd'].append(rssi_stddev)
+		output_dict['cause.lowrssi'].append(cause)
+		output_dict['start.time'].append(start_epoch)
+		output_dict['end.time'].append(end_epoch)
+		output_dict['duration.time'].append(float((end_epoch - start_epoch) / 60))
+	return output_dict
 
 
-def lowRssi(df, minEpisode, maxEpisode, client):
-	# print('Low RSSI Causal Analysis...')
-	output = {'ssi.mean': [], 'ssi.sd': [], 'cause.lowrssi': [], 'start.time': [], 'end.time': [], 'duration.time': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfH = df[(df['episode'] == i)]
-		dfE = df[(df['episode'] == i) & ((df['wlan.ta'] == client) | (df['wlan.sa'] == client))]
-		ssiMean = dfE['radiotap.dbm_antsignal'].mean()
-		ssiSD = dfE['radiotap.dbm_antsignal'].std()
-		cause = 'False'
-		if (ssiMean < -72 and ssiSD > 12):
-			cause = 'True'
+def rbs__data_frame_loss(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	"""
+	use `fc.retry` field
+	check: #(fc.retry == 1)/#(fc.retry == 1 || fc.retry == 0) > 0.5
+	"""
 
-		startTime = (dfH.head(1))['frame.time_epoch']
-		endTime = (dfH.tail(1))['frame.time_epoch']
-		output['start.time'].append(float(startTime))
-		output['end.time'].append(float(endTime))
-		output['duration.time'].append((float(endTime) - float(startTime)) / 60)
-		output['ssi.mean'].append(ssiMean)
-		output['ssi.sd'].append(ssiSD)
-		output['cause.lowrssi'].append(cause)
-	return output
+	output_dict = {
+		'frame.lossrate': [],
+		'cause.dataframeloss': []
+	}
 
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		_df_episode = dataframe[
+			(dataframe['episode'] == episode_idx)
+		]
 
-'''
-check for fc.retry field
-if #(fc.retry == 1)/#(fc.retry == 1 || fc.retry == 0) > 0.5
-'''
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - `fc.retry` == 1
+		#   - either source address or transmitter address should be in `clients`
+		_df_retry_true = _df_episode[
+			((_df_episode['wlan.fc.retry'] == 1) &
+			 (_df_episode['wlan.sa'].isin(clients) | _df_episode['wlan.ta'].isin(clients)))
+		]
 
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - `fc.retry` == 0
+		#   - either source address or transmitter address should be in `clients`
+		_df_retry_false = _df_episode[
+			((_df_episode['wlan.fc.retry'] == 0) &
+			 (_df_episode['wlan.sa'].isin(clients) | _df_episode['wlan.ta'].isin(clients)))
+		]
 
-def dataFrameLosses(df, minEpisode, maxEpisode, client):
-	# print('DataFrame Loss Causal Analysis...')
-	output = {'frame.lossrate': [], 'cause.dataframeloss': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfE = df[(df['episode'] == i)]
+		# calculate ratios and check
+		num_true = len(_df_retry_true)
+		num_false = len(_df_retry_false)
 
-		dfE_a = dfE[(dfE['wlan.fc.retry'] == 1)]
-		dfE_b = dfE_a[(dfE_a['wlan.sa'] == client)]
-		dfE_b.append(dfE_a[(dfE_a['wlan.ta'] == client)])
-		numFCRetry = len(dfE_b)
-
-		dfE_a = dfE[(dfE['wlan.fc.retry'] == 0)]
-		dfE_b = dfE_a[(dfE_a['wlan.sa'] == client)]
-		dfE_b.append(dfE_a[(dfE_a['wlan.ta'] == client)])
-		numFCNoRetry = len(dfE_b)
-
-		# numFCRetry = len(dfE[(dfE['wlan.fc.retry'] == 1) & ((dfE['wlan.sa'] == client) | (dfE['wlan.ta'] == client))])
-		# numFCNoRetry = len(dfE[(dfE['wlan.fc.retry'] == 0) & ((dfE['wlan.sa'] == client) | (dfE['wlan.ta'] == client))])
-
-		if numFCRetry + numFCNoRetry > 0:
-			metric = float(numFCRetry) / float(numFCRetry + numFCNoRetry)
-			cause = 'False'
-			if (metric > 0.5):
-				cause = 'True'
-
-			output['frame.lossrate'].append(metric)
-			output['cause.dataframeloss'].append(cause)
-
+		if num_true + num_false > 0:
+			ratio = float(num_true) / float(num_true + num_false)
 		else:
-			cause = 'False'
-			output['frame.lossrate'].append(-1)
-			output['cause.dataframeloss'].append(cause)
+			ratio = -1  # could not calculate
 
-	return output
+		# check metric
+		cause = str(False)
+		if ratio > 0.5:
+			cause = str(True)
+
+		# append data to output dictionary
+		output_dict['frame.lossrate'].append(ratio)
+		output_dict['cause.dataframeloss'].append(cause)
+
+	return output_dict
+
+
+def rbs__power_state_low_to_high_v1(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	"""
+	calculate number of frames per second.
+	check: if #fps > 2
+	"""
+
+	output_dict = {
+		'frames.persec': [],
+		'cause.powerstate': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - either source address or transmitter address should be in `clients`
+		_df_client_episode = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.sa'].isin(clients) | dataframe['wlan.ta'].isin(clients)))
+		]
+
+		# append data to output dictionary, if no frames found
+		if len(_df_client_episode) == 0:
+			output_dict['frames.persec'].append(0)
+			output_dict['cause.powerstate'].append(str(False))
+			continue
+
+		# calculate metrics
+		start_epoch = float(_df_client_episode.head(1)['frame.time_epoch'])
+		end_epoch = float(_df_client_episode.tail(1)['frame.time_epoch'])
+		window_duration = end_epoch - start_epoch
+		num_of_frames = len(_df_client_episode)
+
+		metric = -1
+		if num_of_frames > 1 and window_duration > 0:
+			metric = float(num_of_frames) / float(window_duration)
+
+		# check metric
+		cause = str(False)
+		if metric == -1:
+			cause = 'Invalid'
+		elif metric > 2:
+			cause = str(True)
+
+		# append data to output dictionary
+		output_dict['frames.persec'].append(metric)
+		output_dict['cause.powerstate'].append(cause)
+	return output_dict
+
+
+def rbs__power_state_low_to_high_v2(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	"""
+	calculate number of frames per second.
+	check: if #fps <= 2
+	"""
+
+	output_dict = {
+		'cause.powerstateV2': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - either source address or transmitter address should be in `clients`
+		_df_client_episode = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.sa'].isin(clients) | dataframe['wlan.ta'].isin(clients)))
+		]
+
+		# append data to output dictionary, if no frames found
+		if len(_df_client_episode) == 0:
+			output_dict['cause.powerstateV2'].append(str(True))
+			continue
+
+		# calculate metrics
+		start_epoch = float(_df_client_episode.head(1)['frame.time_epoch'])
+		end_epoch = float(_df_client_episode.tail(1)['frame.time_epoch'])
+		window_duration = end_epoch - start_epoch
+		num_of_frames = len(_df_client_episode)
+
+		metric = -1
+		if num_of_frames > 1 and window_duration > 0:
+			metric = float(num_of_frames) / float(window_duration)
+
+		# check metric
+		cause = str(False)
+		if metric == -1:
+			cause = 'Invalid'
+		elif metric <= 2:
+			cause = str(True)
+
+		# append data to output dictionary
+		output_dict['cause.powerstateV2'].append(cause)
+	return output_dict
+
+
+def rbs__ap_deauth(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	"""
+	check for deauth packet from ap
+	deauth: fc.type_subtype == 12
+	"""
+
+	output_dict = {
+		'ap.deauth.count': [],
+		'cause.apsideproc': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `deauth`
+		#   - destination address should be in `clients`
+		_df_episode = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.fc.type_subtype'] == 12) &
+			 (dataframe['wlan.da'].isin(clients)))
+		]
+
+		# calculate metrics
+		metric = len(_df_episode)
+
+		# check metric
+		cause = str(False)
+		if metric > 0:
+			cause = str(True)
+
+		# append data to output dictionary
+		output_dict['ap.deauth.count'].append(metric)
+		output_dict['cause.apsideproc'].append(cause)
+	return output_dict
+
+
+def rbs__client_deauth(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	"""
+	check for deauth packet from client
+	deauth: fc.type_subtype == 12
+	"""
+
+	output_dict = {
+		'client.deauth.count': [],
+		'cause.clientdeauth': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `deauth`
+		#   - destination address should be in `clients`
+		_df_episode = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.fc.type_subtype'] == 12) &
+			 (dataframe['wlan.sa'].isin(clients)))
+		]
+
+		# calculate metrics
+		metric = len(_df_episode)
+
+		# check metric
+		cause = str(False)
+		if metric > 0:
+			cause = str(True)
+
+		# append data to output dictionary
+		output_dict['client.deauth.count'].append(metric)
+		output_dict['cause.clientdeauth'].append(cause)
+	return output_dict
 
 
 '''
@@ -113,269 +321,275 @@ def dataFrameLosses(df, minEpisode, maxEpisode, client):
 '''
 
 
-def beaconLoss(df, minEpisode, maxEpisode, client):
-	# print('Beacon Loss Causal Analysis...')
-	output = {'beacon.count': [], 'beacon.interval': [], 'ack.count': [], 'ndf.count': [], 'cause.beaconloss': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfE = df[(df['episode'] == i) & (df['wlan.fc.type_subtype'] == 8)]
-		beaconCount = len(dfE)
-		beaconIntervalCount = 0
-		if beaconCount > 1:
-			prevEpoch = float(dfE.head(1)['frame.time_epoch'])
-			dfE = dfE.ix[1:]
-			for index, row in dfE.iterrows():
-				currentEpoch = float(row['frame.time_epoch'])
-				timeDiff = abs(prevEpoch - currentEpoch)
-				if timeDiff > 0.105:
-					beaconIntervalCount += 1
+def rbs__beacon_loss(dataframe, episode_min_idx, episode_max_idx, clients):
+	"""
+	beacon count is 0 or
+	if beacon interval > 105ms for 7 consecutive beacons or
+	count(wlan.sa = client and type_subtype = 36|44 and pwrmgt = 0) > 0 and count(wlan.ra = client && type_subtype = 29)
+	"""
+
+	output = {
+		'beacon.count': [],
+		'beacon.interval': [],
+		'ack.count': [],
+		'ndf.count': [],
+		'cause.beaconloss': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `beacon`
+		_df_episode_1 = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.fc.type_subtype'] == 8))
+		]
+
+		# calculate metrics
+		beacon_count = len(_df_episode_1)
+
+		beacon_interval_count = 0
+		if beacon_count > 1:
+			previous_epoch = float(_df_episode_1.head(1)['frame.time_epoch'])
+			_df_episode_1 = _df_episode_1.iloc[1:]
+			for index, frame in _df_episode_1.iterrows():
+				current_epoch = float(frame['frame.time_epoch'])
+				delta_time = previous_epoch - current_epoch
+				if delta_time > 0.105:
+					beacon_interval_count += 1
 				else:
-					beaconIntervalCount = 0
-				prevEpoch = currentEpoch
+					beacon_interval_count = 0
 
-		dfE2 = df[(df['episode'] == i) & (df['wlan.fc.type_subtype'] == 29) & (df['wlan.ra'] == client)]
-		ackCount = len(dfE2)
+				# TODO verify (my addition)
+				if beacon_interval_count >= 8:
+					break
 
-		dfE3 = df[(df['episode'] == i) & ((df['wlan.fc.type_subtype'] == 36) | (df['wlan.fc.type_subtype'] == 44)) & (
-				df['wlan.sa'] == client) & (df['wlan.fc.pwrmgt'] == 0)]
-		ndfCount = len(dfE3)
+				previous_epoch = current_epoch
 
-		cause = 'False'
-		if (beaconCount == 0 or beaconIntervalCount > 8 or (ackCount == 0 and ndfCount > 0)):
-			cause = 'True'
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `29`
+		#   - receiver address should be in clients
+		_df_episode_2 = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.fc.type_subtype'] == 29) &
+			 (dataframe['wlan.ra'].isin(clients)))
+		]
+		ack_count = len(_df_episode_2)
 
-		output['beacon.count'].append(beaconCount)
-		output['beacon.interval'].append(beaconIntervalCount)
-		output['ack.count'].append(ackCount)
-		output['ndf.count'].append(ndfCount)
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `36` or `44`
+		#   - source address should be in clients
+		_df_episode_3 = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 ((dataframe['wlan.fc.type_subtype'] == 36) | (dataframe['wlan.fc.type_subtype'] == 44)) &
+			 (dataframe['wlan.sa'].isin(clients)) &
+			 (dataframe['wlan.fc.pwrmgt'] == 0))
+		]
+		ndf_count = len(_df_episode_3)
+
+		# check metric
+		cause = str(False)
+		if beacon_count == 0 or beacon_interval_count > 8 or (ack_count == 0 and ndf_count > 0):
+			cause = str(True)
+
+		# append data to output dictionary
+		output['beacon.count'].append(beacon_count)
+		output['beacon.interval'].append(beacon_interval_count)
+		output['ack.count'].append(ack_count)
+		output['ndf.count'].append(ndf_count)
 		output['cause.beaconloss'].append(cause)
 	return output
 
 
-'''
-check for deauth packet if found in episode 0, assign to episode 1
-deauth: fc.type_subtype == 12
-'''
+def rbs__unsuccessful_assoc_auth_reassoc_deauth(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	output = {
+		'failure.assoc.count': [],
+		'cause.unsuccessAssoc': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `deauth`
+		#   - destination address should be in `clients`
+		_df_episode_1 = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.fc.type_subtype'] == 12) &
+			 (dataframe['wlan.da'].isin(clients)))
+		]
+		deauth_count = len(_df_episode_1)
+
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `1` or `3`
+		#   - `status code` != 0
+		#   - destination address should be in `clients`
+		_df_episode_2 = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 ((dataframe['wlan.fc.type_subtype'] == 1) | (dataframe['wlan.fc.type_subtype'] == 3)) &
+			 (dataframe['wlan_mgt.fixed.status_code'] != 0) &
+			 (dataframe['wlan.da'].isin(clients)))
+		]
+		failure_assoc_count = len(_df_episode_2)
+
+		# check metric
+		cause = str(False)
+		if deauth_count > 0 and failure_assoc_count == 0:
+			cause = str(True)
+
+		# append data to output dictionary
+		output['failure.assoc.count'].append(failure_assoc_count)
+		output['cause.unsuccessAssoc'].append(cause)
+	return output
 
 
-def apDeauth(df, minEpisode, maxEpisode, client):
-	# print('AP-side Procedures Causal Analysis...')
-	output = {'ap.deauth.count': [], 'cause.apsideproc': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfE = df[(df['episode'] == i) & (df['wlan.fc.type_subtype'] == 12) & (df['wlan.da'] == client)]
-		metric = len(dfE)
-		cause = 'False'
+def rbs__successful_assoc_auth_reassoc_deauth(dataframe, episode_min_idx, episode_max_idx, clients: list):
+	output = {
+		'success.assoc.count': [],
+		'cause.successAssoc': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `deauth`
+		#   - destination address should be in `clients`
+		_df_episode_1 = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.fc.type_subtype'] == 12) &
+			 (dataframe['wlan.da'].isin(clients)))
+		]
+		deauth_count = len(_df_episode_1)
+
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type = `1` or `3`
+		#   - `status code` = 0
+		#   - destination address should be in `clients`
+		_df_episode_2 = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 ((dataframe['wlan.fc.type_subtype'] == 1) | (dataframe['wlan.fc.type_subtype'] == 3)) &
+			 (dataframe['wlan_mgt.fixed.status_code'] == 0) &
+			 (dataframe['wlan.da'].isin(clients)))
+		]
+		success_assoc_count = len(_df_episode_2)
+
+		# check metric
+		cause = str(False)
+		if deauth_count == 0 and success_assoc_count > 0:
+			cause = str(True)
+
+		# append data to output dictionary
+		output['success.assoc.count'].append(success_assoc_count)
+		output['cause.successAssoc'].append(cause)
+	return output
+
+
+def rbs__class_3_frames(dataframe, episode_min_idx, episode_max_idx):
+	class_3_frames_list = [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 26, 24, 25, 13, 14]
+
+	output = {
+		'class3frames.count': [],
+		'cause.class3': []
+	}
+
+	for episode_idx in range(episode_min_idx, episode_max_idx + 1):
+		# filter:
+		#   - episode index = `episode_idx`
+		#   - packet type should be in `class_3_frames_list`
+		_df_episode = dataframe[
+			((dataframe['episode'] == episode_idx) &
+			 (dataframe['wlan.fc.type_subtype'].isin(class_3_frames_list)))
+		]
+
+		# calculate metrics
+		metric = len(_df_episode)
+
+		# check metric
+		cause = str(False)
 		if metric > 0:
-			cause = 'True'
+			cause = str(True)
 
-		output['ap.deauth.count'].append(metric)
-		output['cause.apsideproc'].append(cause)
-	return output
-
-
-def clientDeauth(df, minEpisode, maxEpisode, client):
-	# print('Client Deauth Causal Analysis...')
-	output = {'client.deauth.count': [], 'cause.clientdeauth': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfE = df[(df['episode'] == i) & (df['wlan.fc.type_subtype'] == 12) & (df['wlan.sa'] == client)]
-		metric = len(dfE)
-		cause = 'False'
-		if metric > 0:
-			cause = 'True'
-
-		output['client.deauth.count'].append(metric)
-		output['cause.clientdeauth'].append(cause)
-	return output
-
-
-'''
-calculate number of frames (with wlan.sa or wlan.ta from client) per second, nfps
-if nfps > 2
-'''
-
-
-def powerStateLowToHigh(df, minEpisode, maxEpisode, client):
-	# print('Power State Low->High Analysis...')
-	output = {'frames.persec': [], 'cause.powerstate': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfE = df[(df['episode'] == i) & ((df['wlan.ta'] == client) | (df['wlan.sa'] == client))]
-
-		if len(dfE) == 0:
-			output['frames.persec'].append(0)
-			output['cause.powerstate'].append('False')
-			continue
-
-		startEpoch = dfE.head(1)['frame.time_epoch']
-		endEpoch = dfE.tail(1)['frame.time_epoch']
-
-		timeWindow = float(endEpoch) - float(startEpoch)
-		numOfFrames = len(dfE)
-		metric = -1
-		if numOfFrames > 1:
-			metric = float(numOfFrames) / float(timeWindow)
-		cause = 'False'
-		if (metric == -1):
-			cause = 'Invalid'
-		elif (metric > 2):
-			cause = 'True'
-
-		output['frames.persec'].append(metric)
-		output['cause.powerstate'].append(cause)
-	return output
-
-
-'''
-calculate number of frames (with wlan.sa or wlan.ta from client) per second, nfps
-if nfps <= 2
-'''
-
-
-def powerStateLowToHighV2(df, minEpisode, maxEpisode, client):
-	# print('Power State Low->High Analysis V2...')
-	output = {'cause.powerstateV2': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfE = df[(df['episode'] == i) & ((df['wlan.ta'] == client) | (df['wlan.sa'] == client))]
-
-		if len(dfE) == 0:
-			output['cause.powerstateV2'].append('True')
-			continue
-
-		startEpoch = dfE.head(1)['frame.time_epoch']
-		endEpoch = dfE.tail(1)['frame.time_epoch']
-		timeWindow = float(endEpoch) - float(startEpoch)
-		numOfFrames = len(dfE)
-		metric = -1
-		if numOfFrames > 1:
-			metric = float(numOfFrames) / float(timeWindow)
-		cause = 'False'
-		if (metric == -1):
-			cause = 'Invalid'
-		elif (metric <= 2):
-			cause = 'True'
-
-		output['cause.powerstateV2'].append(cause)
-	return output
-
-
-def unsuccessAssocBlah(df, minEpisode, maxEpisode, client):
-	# print('Unsuccess Assoc/Auth/Reassoc/deauth...')
-	# output = { 'unsuccessAssoc.deauth.count': [], 'failure.assoc.count': [], 'cause.unsuccessAssoc': [] }
-	output = {'failure.assoc.count': [], 'cause.unsuccessAssoc': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		# dfE = df[(df['episode'] == i) & (df['wlan.fc.type_subtype'] == 12) & (df['wlan.da'] == client)]
-		# deauthCount = len(dfE)
-		#
-		# dfE2 = df[(df['episode'] == i) & ((df['wlan.fc.type_subtype'] == 1) | (df['wlan.fc.type_subtype'] == 3)) & (
-		#       df['wlan_mgt.fixed.status_code'] != 0) & (df['wlan.da'] == client)]
-		# failureAssocCount = len(dfE2)
-		#
-		# cause = 'False'
-		# if (deauthCount > 0 and failureAssocCount == 0):
-		#   cause = 'True'
-
-		# output['unsuccessAssoc.deauth.count'].append(deauthCount)
-		# output['failure.assoc.count'].append(failureAssocCount)
-		output['failure.assoc.count'].append(0)
-		# output['cause.unsuccessAssoc'].append(cause)
-		output['cause.unsuccessAssoc'].append('False')
-	return output
-
-
-def successAssocBlah(df, minEpisode, maxEpisode, client):
-	# print('Success Assoc/Auth/Reassoc/deauth...')
-	# output = { 'successAssoc.deauth.count': [], 'success.assoc.count': [], 'cause.successAssoc': [] }
-	output = {'success.assoc.count': [], 'cause.successAssoc': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		# dfE = df[(df['episode'] == i) & (df['wlan.fc.type_subtype'] == 12) & (df['wlan.da'] == client)]
-		# deauthCount = len(dfE)
-		#
-		# dfE2 = df[(df['episode'] == i) & ((df['wlan.fc.type_subtype'] == 1) | (df['wlan.fc.type_subtype'] == 3)) & (
-		#       df['wlan_mgt.fixed.status_code'] == 0) & (df['wlan.da'] == client)]
-		# successAssocCount = len(dfE2)
-		#
-		# cause = 'False'
-		# if (deauthCount == 0 and successAssocCount > 0):
-		#   cause = 'True'
-
-		# output['successAssoc.deauth.count'].append(deauthCount)
-		# output['success.assoc.count'].append(successAssocCount)
-		output['success.assoc.count'].append(0)
-		# output['cause.successAssoc'].append(cause)
-		output['cause.successAssoc'].append('False')
-	return output
-
-
-class3FramesList = [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 26, 24, 25, 13, 14]
-
-
-def class3Frames(df, minEpisode, maxEpisode):
-	# print('Class 3 Frames...')
-	output = {'class3frames.count': [], 'cause.class3': []}
-	for i in range(minEpisode, maxEpisode + 1):
-		dfE = df[(df['episode'] == i) & (df['wlan.fc.type_subtype'].isin(class3FramesList))]
-		metric = len(dfE)
-
-		cause = 'False'
-		if metric > 0:
-			cause = 'True'
-
+		# append data to output dictionary
 		output['class3frames.count'].append(metric)
 		output['cause.class3'].append(cause)
 	return output
 
 
-'''
-consider only a single client
-associate each packet captured with an episodeID (starting from 1, incremental)
-so a pcap with {bla,bla,bla,preq1(0.5),preq2(0.6),bla,bla,preq3(1.7),preq4(2.8),bla,bla} becomes
-1: {bla,bla,preq1,preq2}
-2: {bla,bla,preq3}
-3: {preq4}
-aggregates window + following episode
-'''
+def define_episodes_from_frames(dataframe: pd.DataFrame):
+	"""
+	Bundle frames into episodes by assigning a `episode` field to each frame.
+	"""
+
+	# filter: packet type = `probe request`
+	_df_preqs = dataframe[dataframe['wlan.fc.type_subtype'] == 4]
+	# reverse the probe request dataframe
+	_df_reverse: pd.DataFrame = _df_preqs.iloc[::-1]
+
+	# calculate episode windows
+	last_epoch = 0
+	episode_start_epochs = list()
+	for idx, series in _df_reverse.iterrows():
+		current_epoch = float(series['frame.time_epoch'])
+		if abs(last_epoch - current_epoch) > 1:
+			episode_start_epochs.append(current_epoch)
+		last_epoch = current_epoch
+	episode_start_epochs.sort()
+
+	# add `episode` field to each frame
+	last_epoch = 0
+	for episode_index, current_epoch in enumerate(episode_start_epochs):
+		dataframe.loc[
+			(dataframe['frame.time_epoch'] <= current_epoch) & (dataframe['frame.time_epoch'] > last_epoch),
+			'episode'
+		] = episode_index
+		last_epoch = current_epoch
+
+	# make sure all episodes have non negative indexes
+	# this also removes frames that could not be assigned to any episode
+	dataframe = dataframe[(dataframe['episode'] > -1)]
+	return dataframe
 
 
-def defineEpisodes(df):
-	dfX = df[(df['wlan.fc.type_subtype'] == 4)]
-	dfX = dfX.iloc[::-1]
-	lastPReqEpoch = 0
-	pReqEpisodeStartIndex = []
+def filter_frames(dataframe: pd.DataFrame, clients: list):
+	"""
+	Filter out the rows (frames) that are not relevant to the process.
+	"""
 
-	for index, row in dfX.iterrows():
-		currentPReqEpoch = float(row['frame.time_epoch'])
-		if abs(lastPReqEpoch - currentPReqEpoch) > 1:
-			pReqEpisodeStartIndex.append(currentPReqEpoch)
-		lastPReqEpoch = currentPReqEpoch
-
-	pReqEpisodeStartIndex.sort()
-	lastIndex = 0
-	episode = 0
-
-	for i in pReqEpisodeStartIndex:
-		df.ix[(df['frame.time_epoch'] <= i) & (df['frame.time_epoch'] > lastIndex), 'episode'] = episode
-		episode += 1
-		lastIndex = i
-
-	# df.ix[(df.index <= vLastIndex) & (df.index > lastIndex), 'episode'] = episode
-	# not essentially part of any episode ^
-	df = df[(df['episode'] > -1)]
-	return df
+	# Filter
+	#   - source address in clients
+	#   - destination address in clients
+	#   - transmitter address in clients
+	#   - receiver address in clients
+	#   - packet type is `beacon` TODO: verify
+	_df = dataframe[
+		((dataframe['wlan.sa'].isin(clients)) |
+		 (dataframe['wlan.da'].isin(clients)) |
+		 (dataframe['wlan.ra'].isin(clients)) |
+		 (dataframe['wlan.ta'].isin(clients)) |
+		 (dataframe['wlan.fc.type_subtype'] == 8))
+	]
+	return _df
 
 
-def filterData(df, client):
-	df = df[(df['wlan.ra'] == client) | (df['wlan.ta'] == client) | (df['wlan.sa'] == client) | (
-			df['wlan.da'] == client) | (df['wlan.fc.type_subtype'] == 8)]
-	return df
-
-
-def find_all_client_mac_addresses(raw_csv_file):
-	data_frame = pandas.read_csv(raw_csv_file, sep = ',', header = 0, index_col = False)
+def find_all_client_mac_addresses(dataframe):
+	"""
+	Returns a list of all the client mac addresses present in the csv dataframe.
+	"""
 
 	client_mac_addresses = set()
-	client_mac_addresses.add(data_frame['wlan.sa'].unique())
-	client_mac_addresses.add(data_frame['wlan.da'].unique())
-	client_mac_addresses.add(data_frame['wlan.ta'].unique())
-	client_mac_addresses.add(data_frame['wlan.ra'].unique())
-	print(client_mac_addresses)
+	client_mac_addresses.update(set(dataframe['wlan.sa'][dataframe['wlan.sa'].notna()].unique()))
+	client_mac_addresses.update(set(dataframe['wlan.da'][dataframe['wlan.da'].notna()].unique()))
+	client_mac_addresses.update(set(dataframe['wlan.ta'][dataframe['wlan.ta'].notna()].unique()))
+	client_mac_addresses.update(set(dataframe['wlan.ra'][dataframe['wlan.ra'].notna()].unique()))
+
+	# convert to list
+	client_mac_addresses = list(client_mac_addresses)
+	# sort for printing
+	# client_mac_addresses.sort()
+	return client_mac_addresses
 
 
 # #############################################################################
@@ -383,90 +597,203 @@ def find_all_client_mac_addresses(raw_csv_file):
 # get current directory
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 # raw csv directory
-RAW_CSV_DIR = os.path.join(PROJECT_DIR, 'raw_csv')
+RAW_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'raw_csv_files')
 # analyzed csv directory
-ANALYZED_CSV_DIR = os.path.join(PROJECT_DIR, 'analyzed_csv')
+ANALYZED_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'analyzed_csv_files')
 
-# Supported Extensions
+# Supported Extensions - only files with supported extensions shall be read
 SUPPORTED_EXTS = ['.csv', ]
 
-# create directories if don't exist
-if not os.path.exists(RAW_CSV_DIR) or not os.path.isdir(RAW_CSV_DIR):
-	os.mkdir(RAW_CSV_DIR)
-if not os.path.exists(ANALYZED_CSV_DIR) or not os.path.isdir(ANALYZED_CSV_DIR):
-	os.mkdir(ANALYZED_CSV_DIR)
+# Process for clients (mac addresses here!)
+# set PROCESS_ALL_CLIENTS = `True` to process for all the clients
+PROCESS_ALL_CLIENTS = True
+CLIENTS = []
+CLIENTS = [str(x).lower() for x in CLIENTS]
 
-# make sure ANALYZED_CSV_DIR is empty
-if len(os.listdir(ANALYZED_CSV_DIR)) != 0:
-	print(ANALYZED_CSV_DIR, 'is not empty! Please empty the directory and try again.')
-	exit(0)
 
-# read all raw csv files
-raw_csv_files = list()
-for file in os.listdir(RAW_CSV_DIR):
-	if os.path.splitext(file)[1] in SUPPORTED_EXTS:
-		raw_csv_files.append(file)
+def prepare_environment():
+	# create directories if they don't exist
+	if not os.path.exists(RAW_CSV_FILES_DIR) or not os.path.isdir(RAW_CSV_FILES_DIR):
+		os.mkdir(RAW_CSV_FILES_DIR)
+	if not os.path.exists(ANALYZED_CSV_FILES_DIR) or not os.path.isdir(ANALYZED_CSV_FILES_DIR):
+		os.mkdir(ANALYZED_CSV_FILES_DIR)
 
-# sort by name
-raw_csv_files.sort()
+	# make sure RAW_CSV_FILES_DIR is not empty
+	if len(os.listdir(RAW_CSV_FILES_DIR)) == 0:
+		print('"{:s}" is empty! Please create raw csv files using `pcaptocsv.py` and try again!'.format(
+			RAW_CSV_FILES_DIR))
+		exit(0)
+	# make sure ANALYZED_CSV_FILES_DIR is empty
+	if len(os.listdir(ANALYZED_CSV_FILES_DIR)) != 0:
+		print('"{:s}" is not empty! Please empty the directory and try again!'.format(ANALYZED_CSV_FILES_DIR))
+		exit(0)
 
-# --------  SETUP  ---------
-csv_delimiter = ','
-# client = '18:34:51:35:e6:a3'
-# client = '84:3a:4b:d9:35:54'
-# client = '44:6d:57:31:40:6f'
-client = 'c0:ee:fb:30:d7:17'
 
-for idx, file in enumerate(raw_csv_files):
+def get_raw_csv_file_names():
+	"""
+	Read all the file names present in the RAW_CSV_FILES_DIR
+	"""
 
-	# filter raw csv file
-	raw_file = os.path.join(RAW_CSV_DIR, file)
-	print(raw_file)
+	raw_csv_file_names = list()
+	for file in os.listdir(RAW_CSV_FILES_DIR):
+		if os.path.splitext(file)[1] in SUPPORTED_EXTS:
+			raw_csv_file_names.append(file)
 
-	df = pandas.read_csv(raw_file, sep = csv_delimiter, header = 0, index_col = False)
-	df = filterData(df, client)
-	df = defineEpisodes(df)
-	# df.to_csv('csv/'+initfile+'_modif.csv', sep=',')
+	# sort so that we always read in a predefined order
+	raw_csv_file_names.sort()
+	return raw_csv_file_names
 
-	# save filtered csv here if required!
 
-	minE = int((df.head(1))['episode'])
-	maxE = int((df.tail(1))['episode'])
+def read_raw_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines: bool = True):
+	"""
+	Read csv file using `pandas` and convert it to a `dataframe`.
+	Applies filters and other optimizations while reading to sanitize the data as much as possible.
 
-	# apply proper tags
-	tag1 = lowRssi(df, minE, maxE, client)
-	tag2 = dataFrameLosses(df, minE, maxE, client)
-	tag3 = powerStateLowToHigh(df, minE, maxE, client)
-	tag4 = powerStateLowToHighV2(df, minE, maxE, client)
-	tag5 = apDeauth(df, minE, maxE, client)
-	tag6 = clientDeauth(df, minE, maxE, client)
-	tag7 = beaconLoss(df, minE, maxE, client)
-	tag8 = unsuccessAssocBlah(df, minE, maxE, client)
-	tag9 = successAssocBlah(df, minE, maxE, client)
-	tag10 = class3Frames(df, minE, maxE)
-	finalResult = merge_dicts(tag1, tag2, tag3, tag4, tag5, tag6, tag7, tag8, tag9, tag10)
+	:param filepath: path to the csv file
+	:param error_bad_lines: raise an error for malformed csv line (False = drop bad lines)
+	:param warn_bad_lines: raise a warning for malformed csv line (only if `error_bad_lines` is False)
+	:return: dataframe object
+	"""
 
-	finalResult['cause'] = ['' for x in range(len(finalResult['cause.apsideproc']))]
+	csv_dataframe = pd.read_csv(
+		filepath_or_buffer = filepath,
+		sep = ',',  # comma separated values (default)
+		header = 0,  # use first row as column_names
+		index_col = None,  # do not use any column to index
+		skipinitialspace = True,  # skip any space after delimiter
+		na_values = ['', ],  # values to consider as `not available`
+		na_filter = True,  # detect `not available` values
+		skip_blank_lines = True,  # skip any blank lines in the file
+		float_precision = 'high',
+		error_bad_lines = error_bad_lines,
+		warn_bad_lines = warn_bad_lines
+	)
 
+	# sort the dataframe by `frame.number`
+	#   usually file is sorted by default, but just make sure
+	csv_dataframe.sort_values(
+		by = 'frame.number',
+		axis = 0,
+		ascending = True,
+		inplace = True,
+		na_position = 'last'
+	)
+
+	return csv_dataframe
+
+
+def analyze_raw_csv_file(index: int, raw_csv_name: str):
+	"""
+	Analyze a raw csv file and generate a processed csv file that can be used for machine learning.
+	"""
+
+	# raw csv file
+	raw_csv_file = os.path.join(RAW_CSV_FILES_DIR, raw_csv_name)
+	# read the raw csv file
+	dataframe = read_raw_csv_file(raw_csv_file)
+	# print("1. read:", dataframe.shape)
+
+	# create a clients list
+	if PROCESS_ALL_CLIENTS:
+		clients = find_all_client_mac_addresses(dataframe)
+	else:
+		clients = CLIENTS
+
+	# ### Processing ###
+
+	# 1. filter frames (based on clients)
+	dataframe = filter_frames(dataframe, clients)
+	# print("2. filter:", dataframe.shape)
+
+	# 2. define episodes
+	dataframe = define_episodes_from_frames(dataframe)
+	# print("3. define episodes:", dataframe.shape)
+
+	# episode count/bounds
+	episode_idx_range_min = int((dataframe.head(1))['episode'])
+	episode_idx_range_max = int((dataframe.tail(1))['episode'])
+	# print("episode range:", episode_idx_range_min, episode_idx_range_max)
+
+	# 3. apply proper tags
+	tag1 = rbs__low_rssi(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("lowrssi", tag1)
+	tag2 = rbs__data_frame_loss(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("data frame loss", tag2)
+	tag3 = rbs__power_state_low_to_high_v1(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("power state low to high v1", tag3)
+	tag4 = rbs__power_state_low_to_high_v2(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("power state low to high v2", tag4)
+	tag5 = rbs__ap_deauth(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("ap deauth", tag5)
+	tag6 = rbs__client_deauth(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("client deauth", tag6)
+	tag7 = rbs__beacon_loss(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("beacon loss", tag7)
+	tag8 = rbs__unsuccessful_assoc_auth_reassoc_deauth(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("unsuccessful association", tag8)
+	tag9 = rbs__successful_assoc_auth_reassoc_deauth(dataframe, episode_idx_range_min, episode_idx_range_max, clients)
+	# print("successful association", tag9)
+	tag10 = rbs__class_3_frames(dataframe, episode_idx_range_min, episode_idx_range_max)
+	# print("class 3 frames", tag10)
+
+	# 4. Save output
+	final_result = merge_dictionaries(tag1, tag2, tag3, tag4, tag5, tag6, tag7, tag8, tag9, tag10)
+
+	final_result['cause'] = ['' for _ in range(len(final_result['cause.apsideproc']))]
 	drops = []
-	for key, value in finalResult.items():
+	for key, value in final_result.items():
 		if 'cause.' in key:
 			for i in range(0, len(value)):
 				if 'True' in value[i]:
-					if finalResult['cause'][i] is None:
-						finalResult['cause'][i] = getTag(key)
+					if final_result['cause'][i] is None:
+						final_result['cause'][i] = get_tag_for_cause(key)
 					else:
-						finalResult['cause'][i] += getTag(key)
+						final_result['cause'][i] += get_tag_for_cause(key)
 				else:
-					finalResult['cause'][i] += ''
+					final_result['cause'][i] += ''
 			drops.append(key)
 
-	outputDF = pandas.DataFrame(finalResult)
-
+	output_dataframe = pd.DataFrame(final_result)
 	for i in drops:
-		outputDF = outputDF.drop(i, axis = 1)
+		output_dataframe = output_dataframe.drop(i, axis = 1)
 
 	# store final output
-	output_csvname = os.path.basename(file)
-	output_csvfile = os.path.join(ANALYZED_CSV_DIR, output_csvname)
-	outputDF.to_csv(output_csvfile, sep = ',')
+	output_csvname = os.path.basename(raw_csv_file)
+	output_csvfile = os.path.join(ANALYZED_CSV_FILES_DIR, output_csvname)
+	output_dataframe.to_csv(output_csvfile, sep = ',')
+
+
+def analyze_raw_csv_files(raw_csv_file_names: list, use_multithreading: bool):
+	"""
+	Analyze the raw csv files and generate processed csv files that can be used for machine learning.
+	"""
+
+	threads = list()
+	for idx, raw_csv_name in enumerate(raw_csv_file_names):
+		# create a thread for each file
+		thread = threading.Thread(target = analyze_raw_csv_file, args = (idx, raw_csv_name))
+		print('starting thread for file: {:s}...'.format(raw_csv_name))
+		thread.start()
+
+		# if not using multi-threading just wait for the thread to finish
+		# else append thread reference to a list
+		if not use_multithreading:
+			thread.join()
+		else:
+			threads.append(thread)
+
+	# if using multi-threading wait for all threads to finish
+	# else - this list should be empty, so instantly return
+	for thread in threads:
+		thread.join()
+
+
+def main():
+	prepare_environment()
+	raw_csv_file_names = get_raw_csv_file_names()
+	analyze_raw_csv_files(raw_csv_file_names, use_multithreading = False)
+
+
+if __name__ == '__main__':
+	main()
+	pass

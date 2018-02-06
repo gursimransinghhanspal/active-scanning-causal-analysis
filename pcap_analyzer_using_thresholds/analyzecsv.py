@@ -455,8 +455,8 @@ client = 'c0:ee:fb:30:d7:17'
 # 	print(raw_file)
 #
 # 	df = pandas.read_csv(raw_file, sep = csv_delimiter, header = 0, index_col = False)
-# 	df = filter_data(df, client)
-# 	df = defineEpisodes(df)
+# 	df = filter_frames(df, client)
+# 	df = define_episodes_from_frames(df)
 # 	# df.to_csv('csv/'+initfile+'_modif.csv', sep=',')
 #
 # 	# save filtered csv here if required!
@@ -466,16 +466,16 @@ client = 'c0:ee:fb:30:d7:17'
 #
 # 	# apply proper tags
 # 	tag1 = low_rssi(df, minE, maxE, client)
-# 	tag2 = dataFrameLosses(df, minE, maxE, client)
-# 	tag3 = powerStateLowToHigh(df, minE, maxE, client)
-# 	tag4 = powerStateLowToHighV2(df, minE, maxE, client)
-# 	tag5 = apDeauth(df, minE, maxE, client)
-# 	tag6 = clientDeauth(df, minE, maxE, client)
-# 	tag7 = beaconLoss(df, minE, maxE, client)
-# 	tag8 = unsuccessAssocBlah(df, minE, maxE, client)
-# 	tag9 = successAssocBlah(df, minE, maxE, client)
-# 	tag10 = class3Frames(df, minE, maxE)
-# 	finalResult = merge_dicts(tag1, tag2, tag3, tag4, tag5, tag6, tag7, tag8, tag9, tag10)
+# 	tag2 = rbs__data_frame_loss(df, minE, maxE, client)
+# 	tag3 = rbs__power_state_low_to_high_v1(df, minE, maxE, client)
+# 	tag4 = rbs__power_state_low_to_high_v2(df, minE, maxE, client)
+# 	tag5 = rbs__ap_deauth(df, minE, maxE, client)
+# 	tag6 = rbs__client_deauth(df, minE, maxE, client)
+# 	tag7 = rbs__beacon_loss(df, minE, maxE, client)
+# 	tag8 = rbs__unsuccessful_assoc_auth_reassoc_deauth(df, minE, maxE, client)
+# 	tag9 = rbs__successful_assoc_auth_reassoc_deauth(df, minE, maxE, client)
+# 	tag10 = rbs__class_3_frames(df, minE, maxE)
+# 	finalResult = merge_dictionaries(tag1, tag2, tag3, tag4, tag5, tag6, tag7, tag8, tag9, tag10)
 #
 # 	finalResult['cause'] = ['' for x in range(len(finalResult['cause.apsideproc']))]
 #

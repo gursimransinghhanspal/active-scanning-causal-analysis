@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="dae77c30-ac26-4fab-aad9-1101407f4e92" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/codebase.iml" afterPath="$PROJECT_DIR$/.idea/codebase.iml" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/gursimran.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/gursimran.xml" />
+      <change beforePath="$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" afterPath="$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" />
       <change beforePath="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py" afterPath="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -15,7 +14,8 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/codebase$pcaptocsv.coverage" NAME="pcaptocsv Coverage Results" MODIFIED="1517651236860" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pcap_analyzer_using_thresholds" />
+    <SUITE FILE_PATH="coverage/codebase$pcaptocsv.coverage" NAME="pcaptocsv Coverage Results" MODIFIED="1517898069117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pcap_analyzer_using_thresholds" />
+    <SUITE FILE_PATH="coverage/codebase$process_csv_files_for_ML_all_clients.coverage" NAME="process_csv_files_for_ML_all_clients Coverage Results" MODIFIED="1517930466442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pcap_analyzer_using_thresholds" />
   </component>
   <component name="FileColors">
     <fileColor scope="Non-Project Files (Material Default)" color="2E3C43" />
@@ -25,13 +25,13 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="pcaptocsv.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
+      <file leaf-file-name="process_csv_files_for_ML_all_clients.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="621">
-              <caret line="55" column="43" lean-forward="false" selection-start-line="55" selection-start-column="43" selection-end-line="55" selection-end-column="43" />
+            <state relative-caret-position="270">
+              <caret line="774" column="71" lean-forward="true" selection-start-line="774" selection-start-column="71" selection-end-line="774" selection-end-column="71" />
               <folding>
-                <element signature="e#13#22#0" expanded="true" />
+                <element signature="e#0#9#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -40,24 +40,10 @@
       <file leaf-file-name="analyzecsv.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="273">
-              <caret line="425" column="45" lean-forward="false" selection-start-line="425" selection-start-column="45" selection-end-line="425" selection-end-column="45" />
+            <state relative-caret-position="262">
+              <caret line="112" column="8" lean-forward="false" selection-start-line="112" selection-start-column="8" selection-end-line="113" selection-end-column="57" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
                 <element signature="e#765#849#0" expanded="false" />
-                <element signature="e#935#2430#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="process_csv_files_for_ML_all_clients.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5992">
-              <caret line="377" column="31" lean-forward="false" selection-start-line="377" selection-start-column="31" selection-end-line="377" selection-end-column="31" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -75,6 +61,7 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>client</find>
+      <find>class_3_frames_list</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -85,12 +72,12 @@
       <list>
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/.gitignore" />
-        <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/preprocess_csv_for_ML.py" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_single_client.py" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_no_clients.py" />
         <option value="$APPLICATION_CONFIG_DIR$/pycharm64.vmoptions" />
+        <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py" />
       </list>
     </option>
@@ -101,7 +88,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6" fullScreen="true">
+  <component name="ProjectFrameBounds" fullScreen="true">
     <option name="x" value="-1" />
     <option name="y" value="-28" />
     <option name="width" value="1602" />
@@ -135,6 +122,18 @@
               <item name="codebase" type="462c0819:PsiDirectoryNode" />
               <item name="pcap_analyzer_using_thresholds" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
+              <item name="codebase" type="462c0819:PsiDirectoryNode" />
+              <item name="pcap_analyzer_using_thresholds" type="462c0819:PsiDirectoryNode" />
+              <item name="analyzed_csv_files" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
+              <item name="codebase" type="462c0819:PsiDirectoryNode" />
+              <item name="pcap_analyzer_using_thresholds" type="462c0819:PsiDirectoryNode" />
+              <item name="raw_csv_files" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -148,6 +147,13 @@
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+  </component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings>
+        <option name="useSoftWraps" value="true" />
+      </console-settings>
+    </option>
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -166,7 +172,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.process_csv_files_for_ML_all_clients">
     <configuration name="pcaptocsv" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -186,9 +192,33 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
+    <configuration name="process_csv_files_for_ML_all_clients" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pcap_analyzer_using_thresholds" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="codebase" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
+    <list size="2">
+      <item index="0" class="java.lang.String" itemvalue="Python.pcaptocsv" />
+      <item index="1" class="java.lang.String" itemvalue="Python.process_csv_files_for_ML_all_clients" />
+    </list>
     <recent_temporary>
-      <list size="1">
-        <item index="0" class="java.lang.String" itemvalue="Python.pcaptocsv" />
+      <list size="2">
+        <item index="0" class="java.lang.String" itemvalue="Python.process_csv_files_for_ML_all_clients" />
+        <item index="1" class="java.lang.String" itemvalue="Python.pcaptocsv" />
       </list>
     </recent_temporary>
   </component>
@@ -210,40 +240,28 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.6698912" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916147" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.0" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30329043" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916147" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2746781" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="SciView" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916147" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="1.0" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916147" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2985843" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916147" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="SciView" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -259,10 +277,10 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1649">
-          <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -272,7 +290,39 @@
         <state relative-caret-position="6273">
           <caret line="425" column="45" lean-forward="false" selection-start-line="425" selection-start-column="45" selection-end-line="425" selection-end-column="45" />
           <folding>
+            <element signature="e#0#9#0" expanded="false" />
+            <element signature="e#765#849#0" expanded="false" />
+            <element signature="e#935#2430#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6409">
+          <caret line="377" column="31" lean-forward="false" selection-start-line="377" selection-start-column="31" selection-end-line="377" selection-end-column="31" />
+          <folding>
             <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1649">
+          <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
+          <folding>
+            <element signature="e#13#22#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6273">
+          <caret line="425" column="45" lean-forward="false" selection-start-line="425" selection-start-column="45" selection-end-line="425" selection-end-column="45" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -284,7 +334,7 @@
         <state relative-caret-position="6273">
           <caret line="425" column="45" lean-forward="false" selection-start-line="425" selection-start-column="45" selection-end-line="425" selection-end-column="45" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -296,7 +346,7 @@
         <state relative-caret-position="1649">
           <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -306,7 +356,7 @@
         <state relative-caret-position="1666">
           <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -316,7 +366,7 @@
         <state relative-caret-position="1326">
           <caret line="82" column="0" lean-forward="true" selection-start-line="82" selection-start-column="0" selection-end-line="82" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -328,7 +378,7 @@
         <state relative-caret-position="540">
           <caret line="31" column="83" lean-forward="true" selection-start-line="26" selection-start-column="10" selection-end-line="31" selection-end-column="83" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -338,7 +388,7 @@
         <state relative-caret-position="2754">
           <caret line="155" column="12" lean-forward="true" selection-start-line="155" selection-start-column="12" selection-end-line="155" selection-end-column="12" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -350,7 +400,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -368,7 +418,7 @@
         <state relative-caret-position="1649">
           <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -378,7 +428,7 @@
         <state relative-caret-position="746">
           <caret line="425" column="45" lean-forward="false" selection-start-line="425" selection-start-column="45" selection-end-line="425" selection-end-column="45" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -390,7 +440,7 @@
         <state relative-caret-position="1746">
           <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -400,7 +450,7 @@
         <state relative-caret-position="1530">
           <caret line="88" column="0" lean-forward="false" selection-start-line="88" selection-start-column="0" selection-end-line="88" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -436,7 +486,7 @@
         <state relative-caret-position="1764">
           <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -446,7 +496,7 @@
         <state relative-caret-position="1404">
           <caret line="82" column="0" lean-forward="true" selection-start-line="82" selection-start-column="0" selection-end-line="82" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -458,7 +508,7 @@
         <state relative-caret-position="540">
           <caret line="31" column="83" lean-forward="true" selection-start-line="26" selection-start-column="10" selection-end-line="31" selection-end-column="83" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -468,7 +518,7 @@
         <state relative-caret-position="2754">
           <caret line="155" column="12" lean-forward="true" selection-start-line="155" selection-start-column="12" selection-end-line="155" selection-end-column="12" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -480,7 +530,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -498,7 +548,7 @@
         <state relative-caret-position="819">
           <caret line="82" column="0" lean-forward="false" selection-start-line="82" selection-start-column="0" selection-end-line="82" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -510,7 +560,7 @@
         <state relative-caret-position="-216">
           <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -520,7 +570,7 @@
         <state relative-caret-position="1666">
           <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -530,7 +580,7 @@
         <state relative-caret-position="1326">
           <caret line="82" column="0" lean-forward="true" selection-start-line="82" selection-start-column="0" selection-end-line="82" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -542,7 +592,7 @@
         <state relative-caret-position="540">
           <caret line="31" column="83" lean-forward="true" selection-start-line="26" selection-start-column="10" selection-end-line="31" selection-end-column="83" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -552,7 +602,7 @@
         <state relative-caret-position="2754">
           <caret line="155" column="12" lean-forward="true" selection-start-line="155" selection-start-column="12" selection-end-line="155" selection-end-column="12" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
             <element signature="e#765#849#0" expanded="false" />
             <element signature="e#935#2430#0" expanded="false" />
           </folding>
@@ -564,7 +614,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#13#22#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -577,49 +627,63 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="273">
-          <caret line="425" column="45" lean-forward="false" selection-start-line="425" selection-start-column="45" selection-end-line="425" selection-end-column="45" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-            <element signature="e#765#849#0" expanded="false" />
-            <element signature="e#935#2430#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_CONFIG_DIR$/pycharm64.vmoptions" />
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_no_clients.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_single_client.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py">
+    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_no_clients.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5992">
-          <caret line="377" column="31" lean-forward="false" selection-start-line="377" selection-start-column="31" selection-end-line="377" selection-end-column="31" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../python-env/lib/python3.6/site-packages/pandas/core/frame.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="116">
+          <caret line="3388" column="8" lean-forward="false" selection-start-line="3388" selection-start-column="8" selection-end-line="3388" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/PyCharm2017.3/python_stubs/511162371/builtins.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="274">
+          <caret line="3644" column="8" lean-forward="false" selection-start-line="3644" selection-start-column="8" selection-end-line="3644" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="262">
+          <caret line="112" column="8" lean-forward="false" selection-start-line="112" selection-start-column="8" selection-end-line="113" selection-end-column="57" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#765#849#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="621">
-          <caret line="55" column="43" lean-forward="false" selection-start-line="55" selection-start-column="43" selection-end-line="55" selection-end-column="43" />
+        <state relative-caret-position="364">
+          <caret line="129" column="8" lean-forward="false" selection-start-line="129" selection-start-column="8" selection-end-line="129" selection-end-column="76" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_all_clients.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="774" column="71" lean-forward="true" selection-start-line="774" selection-start-column="71" selection-end-line="774" selection-end-column="71" />
           <folding>
-            <element signature="e#13#22#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -7,9 +7,13 @@
       <w>beaconloss</w>
       <w>bssid</w>
       <w>clientdeauth</w>
+      <w>csvfile</w>
+      <w>csvname</w>
       <w>dataframeloss</w>
       <w>datarate</w>
+      <w>deauth</w>
       <w>exts</w>
+      <w>lossrate</w>
       <w>lowrssi</w>
       <w>macbook</w>
       <w>mactime</w>
@@ -19,10 +23,14 @@
       <w>pcapng</w>
       <w>pcaps</w>
       <w>pcaptocsv</w>
+      <w>persec</w>
       <w>powerstate</w>
+      <w>preq</w>
+      <w>preqs</w>
       <w>pwrmgt</w>
       <w>qbss</w>
       <w>radiotap</w>
+      <w>reassoc</w>
       <w>rssi</w>
       <w>scount</w>
       <w>ssid</w>
