@@ -1,9 +1,7 @@
 import os
+import threading
 
-import numpy as np
 import pandas as pd
-
-np.abs(1)
 
 
 def get_tag_for_cause(cause):
@@ -780,19 +778,33 @@ def analyze_raw_csv_file(index: int, raw_csv_name: str):
 	output_dataframe.to_csv(output_csvfile, sep = ',')
 
 
-def analyze_raw_csv_files(raw_csv_file_names: list):
+def analyze_raw_csv_files(raw_csv_file_names: list, use_multithreading: bool = False):
 	"""
 	Analyze the raw csv files and generate processed csv files that can be used for machine learning.
 	"""
 
+	threads = list()
 	for idx, raw_csv_name in enumerate(raw_csv_file_names):
-		analyze_raw_csv_file(idx, raw_csv_name)
+		# use multithreading
+		if use_multithreading:
+			# create a thread for each file
+			thread = threading.Thread(target = analyze_raw_csv_file, args = (idx, raw_csv_name))
+			print('starting thread for file: {:s}...'.format(raw_csv_name))
+			threads.append(thread)
+			thread.start()
+		else:
+			analyze_raw_csv_file(idx, raw_csv_name)
+
+	# if using multi-threading wait for all threads to finish
+	# else - this list should be empty, so instantly return
+	for thread in threads:
+		thread.join()
 
 
 def main():
 	prepare_environment()
 	raw_csv_file_names = get_raw_csv_file_names()
-	analyze_raw_csv_files(raw_csv_file_names)
+	analyze_raw_csv_files(raw_csv_file_names, use_multithreading = True)
 
 
 if __name__ == '__main__':
