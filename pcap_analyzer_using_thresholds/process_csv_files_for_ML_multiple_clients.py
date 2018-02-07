@@ -311,13 +311,6 @@ def rbs__client_deauth(dataframe, episode_min_idx, episode_max_idx, clients: lis
 	return output_dict
 
 
-'''
-. beacon count is 0 or
-. if beacon interval > 105ms for 7 consecutive beacons or
-. count(wlan.sa = client and type_subtype = 36|44 and pwrmgt = 0) > 0 and count(wlan.ra = client && type_subtype = 29)
-'''
-
-
 def rbs__beacon_loss(dataframe, episode_min_idx, episode_max_idx, clients):
 	"""
 	beacon count is 0 or
