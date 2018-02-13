@@ -23,6 +23,27 @@ def get_training_labels():
 	return mapping
 
 
+SUPPORTED_EXTS = ['.csv', ]
+
+
+def get_processed_csv_file_names(directory_path):
+	"""
+	Read all the file names present in the given directory
+	"""
+
+	processed_csv_file_names = list()
+
+	listdir = os.listdir(directory_path)
+	for file in listdir:
+		if os.path.splitext(file)[1] in SUPPORTED_EXTS:
+			processed_csv_file_names.append(file)
+
+	# sort so that we always read in a predefined order
+	# key: smallest file first
+	processed_csv_file_names.sort(key = lambda f: os.path.getsize(os.path.join(directory_path, f)))
+	return processed_csv_file_names
+
+
 def merge_processed_csv_files(training: bool = True):
 	"""
 	Merges all the csv files in `processed_files` directory in a single csv file.
@@ -39,7 +60,7 @@ def merge_processed_csv_files(training: bool = True):
 		training_data_directories = constants.get_training_data_directories()
 
 		for cause, directory in training_data_directories.items():
-			csv_filenames = os.listdir(directory)
+			csv_filenames = get_processed_csv_file_names(directory)
 
 			for filename in csv_filenames:
 				csv_file = os.path.join(directory, filename)
@@ -63,7 +84,7 @@ def merge_processed_csv_files(training: bool = True):
 				                 header = should_add_header, index = False)
 	else:
 		testing_data_directory = directories.processed_files_testing
-		csv_filenames = os.listdir(testing_data_directory)
+		csv_filenames = get_processed_csv_file_names(testing_data_directory)
 
 		for filename in csv_filenames:
 			csv_file = os.path.join(testing_data_directory, filename)
