@@ -84,9 +84,12 @@ def prepare_and_get_csv_header(command_format_string: str):
 		if split_command[i - 1] == '-e':
 			csv_header.append(split_command[i])
 
-	# for some reason the last column was always duplicated in the output (on apple macbook)
-	# not happening on linux ??
-	# csv_header.append(csv_header[-1] + '2')
+	# for MIMO devices, radiotap.dbm_antsignal is itself a comma separated field
+	# since handling this elegantly requires much more processing, we handle this by appending extra columns to
+	# the csv file which would not be used mostly.
+	# assuming MIMO 3x3 is the max (appending 2 extra headers)
+	for i in range(2):
+		csv_header.append('radiotap.dbm_antsignal_' + str(i + 2))
 
 	# join the list to form a comma separated string. also add `newline` char
 	csv_header_string = str.join(',', csv_header)

@@ -4,6 +4,7 @@
       <w>amsdupresent</w>
       <w>antsignal</w>
       <w>apsideproc</w>
+      <w>apsp</w>
       <w>beaconloss</w>
       <w>bssid</w>
       <w>clientdeauth</w>
@@ -12,11 +13,16 @@
       <w>dataframeloss</w>
       <w>datarate</w>
       <w>deauth</w>
+      <w>dropna</w>
       <w>exts</w>
+      <w>filenames</w>
       <w>lossrate</w>
       <w>lowrssi</w>
+      <w>lrrsi</w>
+      <w>lrssi</w>
       <w>macbook</w>
       <w>mactime</w>
+      <w>mimo</w>
       <w>moredata</w>
       <w>multithreading</w>
       <w>pcap</w>
@@ -25,8 +31,10 @@
       <w>pcaptocsv</w>
       <w>persec</w>
       <w>powerstate</w>
+      <w>preprocessing</w>
       <w>preq</w>
       <w>preqs</w>
+      <w>pscan</w>
       <w>pwrmgt</w>
       <w>qbss</w>
       <w>radiotap</w>
@@ -36,7 +44,9 @@
       <w>ssid</w>
       <w>subprocesses</w>
       <w>tshark</w>
+      <w>unassoc</w>
       <w>unsuccess</w>
+      <w>waitpid</w>
       <w>wlan</w>
     </words>
   </dictionary>
