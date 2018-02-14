@@ -12,7 +12,7 @@ from machine_learning.metrics import model_stats
 
 def learn_rbf_svm(stratified_data_csv_file, save_filepath):
 	# read the stratified dataset
-	data = np.genfromtxt(stratified_data_csv_file, delimiter = ',')
+	data = np.genfromtxt(stratified_data_csv_file, delimiter = ',', skip_header = 1)
 	X, y = data[:, :-1], data[:, -1]
 
 	# do a 70-30 train-test split.

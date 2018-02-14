@@ -20,15 +20,12 @@ label_column_name = 'label'
 
 def read_labelled_csv_file(filepath, is_training: bool = True):
 	if is_training:
-		input_columns = list(required_features)
-		input_columns.append(label_column_name)
-
-		dataframe = pd.read_csv(filepath, sep = ',', names = input_columns)
+		dataframe = pd.read_csv(filepath, sep = ',', index_col = None, header = 0)
 		dataframe = dataframe.fillna(0)
 		features_x, target_y = np.array(dataframe[required_features]), np.array(dataframe[label_column_name])
 		return features_x, target_y
 	else:
-		dataframe = pd.read_csv(filepath, sep = ',', names = required_features)
+		dataframe = pd.read_csv(filepath, sep = ',', index_col = None, header = 0)
 		dataframe = dataframe.fillna(0)
 		features_x = np.array(dataframe[required_features])
 		return features_x

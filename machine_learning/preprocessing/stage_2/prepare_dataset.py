@@ -83,17 +83,17 @@ def merge_processed_csv_files(is_training: bool = True, stage_1_model_path = Non
 		_dataframe = _dataframe[required_features]
 		_dataframe.fillna(0)
 
-		# if not os.path.exists(_write_filepath):
-		# 	_should_add_header = True
-		# else:
-		# 	_should_add_header = False
+		if not os.path.exists(_write_filepath):
+			_should_add_header = True
+		else:
+			_should_add_header = False
 
 		output_columns = list(required_features)
 		if _cause is not None:
 			_dataframe[label_column_name] = training_labels[_cause]
 			output_columns.append(label_column_name)
 
-		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = False, index = False)
+		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = _should_add_header, index = False)
 
 	if is_training:
 		_write_file = directories.stage_2_stratified_data_csv_file
@@ -153,8 +153,14 @@ def stratify_labeled_dataset(_write_file):
 			X_final = np.append(X_final, X_label, axis = 0)
 
 	if X_final is not None:
+		# stratify_labeled_dataset() only runs for training, so append `label` to header
+		output_columns = list(required_features)
+		output_columns.append(label_column_name)
+		header_string = ','.join(output_columns)
+
 		np.savetxt(
 			directories.stage_2_stratified_data_csv_file, X_final, delimiter = ',',
+			header = header_string, comments = '',
 			fmt = '%d,%d,%d,%d,%d,%d,%.18e,%.18e,%d,%.18e,%.18e,%d,%d'
 		)
 

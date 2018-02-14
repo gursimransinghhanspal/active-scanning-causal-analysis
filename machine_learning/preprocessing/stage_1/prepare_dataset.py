@@ -62,17 +62,17 @@ def merge_processed_csv_files(training: bool = True):
 		_dataframe = _dataframe[required_features]
 		_dataframe.fillna(0)
 
-		# if not os.path.exists(_write_filepath):
-		# 	_should_add_header = True
-		# else:
-		# 	_should_add_header = False
+		if not os.path.exists(_write_filepath):
+			_should_add_header = True
+		else:
+			_should_add_header = False
 
 		output_columns = list(required_features)
 		if _cause is not None:
 			_dataframe[label_column_name] = training_labels[_cause]
 			output_columns.append(label_column_name)
 
-		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = False, index = False)
+		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = _should_add_header, index = False)
 
 	if training:
 		# delete data files if exist
@@ -103,7 +103,7 @@ def merge_processed_csv_files(training: bool = True):
 
 def stratify_labeled_dataset():
 	X, y = read_labelled_csv_file(directories.stage_1_labeled_data_csv_file)
-	print(np.bincount(y.astype(int)))
+	print('Complete data bincount:', np.bincount(y.astype(int)))
 
 	X_temp = np.concatenate((X, np.vstack(y)), axis = 1)
 
@@ -117,8 +117,14 @@ def stratify_labeled_dataset():
 			X_final = np.append(X_final, X_label, axis = 0)
 
 	if X_final is not None:
+		# stratify_labeled_dataset() only runs for training, so append `label` to header
+		output_columns = list(required_features)
+		output_columns.append(label_column_name)
+		header_string = ','.join(output_columns)
+
 		np.savetxt(
 			directories.stage_1_stratified_data_csv_file, X_final, delimiter = ',',
+			header = header_string, comments = '',
 			fmt = '%d,%d,%d,%d,%d,%d,%.18e,%.18e,%d,%.18e,%.18e,%d,%d'
 		)
 
