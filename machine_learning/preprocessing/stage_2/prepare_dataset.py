@@ -194,7 +194,7 @@ def process_stage_2_learning_data(data_filepath, model_path, is_training: bool):
 	X_test = read_labelled_csv_file(filepath = data_filepath, is_training = False)
 	y_pred = classifier.predict(X_test)
 	n_pred = y_pred.shape[0]
-	print('Stage 1 prediction proportion: {}'.format(np.bincount(y_pred.astype(int))))
+	print('Stage 1 prediction proportion: {}'.format(np.divide(np.bincount(y_pred.astype(int)), n_pred)))
 
 	# stage 1 training labels
 	stage_1_training_labels = get_stage_1_training_labels()

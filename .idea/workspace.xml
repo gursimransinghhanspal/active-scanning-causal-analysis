@@ -2,20 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="dae77c30-ac26-4fab-aad9-1101407f4e92" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/gursimran.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/gursimran.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/boosting.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/boosting.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/decision_tree.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/decision_tree.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/gradient_descent.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/gradient_descent.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/knn.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/knn.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/linear_svm.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/linear_svm.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/logistic_regression.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/logistic_regression.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/naive_bayes.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/naive_bayes.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/random_forest.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/random_forest.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/rbf_svm.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/rbf_svm.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/voting_classifier.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/voting_classifier.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py" />
       <change beforePath="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -40,7 +26,20 @@
     <fileColor scope="Non-Project Files (Material Palenight)" color="2f2e43" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="prepare_dataset.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="93">
+              <caret line="161" column="58" lean-forward="false" selection-start-line="161" selection-start-column="58" selection-end-line="161" selection-end-column="58" />
+              <folding>
+                <element signature="e#1459#1923#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -174,6 +173,25 @@
               <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
               <item name="data" type="462c0819:PsiDirectoryNode" />
               <item name="stage_2" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
+              <item name="codebase" type="462c0819:PsiDirectoryNode" />
+              <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
+              <item name="preprocessing" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
+              <item name="codebase" type="462c0819:PsiDirectoryNode" />
+              <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
+              <item name="preprocessing" type="462c0819:PsiDirectoryNode" />
+              <item name="stage_2" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
+              <item name="codebase" type="462c0819:PsiDirectoryNode" />
+              <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
+              <item name="processed_csv_files" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
@@ -370,13 +388,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.8222491" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.60459495" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.60459495" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19098713" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -755,8 +774,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="193" column="42" lean-forward="true" selection-start-line="193" selection-start-column="42" selection-end-line="193" selection-end-column="42" />
+        <state relative-caret-position="93">
+          <caret line="161" column="58" lean-forward="false" selection-start-line="161" selection-start-column="58" selection-end-line="161" selection-end-column="58" />
           <folding>
             <element signature="e#1459#1923#0" expanded="false" />
           </folding>
