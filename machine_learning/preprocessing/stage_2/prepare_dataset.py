@@ -69,10 +69,10 @@ def get_processed_csv_file_names(directory_path):
 	return processed_csv_file_names
 
 
-def merge_processed_csv_files(training: bool = True, stage_1_model_path = None):
+def merge_processed_csv_files(is_training: bool = True, stage_1_model_path = None):
 	"""
 	Merges all the csv files in `processed_files` directory in a single csv file.
-	If `training` == True, then the training sub-directory is used and the data is also labeled
+	If `is_training` == True, then the is_training sub-directory is used and the data is also labeled
 	according to the folder the files are in.
 	"""
 
@@ -95,7 +95,7 @@ def merge_processed_csv_files(training: bool = True, stage_1_model_path = None):
 
 		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = False, index = False)
 
-	if training:
+	if is_training:
 		_write_file = directories.stage_2_stratified_data_csv_file
 
 		# delete data files if exist
@@ -132,7 +132,7 @@ def merge_processed_csv_files(training: bool = True, stage_1_model_path = None):
 
 	if data_file is not None and stage_1_model_path is not None:
 		stage_1_model_path = os.path.abspath(stage_1_model_path)
-		process_stage_2_learning_data(data_file, stage_1_model_path)
+		process_stage_2_learning_data(data_file, stage_1_model_path, is_training)
 
 
 def stratify_labeled_dataset(_write_file):
@@ -159,7 +159,7 @@ def stratify_labeled_dataset(_write_file):
 		)
 
 
-def process_stage_2_learning_data(data_filepath, model_path):
+def process_stage_2_learning_data(data_filepath, model_path, is_training: bool):
 	"""
 	Removes periodic scan instances from the training dataset using stage 1 classifier
 	"""
@@ -193,12 +193,16 @@ def process_stage_2_learning_data(data_filepath, model_path):
 	# stage 1 training labels
 	stage_1_training_labels = get_stage_1_training_labels()
 
+	input_columns = list(required_features)
+	if is_training:
+		input_columns.append(label_column_name)
+
 	# read in the datafile
 	dataframe = pd.read_csv(
 		filepath_or_buffer = data_filepath,
 		sep = ',',  # comma separated values (default)
 		header = None,
-		names = required_features,
+		names = input_columns,
 		index_col = None,  # do not use any column to index
 		skipinitialspace = True,  # skip any space after delimiter
 		na_values = ['', ],  # values to consider as `not available`
@@ -221,5 +225,5 @@ def process_stage_2_learning_data(data_filepath, model_path):
 
 
 if __name__ == '__main__':
-	merge_processed_csv_files(training = True,
+	merge_processed_csv_files(is_training = True,
 	                          stage_1_model_path = '/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_1/random_forest.pkl')
