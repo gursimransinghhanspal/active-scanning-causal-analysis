@@ -644,7 +644,8 @@ def get_raw_csv_file_names():
 			raw_csv_file_names.append(file)
 
 	# sort so that we always read in a predefined order
-	raw_csv_file_names.sort()
+	# key: smallest file first
+	raw_csv_file_names.sort(key = lambda f: os.path.getsize(os.path.join(RAW_CSV_FILES_DIR, f)))
 	return raw_csv_file_names
 
 

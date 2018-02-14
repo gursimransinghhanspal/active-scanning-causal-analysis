@@ -108,7 +108,8 @@ def get_capture_file_names():
 			capture_file_names.append(file)
 
 	# sort so that we always read in a predefined order
-	capture_file_names.sort()
+	# key: smallest file first
+	capture_file_names.sort(key = lambda f: os.path.getsize(os.path.join(CAPTURE_FILES_DIR, f)))
 	return capture_file_names
 
 
