@@ -31,6 +31,8 @@ __SAVED_MODEL_DIR_NAME = 'saved_models'
 __STAGE_1_SAVED_MODEL_DIR_NAME = 'stage_1'
 __STAGE_2_SAVED_MODEL_DIR_NAME = 'stage_2'
 
+__TEMPORARY_DIR_NAME = 'temporary'
+
 # references to the directories
 project = os.path.abspath(__PROJECT_DIR)
 
@@ -52,10 +54,15 @@ data_stage_2 = os.path.join(data, __DATA_STAGE_2_DIR_NAME)
 stage_1_unlabeled_data_csv_file = os.path.join(data_stage_1, __UNLABELED_DATA_CSV_FILE_NAME)
 stage_1_labeled_data_csv_file = os.path.join(data_stage_1, __LABELED_DATA_CSV_FILE_NAME)
 stage_1_stratified_data_csv_file = os.path.join(data_stage_1, __STRATIFIED_DATA_CSV_FILE_NAME)
+stage_2_unlabeled_data_csv_file = os.path.join(data_stage_2, __UNLABELED_DATA_CSV_FILE_NAME)
+stage_2_labeled_data_csv_file = os.path.join(data_stage_2, __LABELED_DATA_CSV_FILE_NAME)
+stage_2_stratified_data_csv_file = os.path.join(data_stage_2, __STRATIFIED_DATA_CSV_FILE_NAME)
 
 saved_models = os.path.join(project, __SAVED_MODEL_DIR_NAME)
 stage_1_saved_models = os.path.join(saved_models, __STAGE_1_SAVED_MODEL_DIR_NAME)
 stage_2_saved_models = os.path.join(saved_models, __STAGE_2_SAVED_MODEL_DIR_NAME)
+
+temporary = os.path.join(project, __TEMPORARY_DIR_NAME)
 
 
 def create_directory(directory):
@@ -76,6 +83,19 @@ def empty_directory(directory):
 	"""
 
 	abs_directory = os.path.abspath(directory)
+	delete_directory(abs_directory)
+
+	# check if the directory is deleted, create the directory
+	if not os.path.exists(abs_directory):
+		os.mkdir(abs_directory)
+
+
+def delete_directory(directory):
+	"""
+	Deletes the given directory
+	"""
+
+	abs_directory = os.path.abspath(directory)
 
 	if not os.path.exists(abs_directory) or not os.path.isdir(abs_directory):
 		return
@@ -84,6 +104,13 @@ def empty_directory(directory):
 	from shutil import rmtree
 	rmtree(abs_directory)
 
-	# check if the directory is deleted, create the directory
-	if not os.path.exists(abs_directory):
-		os.mkdir(abs_directory)
+
+def delete_file(filepath):
+	"""
+	Deletes the given file
+	"""
+
+	abs_path = os.path.abspath(filepath)
+	if not os.path.exists(abs_path) or not os.path.isfile(abs_path):
+		return
+	os.remove(abs_path)

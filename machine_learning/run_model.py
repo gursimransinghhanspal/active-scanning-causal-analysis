@@ -1,29 +1,21 @@
-import sys
+import os
 
 import numpy as np
 
-from machine_learning.aux.persist import load_classifier
+from machine_learning.aux.persist import load_model
 from machine_learning.preprocessing.read_dataset import read_labelled_csv_file
 
 
-def run():
-	# Name of the model we want to load. This is the first command line argument.
-	model_name = sys.argv[1]
+def run(model_path, test_data_filepath):
+	model_path = os.path.abspath(model_path)
+	test_data_filepath = os.path.abspath(test_data_filepath)
 
-	# Name of the csv file containing the test data. This is the second command line argument.
-	test_data_file = sys.argv[2]
+	classifier = load_model(model_path)
 
-	"""
-	For example: $ python3 test_module.py random_forest data.csv
-	"""
-
-	clf = load_classifier('models/' + model_name + '.pkl')
-
-	# Read the dataset.
-	X_test = read_labelled_csv_file(test_data_file)
-	# print(X_test[0])
-	# Run the classifier on this dataset.
-	y_pred = clf.predict(X_test)
+	# read the dataset.
+	X_test = read_labelled_csv_file(test_data_filepath)
+	# run the classifier on this dataset.
+	y_pred = classifier.predict(X_test)
 
 	# Predictions.
 	# print('Predictions: \n{}'.format(y_pred))
@@ -33,4 +25,4 @@ def run():
 
 
 if __name__ == '__main__':
-	run()
+	run('machine_learning/saved_models/stage_1/random_forest.pkl', 'machine_learning/data/stage_1/stratified_data.csv')

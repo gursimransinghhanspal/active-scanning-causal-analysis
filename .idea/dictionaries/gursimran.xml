@@ -13,9 +13,11 @@
       <w>dataframeloss</w>
       <w>datarate</w>
       <w>deauth</w>
+      <w>dirname</w>
       <w>dropna</w>
       <w>exts</w>
       <w>filenames</w>
+      <w>logreg</w>
       <w>lossrate</w>
       <w>lowrssi</w>
       <w>lrrsi</w>
@@ -31,6 +33,7 @@
       <w>pcaptocsv</w>
       <w>persec</w>
       <w>powerstate</w>
+      <w>pred</w>
       <w>preprocessing</w>
       <w>preq</w>
       <w>preqs</w>
@@ -40,6 +43,7 @@
       <w>radiotap</w>
       <w>reassoc</w>
       <w>rssi</w>
+      <w>scaler</w>
       <w>scount</w>
       <w>ssid</w>
       <w>subprocesses</w>

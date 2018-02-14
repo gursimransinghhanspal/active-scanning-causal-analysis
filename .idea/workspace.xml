@@ -2,13 +2,25 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="dae77c30-ac26-4fab-aad9-1101407f4e92" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/__init__.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/run_model.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/boosting.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/decision_tree.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/gradient_descent.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/knn.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/linear_svm.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/logistic_regression.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/naive_bayes.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/rbf_svm.py" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/machine_learning/classifiers/voting_classifier.py" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/gursimran.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/gursimran.xml" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change beforePath="$PROJECT_DIR$/machine_learning/aux/directories.py" afterPath="$PROJECT_DIR$/machine_learning/aux/directories.py" />
+      <change beforePath="$PROJECT_DIR$/machine_learning/aux/persist.py" afterPath="$PROJECT_DIR$/machine_learning/aux/persist.py" />
+      <change beforePath="$PROJECT_DIR$/machine_learning/classifiers/random_forest.py" afterPath="$PROJECT_DIR$/machine_learning/classifiers/random_forest.py" />
+      <change beforePath="$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py" />
       <change beforePath="$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py" />
-      <change beforePath="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_multiple_clients.py" afterPath="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_multiple_clients.py" />
+      <change beforePath="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" afterPath="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" />
+      <change beforePath="$PROJECT_DIR$/machine_learning/run_model.py" afterPath="$PROJECT_DIR$/machine_learning/run_model.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,8 +32,9 @@
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/codebase$pcaptocsv.coverage" NAME="pcaptocsv Coverage Results" MODIFIED="1517898069117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pcap_analyzer_using_thresholds" />
     <SUITE FILE_PATH="coverage/codebase$process_csv_files_for_ML_all_clients.coverage" NAME="process_csv_files_for_ML_all_clients Coverage Results" MODIFIED="1517930466442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pcap_analyzer_using_thresholds" />
-    <SUITE FILE_PATH="coverage/codebase$random_forest.coverage" NAME="random_forest Coverage Results" MODIFIED="1518546187135" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/machine_learning/classifiers" />
-    <SUITE FILE_PATH="coverage/codebase$prepare_dataset.coverage" NAME="prepare_dataset Coverage Results" MODIFIED="1518545658292" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/machine_learning/preprocessing/stage_1" />
+    <SUITE FILE_PATH="coverage/codebase$random_forest.coverage" NAME="random_forest Coverage Results" MODIFIED="1518615627233" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/machine_learning/classifiers" />
+    <SUITE FILE_PATH="coverage/codebase$prepare_dataset__1_.coverage" NAME="prepare_dataset (1) Coverage Results" MODIFIED="1518616801947" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/machine_learning/preprocessing/stage_2" />
+    <SUITE FILE_PATH="coverage/codebase$prepare_dataset.coverage" NAME="prepare_dataset Coverage Results" MODIFIED="1518612762310" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/machine_learning/preprocessing/stage_1" />
   </component>
   <component name="FileColors">
     <fileColor scope="Non-Project Files (Material Default)" color="2E3C43" />
@@ -31,14 +44,12 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="run_model.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/machine_learning/run_model.py">
+      <file leaf-file-name="random_forest.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/random_forest.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="527">
-              <caret line="31" column="93" lean-forward="false" selection-start-line="31" selection-start-column="93" selection-end-line="31" selection-end-column="93" />
-              <folding>
-                <element signature="e#0#10#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="491">
+              <caret line="46" column="26" lean-forward="false" selection-start-line="53" selection-start-column="6" selection-end-line="56" selection-end-column="7" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -46,8 +57,8 @@
       <file leaf-file-name="prepare_dataset.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1853">
-              <caret line="109" column="25" lean-forward="true" selection-start-line="109" selection-start-column="25" selection-end-line="109" selection-end-column="25" />
+            <state relative-caret-position="661">
+              <caret line="126" column="45" lean-forward="false" selection-start-line="126" selection-start-column="45" selection-end-line="126" selection-end-column="45" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -55,41 +66,25 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="read_dataset.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py">
+      <file leaf-file-name="prepare_dataset.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="51">
-              <caret line="3" column="24" lean-forward="false" selection-start-line="3" selection-start-column="24" selection-end-line="3" selection-end-column="24" />
+            <state relative-caret-position="267">
+              <caret line="221" column="0" lean-forward="true" selection-start-line="221" selection-start-column="0" selection-end-line="221" selection-end-column="0" />
               <folding>
-                <element signature="e#0#18#0" expanded="true" />
+                <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#1459#1923#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="process_csv_files_for_ML_multiple_clients.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_multiple_clients.py">
+      <file leaf-file-name="read_dataset.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-252">
-              <caret line="663" column="21" lean-forward="true" selection-start-line="663" selection-start-column="21" selection-end-line="663" selection-end-column="21" />
-              <folding>
-                <element signature="e#0#11#0" expanded="true" />
-                <element signature="e#1094#1623#0" expanded="false" />
-                <element signature="e#1663#1747#0" expanded="false" />
-                <element signature="e#1830#3295#0" expanded="false" />
-                <element signature="e#3385#4834#0" expanded="false" />
-                <element signature="e#4935#6265#0" expanded="false" />
-                <element signature="e#6366#7592#0" expanded="false" />
-                <element signature="e#7676#8464#0" expanded="false" />
-                <element signature="e#8552#9356#0" expanded="false" />
-                <element signature="e#9436#11796#0" expanded="false" />
-                <element signature="e#11909#13122#0" expanded="false" />
-                <element signature="e#13233#14441#0" expanded="false" />
-                <element signature="e#14515#15261#0" expanded="false" />
-                <element signature="e#15337#16738#0" expanded="false" />
-                <element signature="e#16815#17454#0" expanded="false" />
-                <element signature="e#17504#18153#0" expanded="false" />
-              </folding>
+            <state relative-caret-position="216">
+              <caret line="25" column="0" lean-forward="false" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -109,6 +104,9 @@
       <find>class_3_frames_list</find>
       <find>beacon.interval</find>
       <find>frame.lossrate</find>
+      <find>'label'</find>
+      <find>failure.assoc.count</find>
+      <find>2</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -128,12 +126,7 @@
         <option value="$PROJECT_DIR$/machine_learning/helper_scripts/directory_references.py" />
         <option value="$PROJECT_DIR$/machine_learning/aux/directory_references.py" />
         <option value="$PROJECT_DIR$/machine_learning/classifiers/stage_1/random_forest.py" />
-        <option value="$PROJECT_DIR$/machine_learning/aux/constants.py" />
-        <option value="$PROJECT_DIR$/machine_learning/aux/helpers.py" />
         <option value="$PROJECT_DIR$/machine_learning/metrics/model_stats.py" />
-        <option value="$PROJECT_DIR$/machine_learning/aux/persist.py" />
-        <option value="$PROJECT_DIR$/machine_learning/aux/directories.py" />
-        <option value="$PROJECT_DIR$/machine_learning/classifiers/random_forest.py" />
         <option value="$PROJECT_DIR$/machine_learning/processed_csv_files/training/ap_side_procedures/init.txt" />
         <option value="$PROJECT_DIR$/machine_learning/saved_models/stage_1/init.txt" />
         <option value="$PROJECT_DIR$/machine_learning/temporary/init.txt" />
@@ -141,11 +134,26 @@
         <option value="$PROJECT_DIR$/machine_learning/.gitignore" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py" />
         <option value="$PROJECT_DIR$/machine_learning/preprocessing/stage_1/read_dataset.py" />
-        <option value="$PROJECT_DIR$/machine_learning/run_model.py" />
-        <option value="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" />
-        <option value="$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py" />
-        <option value="$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py" />
         <option value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_multiple_clients.py" />
+        <option value="$PROJECT_DIR$/machine_learning/aux/persist.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/decision_tree.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/k_nearest_neighbors.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/boosting.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/knn.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/linear_svm.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/logistic_regression.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/naive_bayes.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/rbf_svm.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/gradient_descent.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/voting_classifier.py" />
+        <option value="$PROJECT_DIR$/machine_learning/run_model.py" />
+        <option value="$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py" />
+        <option value="$PROJECT_DIR$/machine_learning/aux/constants.py" />
+        <option value="$PROJECT_DIR$/machine_learning/aux/directories.py" />
+        <option value="$PROJECT_DIR$/machine_learning/aux/helpers.py" />
+        <option value="$PROJECT_DIR$/machine_learning/classifiers/random_forest.py" />
+        <option value="$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py" />
+        <option value="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" />
       </list>
     </option>
   </component>
@@ -194,6 +202,12 @@
               <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
               <item name="codebase" type="462c0819:PsiDirectoryNode" />
               <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
+              <item name="classifiers" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
+              <item name="codebase" type="462c0819:PsiDirectoryNode" />
+              <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
               <item name="data" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -207,25 +221,26 @@
               <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
               <item name="codebase" type="462c0819:PsiDirectoryNode" />
               <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
-              <item name="preprocessing" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
-              <item name="codebase" type="462c0819:PsiDirectoryNode" />
-              <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
-              <item name="preprocessing" type="462c0819:PsiDirectoryNode" />
+              <item name="data" type="462c0819:PsiDirectoryNode" />
               <item name="stage_2" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
               <item name="codebase" type="462c0819:PsiDirectoryNode" />
-              <item name="pcap_analyzer_using_thresholds" type="462c0819:PsiDirectoryNode" />
+              <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
+              <item name="saved_models" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
+              <item name="codebase" type="462c0819:PsiDirectoryNode" />
+              <item name="machine_learning" type="462c0819:PsiDirectoryNode" />
+              <item name="saved_models" type="462c0819:PsiDirectoryNode" />
+              <item name="stage_1" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="codebase" type="b2602c69:ProjectViewProjectNode" />
               <item name="codebase" type="462c0819:PsiDirectoryNode" />
               <item name="pcap_analyzer_using_thresholds" type="462c0819:PsiDirectoryNode" />
-              <item name="analyzed_csv_files" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -238,6 +253,7 @@
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/aux/helpers.py" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -272,7 +288,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.random_forest">
+  <component name="RunManager" selected="Python.prepare_dataset (1)">
     <configuration name="pcaptocsv" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -287,6 +303,25 @@
       <module name="codebase" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
+    <configuration name="prepare_dataset (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/machine_learning/preprocessing/stage_2" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="codebase" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -349,18 +384,20 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
-    <list size="4">
+    <list size="5">
       <item index="0" class="java.lang.String" itemvalue="Python.pcaptocsv" />
       <item index="1" class="java.lang.String" itemvalue="Python.process_csv_files_for_ML_all_clients" />
       <item index="2" class="java.lang.String" itemvalue="Python.random_forest" />
       <item index="3" class="java.lang.String" itemvalue="Python.prepare_dataset" />
+      <item index="4" class="java.lang.String" itemvalue="Python.prepare_dataset (1)" />
     </list>
     <recent_temporary>
-      <list size="4">
-        <item index="0" class="java.lang.String" itemvalue="Python.random_forest" />
-        <item index="1" class="java.lang.String" itemvalue="Python.prepare_dataset" />
-        <item index="2" class="java.lang.String" itemvalue="Python.process_csv_files_for_ML_all_clients" />
-        <item index="3" class="java.lang.String" itemvalue="Python.pcaptocsv" />
+      <list size="5">
+        <item index="0" class="java.lang.String" itemvalue="Python.prepare_dataset (1)" />
+        <item index="1" class="java.lang.String" itemvalue="Python.random_forest" />
+        <item index="2" class="java.lang.String" itemvalue="Python.prepare_dataset" />
+        <item index="3" class="java.lang.String" itemvalue="Python.process_csv_files_for_ML_all_clients" />
+        <item index="4" class="java.lang.String" itemvalue="Python.pcaptocsv" />
       </list>
     </recent_temporary>
   </component>
@@ -386,11 +423,11 @@
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.007255139" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.37363967" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.60459495" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3018598" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19098713" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -414,51 +451,11 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="1" />
+      <option name="time" value="2" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" />
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/.gitignore" />
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/.gitignore">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="7" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" />
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-216">
-          <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1666">
-          <caret line="98" column="29" lean-forward="false" selection-start-line="98" selection-start-column="29" selection-end-line="98" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" />
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
-          <caret line="31" column="83" lean-forward="true" selection-start-line="26" selection-start-column="10" selection-end-line="31" selection-end-column="83" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" />
     <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/pcaptocsv.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -487,58 +484,11 @@
     <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzecsv.py" />
     <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/stage_1/random_forest.py" />
     <entry file="file://$PROJECT_DIR$/machine_learning/temporary/hellow.txt" />
-    <entry file="file://$PROJECT_DIR$/machine_learning/aux/helpers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="19" lean-forward="false" selection-start-line="0" selection-start-column="19" selection-end-line="0" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/machine_learning/processed_csv_files/training/APSP_Apple_Channel1_Exp1-5c_f7_e6_a2_5d_14.csv" />
-    <entry file="file://$PROJECT_DIR$/machine_learning/data/stage_1/stratified_data.csv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/aux/persist.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" column="4" lean-forward="false" selection-start-line="3" selection-start-column="4" selection-end-line="3" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/random_forest.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="36" lean-forward="false" selection-start-line="9" selection-start-column="36" selection-end-line="9" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/aux/constants.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="661">
-          <caret line="44" column="18" lean-forward="false" selection-start-line="44" selection-start-column="18" selection-end-line="44" selection-end-column="18" />
-          <folding>
-            <element signature="e#0#11#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/machine_learning/metrics/model_stats.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="748">
           <caret line="44" column="0" lean-forward="false" selection-start-line="44" selection-start-column="0" selection-end-line="44" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/aux/directories.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="443">
-          <caret line="57" column="48" lean-forward="false" selection-start-line="57" selection-start-column="48" selection-end-line="57" selection-end-column="48" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -656,32 +606,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/run_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="527">
-          <caret line="31" column="93" lean-forward="false" selection-start-line="31" selection-start-column="93" selection-end-line="31" selection-end-column="93" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/data/stage_1/labeled_data.csv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/analyzed_csv_files/spdy-experiment_spdy_4.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -690,33 +614,111 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py">
+    <entry file="file://$PROJECT_DIR$/machine_learning/aux/persist.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" column="24" lean-forward="false" selection-start-line="3" selection-start-column="24" selection-end-line="3" selection-end-column="24" />
+        <state relative-caret-position="527">
+          <caret line="31" column="0" lean-forward="true" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py">
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/voting_classifier.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1853">
-          <caret line="109" column="25" lean-forward="true" selection-start-line="109" selection-start-column="25" selection-end-line="109" selection-end-column="25" />
+        <state relative-caret-position="1394">
+          <caret line="82" column="73" lean-forward="false" selection-start-line="82" selection-start-column="73" selection-end-line="82" selection-end-column="73" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#16#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/gradient_descent.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="474">
+          <caret line="52" column="0" lean-forward="true" selection-start-line="52" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/rbf_svm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="12" column="59" lean-forward="true" selection-start-line="12" selection-start-column="59" selection-end-line="12" selection-end-column="59" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/naive_bayes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="100">
+          <caret line="19" column="24" lean-forward="true" selection-start-line="19" selection-start-column="24" selection-end-line="19" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/logistic_regression.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="88">
+          <caret line="23" column="41" lean-forward="true" selection-start-line="20" selection-start-column="4" selection-end-line="23" selection-end-column="41" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/boosting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="493">
+          <caret line="29" column="36" lean-forward="false" selection-start-line="29" selection-start-column="36" selection-end-line="29" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/linear_svm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="765">
+          <caret line="45" column="0" lean-forward="true" selection-start-line="45" selection-start-column="0" selection-end-line="45" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/knn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1020">
+          <caret line="60" column="5" lean-forward="true" selection-start-line="60" selection-start-column="5" selection-end-line="60" selection-end-column="5" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/decision_tree.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="8" column="48" lean-forward="true" selection-start-line="8" selection-start-column="48" selection-end-line="8" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pcap_analyzer_using_thresholds/process_csv_files_for_ML_multiple_clients.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-252">
-          <caret line="663" column="21" lean-forward="true" selection-start-line="663" selection-start-column="21" selection-end-line="663" selection-end-column="21" />
+        <state relative-caret-position="279">
+          <caret line="42" column="19" lean-forward="false" selection-start-line="42" selection-start-column="18" selection-end-line="42" selection-end-column="19" />
           <folding>
-            <element signature="e#0#11#0" expanded="true" />
-            <element signature="e#1094#1623#0" expanded="false" />
             <element signature="e#1663#1747#0" expanded="false" />
             <element signature="e#1830#3295#0" expanded="false" />
             <element signature="e#3385#4834#0" expanded="false" />
@@ -725,13 +727,105 @@
             <element signature="e#7676#8464#0" expanded="false" />
             <element signature="e#8552#9356#0" expanded="false" />
             <element signature="e#9436#11796#0" expanded="false" />
-            <element signature="e#11909#13122#0" expanded="false" />
             <element signature="e#13233#14441#0" expanded="false" />
             <element signature="e#14515#15261#0" expanded="false" />
             <element signature="e#15337#16738#0" expanded="false" />
             <element signature="e#16815#17454#0" expanded="false" />
             <element signature="e#17504#18153#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/aux/constants.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="6" column="6" lean-forward="false" selection-start-line="6" selection-start-column="6" selection-end-line="6" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/aux/directories.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="661">
+          <caret line="114" column="14" lean-forward="false" selection-start-line="114" selection-start-column="14" selection-end-line="114" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/run_model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="17" column="39" lean-forward="true" selection-start-line="17" selection-start-column="39" selection-end-line="17" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/aux/helpers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="442">
+          <caret line="26" column="5" lean-forward="true" selection-start-line="14" selection-start-column="4" selection-end-line="26" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/classifiers/random_forest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="491">
+          <caret line="46" column="26" lean-forward="false" selection-start-line="53" selection-start-column="6" selection-end-line="56" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_1/prepare_dataset.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="661">
+          <caret line="126" column="45" lean-forward="false" selection-start-line="126" selection-start-column="45" selection-end-line="126" selection-end-column="45" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/data/stage_2/stratified_data.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-42789">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/data/stage_1/labeled_data.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-22008">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/data/stage_1/stratified_data.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-93840">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/stage_2/prepare_dataset.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="267">
+          <caret line="221" column="0" lean-forward="true" selection-start-line="221" selection-start-column="0" selection-end-line="221" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#1459#1923#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/machine_learning/preprocessing/read_dataset.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="25" column="0" lean-forward="false" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
