@@ -1,9 +1,9 @@
 import os
 
 import numpy as np
-import pandas as pd
 
 from machine_learning.aux import constants, directories, helpers
+from machine_learning.preprocessing.read_dataset import read_labelled_csv_file
 
 
 def get_training_labels():
@@ -105,25 +105,10 @@ def merge_processed_csv_files(training: bool = True):
 			                 header = should_add_header, index = False)
 
 
-headers = ['index', 'ack.count', 'ap.deauth.count', 'beacon.count', 'beacon.interval', 'cause',
-           'class3frames.count', 'client.deauth.count', 'duration.time', 'end.time', 'failure.assoc.count',
-           'frame.lossrate', 'frames.persec', 'ndf.count', 'ssi.mean', 'ssi.sd', 'start.time',
-           'success.assoc.count', 'label']
-features = ['ack.count', 'ap.deauth.count', 'beacon.count', 'beacon.interval', 'class3frames.count',
-            'client.deauth.count', 'frame.lossrate', 'frames.persec', 'ndf.count', 'ssi.mean',
-            'ssi.sd', 'success.assoc.count']
-
-
-def read():
-	data = pd.read_csv(directories.stage_1_labeled_data_csv_file, sep = ',', names = headers)
-	data = data.fillna(0)  # For null ssi.sd values.
-	X, y = np.array(data[features]), np.array(data['label'])
-	return X, y
-
-
 # Read specific number of examples for each label.
-def read_specific_num_examples_and_create_dataset():
-	X, y = read()
+def stratify_labeled_dataset():
+	X, y = read_labelled_csv_file(directories.stage_1_labeled_data_csv_file)
+
 	print(np.bincount(y.astype(int)))
 
 	X_temp = np.concatenate((X, np.vstack(y)), axis = 1)
@@ -143,4 +128,4 @@ def read_specific_num_examples_and_create_dataset():
 
 
 merge_processed_csv_files(True)
-read_specific_num_examples_and_create_dataset()
+stratify_labeled_dataset()

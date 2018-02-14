@@ -1,7 +1,40 @@
+import enum
 import os
 import threading
 
 import pandas as pd
+
+
+class ProcessedCauses(enum.Enum):
+	cause_lowrssi = 'cause.lowrssi'
+	cause_dataframeloss = 'cause.dataframeloss'
+	cause_powerstate = 'cause.powerstate'
+	cause_powerstateV2 = 'cause.powerstateV2'
+	cause_apsideproc = 'cause.apsideproc'
+	cause_clientdeauth = 'cause.clientdeauth'
+	cause_beaconloss = 'cause.beaconloss'
+	cause_unsuccessAssoc = 'cause.unsuccessAssoc'
+	cause_successAssoc = 'cause.successAssoc'
+	cause_class3 = 'cause.class3'
+
+
+class ProcessedColumns(enum.Enum):
+	ssi_mean = 'ssi.mean'
+	ssi_sd = 'ssi.sd'
+	start_time = 'start.time'
+	end_time = 'end.time'
+	duration_time = 'duration.time'
+	frame_lossrate = 'frame.lossrate'
+	frames_persec = 'frames.persec'
+	ap_deauth_count = 'ap.deauth.count'
+	client_deauth_count = 'client.deauth.count'
+	beacon_count = 'beacon.count'
+	beacon_interval = 'beacon.interval'
+	ack_count = 'ack.count'
+	ndf_count = 'ndf.count'
+	failure_assoc_count = 'failure.assoc.count'
+	success_assoc_count = 'success.assoc.count'
+	class3frames_count = 'class3frames.count'
 
 
 def get_tag_for_cause(cause):
@@ -608,6 +641,28 @@ ANALYZED_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'analyzed_csv_files')
 # Supported Extensions - only files with supported extensions shall be read
 SUPPORTED_EXTS = ['.csv', ]
 
+# Output column order
+OUTPUT_COLUMNS = [
+	ProcessedColumns.ssi_mean,
+	ProcessedColumns.ssi_sd,
+	ProcessedColumns.start_time,
+	ProcessedColumns.end_time,
+	ProcessedColumns.duration_time,
+	ProcessedColumns.frame_lossrate,
+	ProcessedColumns.frames_persec,
+	ProcessedColumns.ap_deauth_count,
+	ProcessedColumns.client_deauth_count,
+	ProcessedColumns.beacon_count,
+	ProcessedColumns.beacon_interval,
+	ProcessedColumns.ack_count,
+	ProcessedColumns.ndf_count,
+	ProcessedColumns.failure_assoc_count,
+	ProcessedColumns.success_assoc_count,
+	ProcessedColumns.class3frames_count,
+	'cause'
+]
+OUTPUT_COLUMNS.sort()
+
 # Process for clients (mac addresses here!)
 # set PROCESS_ALL_CLIENTS = `True` to process for all the clients
 PROCESS_ALL_CLIENTS = True
@@ -769,7 +824,7 @@ def analyze_raw_csv_file(index: int, raw_csv_name: str):
 	# store final output
 	output_csvname = os.path.basename(raw_csv_file)
 	output_csvfile = os.path.join(ANALYZED_CSV_FILES_DIR, output_csvname)
-	output_dataframe.to_csv(output_csvfile, sep = ',')
+	output_dataframe.to_csv(output_csvfile, sep = ',', columns = OUTPUT_COLUMNS, index = False)
 
 
 def analyze_raw_csv_files(raw_csv_file_names: list, use_multithreading: bool = False):
