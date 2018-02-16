@@ -389,6 +389,8 @@ def rbs__beacon_loss(dataframe, episode_min_idx, episode_max_idx, clients):
 
 				previous_epoch = current_epoch
 
+				# TODO add max beacon interval count heres
+
 		# filter:
 		#   - episode index = `episode_idx`
 		#   - packet type = `29`

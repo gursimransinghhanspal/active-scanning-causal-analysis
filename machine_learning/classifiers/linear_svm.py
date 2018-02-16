@@ -58,7 +58,7 @@ if __name__ == '__main__':
 		os.path.join(directories.stage_1_saved_models, 'linear_svm.pkl')
 	)
 	# stage 2
-	learn_linear_svm(
-		directories.stage_2_stratified_data_csv_file,
-		os.path.join(directories.stage_2_saved_models, 'linear_svm.pkl')
-	)
+	# learn_linear_svm(
+	# 	directories.stage_2_stratified_data_csv_file,
+	# 	os.path.join(directories.stage_2_saved_models, 'linear_svm.pkl')
+	# )

@@ -93,7 +93,8 @@ def merge_processed_csv_files(is_training: bool = True, stage_1_model_path = Non
 			_dataframe[label_column_name] = training_labels[_cause]
 			output_columns.append(label_column_name)
 
-		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = _should_add_header, index = False)
+		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = _should_add_header,
+		                  index = False)
 
 	if is_training:
 		_write_file = directories.stage_2_stratified_data_csv_file
@@ -194,6 +195,7 @@ def process_stage_2_learning_data(data_filepath, model_path, is_training: bool):
 	X_test = read_labelled_csv_file(filepath = data_filepath, is_training = False)
 	y_pred = classifier.predict(X_test)
 	n_pred = y_pred.shape[0]
+	print('Stage 1 prediction count: {}'.format(np.bincount(y_pred.astype(int))))
 	print('Stage 1 prediction proportion: {}'.format(np.divide(np.bincount(y_pred.astype(int)), n_pred)))
 
 	# stage 1 training labels
@@ -216,20 +218,22 @@ def process_stage_2_learning_data(data_filepath, model_path, is_training: bool):
 		skip_blank_lines = True,  # skip any blank lines in the file
 		float_precision = 'high'
 	)
-	print('Stage 2 instances before dropping: {:d}'.format(len(dataframe)))
+	print('Stage 2 instances before dropping: {:d}'.format(len(dataframe) - 1))
 
 	# remove unassociated per_scans
 	dataframe = remove_unassociated_pscans(dataframe, y_pred)
-	print('Stage 2 instances after dropping unassociated per scans: {:d}'.format(len(dataframe)))
+	print('Stage 2 instances after dropping unassociated per scans: {:d}'.format(len(dataframe) - 1))
 
 	# remove associated per_scans
 	dataframe = remove_associated_pscans(dataframe, y_pred)
-	print('Stage 2 instances after dropping associated per scans: {:d}'.format(len(dataframe)))
+	print('Stage 2 instances after dropping associated per scans: {:d}'.format(len(dataframe) - 1))
 
 	# write the file back
 	dataframe.to_csv(data_filepath, mode = 'w', columns = required_features, header = False, index = False)
 
 
 if __name__ == '__main__':
-	merge_processed_csv_files(is_training = True,
-	                          stage_1_model_path = '/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_1/random_forest.pkl')
+	merge_processed_csv_files(
+		is_training = False,
+		stage_1_model_path = '/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_1/stochastic_gradient_descent.pkl'
+	)

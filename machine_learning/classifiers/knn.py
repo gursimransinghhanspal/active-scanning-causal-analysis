@@ -55,7 +55,7 @@ if __name__ == '__main__':
 		os.path.join(directories.stage_1_saved_models, 'knn.pkl')
 	)
 	# stage 2
-	learn_knn(
-		directories.stage_2_stratified_data_csv_file,
-		os.path.join(directories.stage_2_saved_models, 'knn.pkl')
-	)
+	# learn_knn(
+	# 	directories.stage_2_stratified_data_csv_file,
+	# 	os.path.join(directories.stage_2_saved_models, 'knn.pkl')
+	# )

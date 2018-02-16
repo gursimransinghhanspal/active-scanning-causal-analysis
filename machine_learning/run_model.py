@@ -13,7 +13,7 @@ def run(model_path, test_data_filepath):
 	classifier = load_model(model_path)
 
 	# read the dataset.
-	X_test = read_labelled_csv_file(test_data_filepath)
+	X_test = read_labelled_csv_file(test_data_filepath, is_training = False)
 	# run the classifier on this dataset.
 	y_pred = classifier.predict(X_test)
 
@@ -25,4 +25,5 @@ def run(model_path, test_data_filepath):
 
 
 if __name__ == '__main__':
-	run('machine_learning/saved_models/stage_1/random_forest.pkl', 'machine_learning/data/stage_1/stratified_data.csv')
+	run('/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_1/random_forest.pkl',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_1/unlabeled_data.csv')
