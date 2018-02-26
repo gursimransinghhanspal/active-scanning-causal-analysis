@@ -1,3 +1,5 @@
 capture_files/
 raw_csv_files/
 analyzed_csv_files/
+
+.env

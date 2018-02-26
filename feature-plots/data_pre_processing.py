@@ -10,7 +10,7 @@ def get_training_data():
 	target = dataframe.as_matrix()[:, n_col-1]
 
 	target_names = np.array(['periodic', 'unknown', 'conn. est.', 'power management', 'beacon loss', 'ap-side', 'lowRSSI', 'frame loss'])
-	features = np.array(['ack_count', 'ap_deauth_count', 'beacon_count', 'beacon_interval', 'cause', 'class3frames_count', 'client_deauth_count', 'duration_time', 'end_time', 'failure_assoc_count', 'frame_lossrate', 'frames_persec', 'ndf_count', 'ssi_mean', 'ssi_sd', 'start_time', 'success_assoc_count'])
+	features = np.array(['ack__count', 'ap_deauth__count', 'beacon__count', 'max_consecutive_beacons__count', 'cause', 'class_3_frames__count', 'client_deauth__count', 'episode_duration', 'end__time_epoch', 'failure_assoc__count', 'frame__loss_rate', 'frame__frequency', 'null_dataframe__count', 'rssi__mean', 'rssi__sd', 'start__time_epoch', 'success_assoc__count'])
 
 	features_entities = {}
 
