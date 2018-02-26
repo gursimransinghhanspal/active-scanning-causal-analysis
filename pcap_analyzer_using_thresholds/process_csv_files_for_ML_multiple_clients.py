@@ -1,6 +1,5 @@
 import enum
 import os
-import threading
 
 import pandas as pd
 
@@ -148,8 +147,8 @@ def define_episodes_from_frames(dataframe: pd.DataFrame):
 
 	# make sure all episodes have non negative indexes
 	# this also removes frames that could not be assigned to any episode
-	dataframe['episode_index'] = dataframe['episode_index'].astype(int)
 	dataframe = dataframe[(dataframe['episode_index'] > -1)]
+	dataframe['episode_index'] = dataframe['episode_index'].astype(int)
 
 	# list of episode indexes
 	ep_indexes = list(dataframe['episode_index'].unique())
@@ -157,7 +156,7 @@ def define_episodes_from_frames(dataframe: pd.DataFrame):
 	return dataframe, len(ep_indexes), ep_indexes
 
 
-def filter_out_irrelevant_frames(dataframe: pd.DataFrame, clients: list, access_points: list):
+def filter_out_irrelevant_frames(dataframe: pd.DataFrame, clients: list, access_points: list = None):
 	"""
 	Filter out the rows (frames) that are not relevant to the process.
 	"""
@@ -291,6 +290,7 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 			_loss_rate = float(_num_true) / float(_num_true + _num_false)
 		else:
 			_loss_rate = -1  # could not calculate
+
 		return _loss_rate
 
 	def __f3():
@@ -308,6 +308,7 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 		_frequency = -1
 		if _num_frames >= 0 and _ep_duration > 0:
 			_frequency = float(_num_frames) / float(_ep_duration)
+
 		return _frequency
 
 	def __f4():
@@ -324,6 +325,7 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 		]
 
 		_ap_deauth_count = len(_deauth_ap_df)
+
 		return _ap_deauth_count
 
 	def __f5():
@@ -340,6 +342,7 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 		]
 
 		_client_deauth_count = len(_deauth_client_df)
+
 		return _client_deauth_count
 
 	def __f6():
@@ -417,6 +420,7 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 			 (ep_dataframe['wlan.da'] == the_client))
 		]
 		_failure_assoc_reassoc_count = len(_assoc_reassoc_failure_response_df)
+
 		return _failure_assoc_reassoc_count
 
 	def __f8():
@@ -434,6 +438,7 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 			 (ep_dataframe['wlan.da'] == the_client))
 		]
 		_success_assoc_reassoc_count = len(_assoc_reassoc_success_response_df)
+
 		return _success_assoc_reassoc_count
 
 	def __f9():
@@ -470,6 +475,7 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 			(ep_dataframe['wlan.fc.type_subtype'].isin(class_3_frames_list))
 		]
 		_class_3_frames_count = len(_class_3_df)
+
 		return _class_3_frames_count
 
 	def __p1():
@@ -670,8 +676,6 @@ def convert_ep_characteristics_to_dataframe(episode_characteristics: list):
 
 	# convert to dataframe
 	df = pd.DataFrame.from_dict(output_dictionary)
-	print('Output episode characteristic dataframe')
-	print(df.head(5))
 	return df
 
 
@@ -707,7 +711,7 @@ def prepare_environment():
 
 	# make sure RAW_CSV_FILES_DIR is not empty
 	if len(os.listdir(RAW_CSV_FILES_DIR)) == 0:
-		print('"{:s}" is empty! Please create raw csv files using `pcaptocsv.py` and try again!'.format(
+		print('"{:s}" is empty! Please create `frames csv file` and try again!'.format(
 			RAW_CSV_FILES_DIR))
 		exit(0)
 	# make sure ANALYZED_CSV_FILES_DIR is empty
@@ -757,6 +761,10 @@ def read_raw_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines: b
 		warn_bad_lines = warn_bad_lines
 	)
 
+	# sanitize data
+	#   - drop not available values
+	csv_dataframe.dropna(axis = 0, subset = ['frame.time_epoch', 'radiotap.dbm_antsignal', ], inplace = True)
+
 	# sort the dataframe by `frame.time_epoch`
 	csv_dataframe.sort_values(
 		by = 'frame.time_epoch',
@@ -769,17 +777,27 @@ def read_raw_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines: b
 	return csv_dataframe
 
 
-def process_frame_csv_file(raw_csv_name: str, assign_rbs_tags = False, separate_client_files = False):
+def process_frame_csv_file(raw_csv_name: str, access_points = None, clients = None, assign_rbs_tags = False,
+                           separate_client_files = False):
+	"""
+	Processes a given frame csv file to generate episode characteristics.
+
+	:param raw_csv_name:
+	:param access_points:
+	:param clients:
+	:param assign_rbs_tags:
+	:param separate_client_files:
+	:return:
+	"""
+
 	# raw csv file
 	raw_csv_file = os.path.join(RAW_CSV_FILES_DIR, raw_csv_name)
 	# read the raw csv file
 	main_dataframe = read_raw_csv_file(raw_csv_file)
-	# print("1. read:", dataframe.shape)
+	print('• Dataframe shape (on read):', main_dataframe.shape)
 
-	if PROCESS_ALL_CLIENTS:
+	if clients is None:
 		clients = find_all_client_mac_addresses(main_dataframe)
-	else:
-		clients = CLIENTS
 
 	# all episodes characteristics as list of 2-tuples
 	#   - 1. features
@@ -788,7 +806,8 @@ def process_frame_csv_file(raw_csv_name: str, assign_rbs_tags = False, separate_
 
 	# ### Processing ###
 	# 1. keep only relevant frames in memory
-	main_dataframe = filter_out_irrelevant_frames(main_dataframe, clients, ACCESS_POINTS)
+	main_dataframe = filter_out_irrelevant_frames(main_dataframe, clients, access_points)
+	print('• Dataframe shape (relevance filter):', main_dataframe.shape)
 
 	# 2. for each client...
 	for the_client in clients:
@@ -797,12 +816,17 @@ def process_frame_csv_file(raw_csv_name: str, assign_rbs_tags = False, separate_
 
 		# 2.b. filter frames belonging to the client
 		dataframe = filter_client_frames(dataframe, the_client)
+		if dataframe is None:
+			print('• No relevant frames found for client {:s} -'.format(the_client))
+			continue
 
 		# 2.c. define episodes on frames
 		result = define_episodes_from_frames(dataframe)
 		if result is not None:
 			dataframe, ep_count, ep_indexes = result
+			print('• Episodes generated for client {:s} -'.format(the_client), ep_count)
 		else:
+			print('• Episodes generated for client {:s} -'.format(the_client), 0)
 			continue
 
 		# 2.d. for each episode...
@@ -828,6 +852,10 @@ def process_frame_csv_file(raw_csv_name: str, assign_rbs_tags = False, separate_
 
 	# 3. make a dataframe from episode characteristics
 	ep_characteristics_df = convert_ep_characteristics_to_dataframe(ep_characteristics_list)
+	print('• Total episodes generated: {:d}'.format(len(ep_characteristics_df)))
+	# 3.a. drop null values, since ML model can't make any sense of this
+	ep_characteristics_df.dropna(axis = 0, inplace = True)
+	print('• Total episodes generated after dropping null values: {:d}'.format(len(ep_characteristics_df)))
 
 	# 4. (optional) assign tags for causes according to old rule-based-system
 	if assign_rbs_tags:
@@ -840,7 +868,9 @@ def process_frame_csv_file(raw_csv_name: str, assign_rbs_tags = False, separate_
 
 	if separate_client_files:
 		for the_client in clients:
-			_df = ep_characteristics_df[EpisodeProperties.associated_client.value == the_client]
+			_df = ep_characteristics_df[
+				(ep_characteristics_df[EpisodeProperties.associated_client.value] == the_client)
+			]
 			name, extension = os.path.splitext(os.path.basename(raw_csv_file))
 			output_csvname = str.format('{:s}_{:s}{:s}', name, the_client, extension)
 			output_csvfile = os.path.join(ANALYZED_CSV_FILES_DIR, output_csvname)
@@ -851,35 +881,36 @@ def process_frame_csv_file(raw_csv_name: str, assign_rbs_tags = False, separate_
 		ep_characteristics_df.to_csv(output_csvfile, sep = ',', index = False, columns = output_column_order)
 
 
-def process_frame_csv_files(raw_csv_file_names: list, use_multithreading: bool = False):
+def process_frame_csv_files(raw_csv_file_names: list, access_points = None, clients = None,
+                            assign_rbs_tags = True, separate_client_files = False):
 	"""
-	Analyze the raw csv files and generate processed csv files that can be used for machine learning.
+	Run `process_frame_csv_file` for multiple files sequentially.
+
+	:param raw_csv_file_names:
+	:param access_points:
+	:param clients: `None` -- process all clients
+	:param assign_rbs_tags:
+	:param separate_client_files:
+	:return:
 	"""
 
-	threads = list()
 	for idx, raw_csv_name in enumerate(raw_csv_file_names):
-		# use multithreading
-		if use_multithreading:
-			# create a thread for each file
-			thread = threading.Thread(target = process_frame_csv_file, args = (raw_csv_name,))
-			print('starting thread for file: {:s}...'.format(raw_csv_name))
-			threads.append(thread)
-			thread.start()
-		else:
-			process_frame_csv_file(raw_csv_name)
-
-	# if using multi-threading wait for all threads to finish
-	# else - this list should be empty, so instantly return
-	for thread in threads:
-		thread.join()
+		print('Started processing file: {:s}'.format(raw_csv_name))
+		process_frame_csv_file(raw_csv_name, access_points = access_points, clients = clients,
+		                       assign_rbs_tags = assign_rbs_tags, separate_client_files = separate_client_files)
+		print('-' * 40)
+		print()
 
 
 def main():
 	prepare_environment()
 	raw_csv_file_names = get_raw_csv_file_names()
-	process_frame_csv_files(raw_csv_file_names, use_multithreading = True)
+	process_frame_csv_files(raw_csv_file_names)
 
 
 if __name__ == '__main__':
+	# disable warnings
+	pd.options.mode.chained_assignment = None
+
 	main()
 	pass
