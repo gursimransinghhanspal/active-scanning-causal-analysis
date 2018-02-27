@@ -746,6 +746,8 @@ def read_frames_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines
 		warn_bad_lines = warn_bad_lines
 	)
 
+	print('• Dataframe shape (on read):', csv_dataframe.shape)
+
 	# sanitize data
 	#   - drop not available values
 	csv_dataframe.dropna(axis = 0, subset = ['frame.time_epoch', 'radiotap.dbm_antsignal', ], inplace = True)
@@ -778,8 +780,7 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 	frames_csv_file = os.path.join(FRAMES_CSV_FILES_DIR, frames_csv_name)
 	# read the frames csv file
 	main_dataframe = read_frames_csv_file(frames_csv_file)
-	print('• Dataframe shape (on read'
-	      '):', main_dataframe.shape)
+	print('• Dataframe shape (after read):', main_dataframe.shape)
 
 	if clients is None:
 		clients = find_all_client_mac_addresses(main_dataframe)
