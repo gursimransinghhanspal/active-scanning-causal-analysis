@@ -1,5 +1,5 @@
-capture_files/
-raw_csv_files/
-analyzed_csv_files/
-
 .env
+
+capture_files/
+frames_csv_files/
+processed_episode_csv_files/
