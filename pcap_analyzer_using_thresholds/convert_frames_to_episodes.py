@@ -174,6 +174,8 @@ def filter_out_irrelevant_frames(dataframe: pd.DataFrame, clients: list, access_
 	#   OR
 	#   - packet type is `beacon` AND the source address or transmitter address is in access points
 	if access_points is not None:
+		print('• Using access points to filter beacon packets:', access_points)
+
 		_df = dataframe[
 			((dataframe['wlan.sa'].isin(clients)) |
 			 (dataframe['wlan.da'].isin(clients)) |
@@ -870,7 +872,8 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 		ep_characteristics_df.to_csv(output_csvfile, sep = ',', index = False, columns = output_column_order)
 
 
-def process_frame_csv_files(frames_csv_file_names: list, access_points, clients, assign_rbs_tags, separate_client_files):
+def process_frame_csv_files(frames_csv_file_names: list, access_points, clients, assign_rbs_tags,
+                            separate_client_files):
 	"""
 	Run `process_frame_csv_file` for multiple files sequentially.
 
