@@ -780,7 +780,7 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 	frames_csv_file = os.path.join(FRAMES_CSV_FILES_DIR, frames_csv_name)
 	# read the frames csv file
 	main_dataframe = read_frames_csv_file(frames_csv_file)
-	print('• Dataframe shape (after read):', main_dataframe.shape)
+	print('• Dataframe shape (after dropping null values):', main_dataframe.shape)
 
 	if clients is None:
 		clients = find_all_client_mac_addresses(main_dataframe)
@@ -844,7 +844,7 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 	print('• Total episodes generated: {:d}'.format(len(ep_characteristics_df)))
 	# 3.a. drop null values, since ML model can't make any sense of this
 	ep_characteristics_df.dropna(axis = 0, inplace = True)
-	print('• Total episodes generated after dropping null values: {:d}'.format(len(ep_characteristics_df)))
+	print('• Total episodes generated (after dropping null values): {:d}'.format(len(ep_characteristics_df)))
 
 	# 4. (optional) assign tags for causes according to old rule-based-system
 	if assign_rbs_tags:
