@@ -46,8 +46,8 @@ if __name__ == '__main__':
 		directories.stage_1_stratified_data_csv_file,
 		os.path.join(directories.stage_1_saved_models, 'naive_bayes.pkl')
 	)
-	# stage 2
-	# learn_naive_bayes(
-	# 	directories.stage_2_stratified_data_csv_file,
-	# 	os.path.join(directories.stage_2_saved_models, 'naive_bayes.pkl')
-	# )
+# stage 2
+# learn_naive_bayes(
+# 	directories.stage_2_training_dataset_csv_file,
+# 	os.path.join(directories.stage_2_saved_models, 'naive_bayes.pkl')
+# )

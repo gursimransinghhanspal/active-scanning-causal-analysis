@@ -140,7 +140,6 @@ if __name__ == "__main__":
 	csv_file = convert_pcap_to_csv(args.pcap)
 	plot_graphs_from_csv_for_clients(csv_file, args.clients, args.should_save_plots)
 
-
 # for help:
 #   python3 periodicity_plotter.py -h
 

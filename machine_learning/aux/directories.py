@@ -55,8 +55,8 @@ stage_1_unlabeled_data_csv_file = os.path.join(data_stage_1, __UNLABELED_DATA_CS
 stage_1_labeled_data_csv_file = os.path.join(data_stage_1, __LABELED_DATA_CSV_FILE_NAME)
 stage_1_stratified_data_csv_file = os.path.join(data_stage_1, __STRATIFIED_DATA_CSV_FILE_NAME)
 stage_2_unlabeled_data_csv_file = os.path.join(data_stage_2, __UNLABELED_DATA_CSV_FILE_NAME)
-stage_2_labeled_data_csv_file = os.path.join(data_stage_2, __LABELED_DATA_CSV_FILE_NAME)
-stage_2_stratified_data_csv_file = os.path.join(data_stage_2, __STRATIFIED_DATA_CSV_FILE_NAME)
+stage_2_merged_dataset_csv_file = os.path.join(data_stage_2, __LABELED_DATA_CSV_FILE_NAME)
+stage_2_training_dataset_csv_file = os.path.join(data_stage_2, __STRATIFIED_DATA_CSV_FILE_NAME)
 
 saved_models = os.path.join(project, __SAVED_MODEL_DIR_NAME)
 stage_1_saved_models = os.path.join(saved_models, __STAGE_1_SAVED_MODEL_DIR_NAME)

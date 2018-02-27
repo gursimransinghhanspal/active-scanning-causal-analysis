@@ -1,9 +1,11 @@
 from __future__ import division
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 def plot_graph(data, target, feature, is_feature_val_cont,
-				feature_entities, label, target_val):
+               feature_entities, label, target_val):
 	importance_dict = {entity: np.array([0, 0]) for entity in feature_entities}
 
 	for datum_idx, datum in enumerate(data):
@@ -20,7 +22,7 @@ def plot_graph(data, target, feature, is_feature_val_cont,
 	y_pred = []
 	y_not_pred = []
 
-	print (importance_dict)
+	print(importance_dict)
 
 	for entity in sorted(importance_dict):
 		if is_feature_val_cont:
@@ -40,13 +42,13 @@ def plot_graph(data, target, feature, is_feature_val_cont,
 
 	if not is_feature_val_cont:
 		x = range(len(feature_entities))
-		plt.xticks(x, xticks, rotation=45)
+		plt.xticks(x, xticks, rotation = 45)
 
-	plt.plot(x, y_pred, label='Label Predicted')
-	plt.plot(x, y_not_pred, label='Label Not Predicted')
+	plt.plot(x, y_pred, label = 'Label Predicted')
+	plt.plot(x, y_not_pred, label = 'Label Not Predicted')
 	plt.xlabel(feature)
 	plt.ylabel('Prediction Probability')
-	plt.title('%s v/s Prediction Count for label %s' %(feature, label))
-	plt.legend(bbox_to_anchor=(0., 1.05, 1., .102), loc=3,
-			ncol=2, mode="expand", borderaxespad=0.)
+	plt.title('%s v/s Prediction Count for label %s' % (feature, label))
+	plt.legend(bbox_to_anchor = (0., 1.05, 1., .102), loc = 3,
+	           ncol = 2, mode = "expand", borderaxespad = 0.)
 	plt.show()

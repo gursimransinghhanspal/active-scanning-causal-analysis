@@ -79,6 +79,6 @@ if __name__ == '__main__':
 	)
 	# stage 2
 	learn_voting_classifier(
-		directories.stage_2_stratified_data_csv_file,
+		directories.stage_2_training_dataset_csv_file,
 		os.path.join(directories.stage_2_saved_models, 'voting_classifier.pkl')
 	)

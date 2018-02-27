@@ -1,6 +1,6 @@
 import enum
 
-from . import directories
+from machine_learning.aux import directories
 
 
 # the identified active scanning causes
@@ -43,3 +43,51 @@ def get_training_data_directories():
 	mapping[ASCause.pscan_unassoc] = directories.training_cause_pscan_unassoc
 	mapping[ASCause.pwr_state] = directories.training_cause_pwr_state
 	return mapping
+
+
+def get_processed_data_file_header_structure(for_training = False):
+	"""
+	Returns header names for columns in input processed data files
+	TODO: make this common across preprocessor
+	"""
+
+	from preprocessor.convert_frames_to_episodes import get_output_column_order
+
+	header = get_output_column_order()
+	if for_training:
+		header.append(get_training_label_header())
+	return header
+
+
+def get_processed_data_file_header_segregation(for_training = False):
+	"""
+	Divides the data file into subsets
+	1. ML feature set
+	2. Label column (if for_training == true)
+	3. Remaining columns
+	"""
+
+	from preprocessor.convert_frames_to_episodes import EpisodeFeatures, EpisodeProperties
+
+	# the for_training label
+	training_label = get_training_label_header()
+	# the feature set
+	features = [item.value for item in EpisodeFeatures]
+	features.sort()
+	# required properties
+	properties = [
+		EpisodeProperties.associated_client.value,
+	]
+
+	if for_training:
+		return features, [training_label, ], properties
+	else:
+		return features, properties
+
+
+def get_training_label_header():
+	return 'training_label'
+
+
+if __name__ == '__main__':
+	print(get_processed_data_file_header_segregation(True))

@@ -1,9 +1,11 @@
 import os
 
 import numpy as np
+import pandas as pd
 
 from machine_learning.aux import constants, directories, helpers
-from machine_learning.preprocessing.read_dataset import label_column_name, read_labelled_csv_file, required_features
+from machine_learning.aux.constants import get_processed_data_file_header_segregation, get_training_label_header
+from machine_learning.aux.helpers import read_dataset_csv_file_as_np_arrays
 
 
 def get_training_labels():
@@ -27,19 +29,17 @@ def get_training_labels():
 	return mapping
 
 
-SUPPORTED_EXTS = ['.csv', ]
-
-
 def get_processed_csv_file_names(directory_path):
 	"""
 	Read all the file names present in the given directory
 	"""
+	__supported_extensions = ['.csv', ]
 
 	processed_csv_file_names = list()
 
 	listdir = os.listdir(directory_path)
 	for file in listdir:
-		if os.path.splitext(file)[1] in SUPPORTED_EXTS:
+		if os.path.splitext(file)[1] in __supported_extensions:
 			processed_csv_file_names.append(file)
 
 	# sort so that we always read in a predefined order
@@ -48,86 +48,126 @@ def get_processed_csv_file_names(directory_path):
 	return processed_csv_file_names
 
 
-def merge_processed_csv_files(training: bool = True):
+def get_training_label_proportions():
+	"""
+	Mapping from as-causes to training label proportions for stage 1 classifier
+	"""
+
+	mapping = dict()
+	mapping[2] = 600
+	mapping[1] = 0
+	mapping[0] = 0
+	return mapping
+
+
+def merge_and_label_processed_csv_files(outfile, training_labels, for_training: bool = True):
 	"""
 	Merges all the csv files in `processed_files` directory in a single csv file.
-	If `training` == True, then the training sub-directory is used and the data is also labeled
-	according to the folder the files are in.
+		- If `for_training` == True, then the training sub-directory is used and the data is also labeled
+		  according to the folder the files are in.
+		- Else, the testing subdirectory is used.
 	"""
 
-	def merge(_read_directory, _read_filename, _write_filepath, _cause = None):
-		_csv_file = os.path.join(_read_directory, _read_filename)
-		_dataframe = helpers.read_processed_csv_file(_csv_file)
-
-		_dataframe = _dataframe[required_features]
-		_dataframe.fillna(0)
+	def label_and_append_processed_csv_file(_filename, _write_filepath, required_columns,
+	                                        _cause = None):
+		_dataframe = helpers.read_csv_file(_filename)
+		_dataframe = _dataframe[required_columns]
 
 		if not os.path.exists(_write_filepath):
 			_should_add_header = True
 		else:
 			_should_add_header = False
 
-		output_columns = list(required_features)
+		header = list(required_columns)
 		if _cause is not None:
-			_dataframe[label_column_name] = training_labels[_cause]
-			output_columns.append(label_column_name)
+			head_training = get_training_label_header()
+			_dataframe[head_training] = training_labels[_cause]
+			header.append(head_training)
 
-		_dataframe.to_csv(_write_filepath, mode = 'a', columns = output_columns, header = _should_add_header, index = False)
+		_dataframe.to_csv(_write_filepath, mode = 'a', columns = header, header = _should_add_header,
+		                  index = False)
+		return _dataframe.shape[0]
 
-	if training:
-		# delete data files if exist
-		directories.delete_file(directories.stage_1_labeled_data_csv_file)
-		directories.delete_file(directories.stage_1_stratified_data_csv_file)
+	# required columns
+	# used to choose only the required columns from the input processed episode csv
+	head_features, head_properties = get_processed_data_file_header_segregation(for_training = False)
+	req_columns = head_features + head_properties
 
-		training_labels = get_training_labels()
+	# count of number of instances
+	instance_count = 0
+
+	if for_training:
+		# delete dataset files if they exist
+		directories.delete_file(outfile)
+
+		# get label info
 		training_data_directories = constants.get_training_data_directories()
 
+		# assign labels and merge
 		for cause, directory in training_data_directories.items():
+			if cause not in training_labels.keys():
+				continue
+
 			csv_filenames = get_processed_csv_file_names(directory)
-
 			for filename in csv_filenames:
-				merge(directory, filename, directories.stage_1_labeled_data_csv_file, cause)
+				csv_filename = os.path.abspath(os.path.join(directory, filename))
+				instance_count += label_and_append_processed_csv_file(csv_filename, outfile,
+				                                                      required_columns = req_columns, _cause = cause)
 
-		stratify_labeled_dataset()
-
+			print('• Total instance count for cause "{:s}":'.format(cause.name), instance_count)
+			instance_count = 0
 	else:
-		# delete data files if exist
-		directories.delete_file(directories.stage_1_unlabeled_data_csv_file)
+		# delete dataset files if they exist
+		directories.delete_file(outfile)
 
+		# get label info
 		testing_data_directory = directories.processed_files_testing
+
+		# merge
 		csv_filenames = get_processed_csv_file_names(testing_data_directory)
-
 		for filename in csv_filenames:
-			merge(testing_data_directory, filename, directories.stage_1_unlabeled_data_csv_file)
+			csv_filename = os.path.abspath(os.path.join(testing_data_directory, filename))
+			instance_count += label_and_append_processed_csv_file(csv_filename, outfile, required_columns = req_columns,
+			                                                      _cause = None)
+
+		print('• Total instance count:', instance_count)
 
 
-def stratify_labeled_dataset():
-	X, y = read_labelled_csv_file(directories.stage_1_labeled_data_csv_file)
-	print('Complete data bincount:', np.bincount(y.astype(int)))
+def create_training_dataset(infile, outfile, proportions = None):
+	"""
+	Creates training dataset using the complete merged dataset file.
+	"""
 
+	X, y, _ = read_dataset_csv_file_as_np_arrays(infile, for_training = True)
+	print(np.bincount(y.astype(int)))
+
+	# concatenate features and target
 	X_temp = np.concatenate((X, np.vstack(y)), axis = 1)
 
 	X_final = None
-	for label in range(3):
-		X_label = X_temp[np.where(y == label)]
 
-		if X_final is None:
-			X_final = np.array(X_label)
-		else:
-			X_final = np.append(X_final, X_label, axis = 0)
+	# stratify if proportions are given
+	if proportions is not None:
+		for label, sample_size in proportions.items():
+			X_label = X_temp[np.where(y == label)]
+			X_label = X_label[np.random.choice(X_label.shape[0], sample_size, replace = False)]
+
+			if X_final is None:
+				X_final = np.array(X_label)
+			else:
+				X_final = np.append(X_final, X_label, axis = 0)
+	else:
+		X_final = X_temp
 
 	if X_final is not None:
-		# stratify_labeled_dataset() only runs for training, so append `label` to header
-		output_columns = list(required_features)
-		output_columns.append(label_column_name)
-		header_string = ','.join(output_columns)
+		# required columns (header)
+		head_features, head_training, head_properties = get_processed_data_file_header_segregation(for_training = True)
+		header = head_features + head_properties + head_training
 
-		np.savetxt(
-			directories.stage_1_stratified_data_csv_file, X_final, delimiter = ',',
-			header = header_string, comments = '',
-			fmt = '%d,%d,%d,%d,%d,%d,%.18e,%.18e,%d,%.18e,%.18e,%d,%d'
-		)
+		# save array to outfile
+		dataframe = pd.DataFrame(data = X_final, columns = header)
+		dataframe.to_csv(outfile, sep = ',', columns = header, header = True, index = False, mode = 'w')
 
 
 if __name__ == '__main__':
-	merge_processed_csv_files(training = True)
+	pass

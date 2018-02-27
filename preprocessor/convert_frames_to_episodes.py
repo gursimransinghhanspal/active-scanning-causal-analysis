@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-import pcap_analyzer_using_thresholds.devices as devices
+import preprocessor.devices as devices
 
 
 class RBSCauses(enum.Enum):
