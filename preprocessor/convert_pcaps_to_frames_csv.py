@@ -7,8 +7,8 @@ import subprocess
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 # the captured files directory
 CAPTURE_FILES_DIR = os.path.join(PROJECT_DIR, 'capture_files')
-# the raw csv files directory
-RAW_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'raw_csv_files')
+# the frames csv files directory
+FRAMES_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'frames_csv_files')
 
 # Supported Extensions - only files with supported extensions shall be read
 SUPPORTED_EXTS = ['.pcap', '.pcapng', '.cap', ]
@@ -18,16 +18,16 @@ def prepare_environment():
 	# create directories if they don't exist
 	if not os.path.exists(CAPTURE_FILES_DIR) or not os.path.isdir(CAPTURE_FILES_DIR):
 		os.mkdir(CAPTURE_FILES_DIR)
-	if not os.path.exists(RAW_CSV_FILES_DIR) or not os.path.isdir(RAW_CSV_FILES_DIR):
-		os.mkdir(RAW_CSV_FILES_DIR)
+	if not os.path.exists(FRAMES_CSV_FILES_DIR) or not os.path.isdir(FRAMES_CSV_FILES_DIR):
+		os.mkdir(FRAMES_CSV_FILES_DIR)
 
 	# make sure CAPTURE_FILES_DIR is not empty
 	if len(os.listdir(CAPTURE_FILES_DIR)) == 0:
 		print('"{:s}" is empty! Please add some capture files and try again!'.format(CAPTURE_FILES_DIR))
 		exit(0)
-	# make sure RAW_CSV_DIR is empty
-	if len(os.listdir(RAW_CSV_FILES_DIR)) != 0:
-		print('"{:s}" is not empty! Please empty the directory and try again!'.format(RAW_CSV_FILES_DIR))
+	# make sure FRAMES_CSV_FILES_DIR is empty
+	if len(os.listdir(FRAMES_CSV_FILES_DIR)) != 0:
+		print('"{:s}" is not empty! Please empty the directory and try again!'.format(FRAMES_CSV_FILES_DIR))
 		exit(0)
 
 
@@ -113,7 +113,8 @@ def get_capture_file_names():
 	return capture_file_names
 
 
-def generate_output_csv_files(capture_file_names: list, command_format_string: str, csv_file_header: str):
+def generate_output_csv_files(capture_file_names: list, command_format_string: str, csv_file_header: str,
+                              use_subprocesses: bool = False):
 	"""
 	Run the command for each file name present in `capture_file_names` list
 	"""
@@ -128,7 +129,7 @@ def generate_output_csv_files(capture_file_names: list, command_format_string: s
 		# capture file
 		capture_file = os.path.join(CAPTURE_FILES_DIR, capture_name)
 		# csv file
-		csv_file = os.path.join(RAW_CSV_FILES_DIR, csv_name)
+		csv_file = os.path.join(FRAMES_CSV_FILES_DIR, csv_name)
 
 		# print progress
 		print('starting sub-process for file: {:s}...'.format(capture_name))
@@ -142,14 +143,16 @@ def generate_output_csv_files(capture_file_names: list, command_format_string: s
 		#   - this can be run in parallel
 		command = command_format_string.format(str(capture_file), str(csv_file))
 		p = subprocess.Popen(command, shell = True)
-		# os.waitpid(p.pid, 0)
-		subprocesses.append(p)
 
-	exit_codes = [q.wait() for q in subprocesses]
-	# print the exit codes
-	print('Exit codes for sub-processes: ', exit_codes)
+		if use_subprocesses:
+			subprocesses.append(p)
+		else:
+			pid, exit_code = os.waitpid(p.pid, 0)
+			print('Process pid {:d}, exit-code: {:d}:'.format(pid, exit_code))
 
-	return exit_codes
+	if use_subprocesses:
+		exit_codes = [q.wait() for q in subprocesses]
+		print('Exit codes for sub-processes: ', exit_codes)
 
 
 def main():

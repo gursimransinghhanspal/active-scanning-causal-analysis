@@ -3,8 +3,6 @@ import os
 
 import pandas as pd
 
-import preprocessor.devices as devices
-
 
 class RBSCauses(enum.Enum):
 	low_rssi = 'd'
@@ -174,7 +172,9 @@ def filter_out_irrelevant_frames(dataframe: pd.DataFrame, clients: list, access_
 	#   OR
 	#   - packet type is `beacon` AND the source address or transmitter address is in access points
 	if access_points is not None:
-		print('• Using access points to filter beacon packets:', access_points)
+		from pprint import pprint
+		print('• Using access points to filter beacon packets. Access points:')
+		pprint(access_points, indent = 4)
 
 		_df = dataframe[
 			((dataframe['wlan.sa'].isin(clients)) |
@@ -241,7 +241,7 @@ def find_all_client_mac_addresses(dataframe):
 	client_mac_addresses.update(set(_preq_df['wlan.ra'][_preq_df['wlan.ra'].notna()].unique()))
 
 	# remove `broadcast`
-	client_mac_addresses.remove('ff:ff:ff:ff:ff:ff')
+	client_mac_addresses = client_mac_addresses.difference({'ff:ff:ff:ff:ff:ff', })
 
 	# convert to list
 	client_mac_addresses = list(client_mac_addresses)
@@ -906,12 +906,10 @@ if __name__ == '__main__':
 
 	# client devices to process for
 	_clients = [
-		devices.gursimran_oneplus_one,
 	]
 
 	# access points
 	_access_points = [
-		devices.dheryta_netgear,
 	]
 
 	#   - clients = None, to process all clients

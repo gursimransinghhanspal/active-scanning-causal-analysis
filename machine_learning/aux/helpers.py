@@ -46,6 +46,8 @@ def read_dataset_csv_file_as_np_arrays(filepath, for_training: bool):
 		features_x = np.array(dataframe[feature_set])
 		target_y = np.array(dataframe[target_set])
 		extra_z = np.array(dataframe[extra_properties])
+
+		target_y = np.reshape(target_y, target_y.shape[0])
 		return features_x, target_y, extra_z
 	else:
 		feature_set, extra_properties = get_processed_data_file_header_segregation(for_training = False)

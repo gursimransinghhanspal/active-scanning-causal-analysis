@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import pandas as pd
 
 from machine_learning.aux import constants, directories, helpers
 from machine_learning.aux.constants import get_processed_data_file_header_segregation, get_training_label_header
@@ -55,8 +54,8 @@ def get_training_label_proportions():
 
 	mapping = dict()
 	mapping[2] = 600
-	mapping[1] = 0
-	mapping[0] = 0
+	mapping[1] = 100
+	mapping[0] = 100
 	return mapping
 
 
@@ -133,7 +132,7 @@ def merge_and_label_processed_csv_files(outfile, training_labels, for_training: 
 		print('• Total instance count:', instance_count)
 
 
-def create_training_dataset(infile, outfile, proportions = None):
+def create_training_dataset(infile, outfile, proportions):
 	"""
 	Creates training dataset using the complete merged dataset file.
 	"""
@@ -150,6 +149,11 @@ def create_training_dataset(infile, outfile, proportions = None):
 	if proportions is not None:
 		for label, sample_size in proportions.items():
 			X_label = X_temp[np.where(y == label)]
+			if X_label.shape[0] == 0:
+				continue
+
+			# choose sample
+			sample_size = min(X_label.shape[0], sample_size)
 			X_label = X_label[np.random.choice(X_label.shape[0], sample_size, replace = False)]
 
 			if X_final is None:
@@ -161,13 +165,23 @@ def create_training_dataset(infile, outfile, proportions = None):
 
 	if X_final is not None:
 		# required columns (header)
-		head_features, head_training, head_properties = get_processed_data_file_header_segregation(for_training = True)
-		header = head_features + head_properties + head_training
+		head_features, head_training, _ = get_processed_data_file_header_segregation(for_training = True)
+		header = head_features + head_training
+		header_string = ','.join(header)
 
 		# save array to outfile
-		dataframe = pd.DataFrame(data = X_final, columns = header)
-		dataframe.to_csv(outfile, sep = ',', columns = header, header = True, index = False, mode = 'w')
+		np.savetxt(
+			outfile, X_final, delimiter = ',', header = header_string, comments = '',
+			fmt = '%d,%d,%d,%d,%d,%d,%.18e,%.18e,%d,%d,%.18e,%.18e,%d,%d'
+		)
+
+
+# dataframe = pd.DataFrame(data = X_final, columns = header)
+# dataframe.to_csv(outfile, sep = ',', columns = header, header = True, index = False, mode = 'w')
 
 
 if __name__ == '__main__':
+	# merge_and_label_processed_csv_files(directories.stage_1_labeled_data_csv_file, get_training_labels(), True)
+	# create_training_dataset(directories.stage_1_labeled_data_csv_file, directories.stage_1_stratified_data_csv_file,
+	#                         None)
 	pass

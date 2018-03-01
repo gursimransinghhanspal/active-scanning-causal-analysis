@@ -2,11 +2,12 @@ import os
 
 import numpy as np
 
-from machine_learning.aux import constants, helpers
+from machine_learning.aux import constants, directories, helpers
 from machine_learning.aux.constants import get_processed_data_file_header_segregation
 from machine_learning.aux.helpers import read_dataset_csv_file_as_np_arrays
 from machine_learning.aux.persist import load_model
-from machine_learning.preprocessing.stage_1.prepare_dataset import get_training_labels as get_stage_1_training_labels
+from machine_learning.preprocessing.stage_1.prepare_dataset import get_training_labels as get_stage_1_training_labels, \
+	merge_and_label_processed_csv_files
 
 
 def get_training_labels():
@@ -131,4 +132,22 @@ def identify_pscans_using_stage_1_classifier(infile, outfile, classifier_filepat
 
 
 if __name__ == '__main__':
+	merge_and_label_processed_csv_files(
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/merged_testing_dataset.csv',
+		get_training_labels(),
+		for_training = False
+	)
+
+	identify_pscans_using_stage_1_classifier(
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/merged_testing_dataset.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/reduced_testing_dataset.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_1/random_forest.pkl',
+		for_training = True
+	)
+
+	# create_training_dataset(
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/reduced_dataset.csv',
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/training_dataset.csv',
+	# 	get_training_label_proportions()
+	# )
 	pass

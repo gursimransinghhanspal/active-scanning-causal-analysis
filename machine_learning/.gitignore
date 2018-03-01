@@ -1,4 +1,5 @@
 temporary/
+output/
 data/stage_1/
 data/stage_2/
 processed_csv_files/testing/

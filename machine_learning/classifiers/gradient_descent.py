@@ -53,12 +53,12 @@ def learn_sgd(stratified_data_csv_file, save_filepath):
 
 if __name__ == '__main__':
 	# stage 1
+	# learn_sgd(
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_1/training_dataset.csv',
+	# 	os.path.join(directories.stage_1_saved_models, 'stochastic_gradient_descent.pkl')
+	# )
+	# stage 2
 	learn_sgd(
-		directories.stage_1_stratified_data_csv_file,
-		os.path.join(directories.stage_1_saved_models, 'stochastic_gradient_descent.pkl')
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/training_dataset.csv',
+		os.path.join(directories.stage_2_saved_models, 'stochastic_gradient_descent.pkl')
 	)
-# stage 2
-# learn_sgd(
-# 	directories.stage_2_training_dataset_csv_file,
-# 	os.path.join(directories.stage_2_saved_models, 'stochastic_gradient_descent.pkl')
-# )

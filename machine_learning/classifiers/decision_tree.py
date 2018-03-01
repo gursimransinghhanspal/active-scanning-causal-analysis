@@ -47,12 +47,12 @@ def learn_decision_tree(stratified_data_csv_file, save_filepath):
 
 if __name__ == '__main__':
 	# stage 1
+	# learn_decision_tree(
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_1/training_dataset.csv',
+	# 	os.path.join(directories.stage_1_saved_models, 'decision_tree.pkl')
+	# )
+	# stage 2
 	learn_decision_tree(
-		directories.stage_1_stratified_data_csv_file,
-		os.path.join(directories.stage_1_saved_models, 'decision_tree.pkl')
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/training_dataset.csv',
+		os.path.join(directories.stage_2_saved_models, 'decision_tree.pkl')
 	)
-# stage 2
-# learn_decision_tree(
-# 	directories.stage_2_training_dataset_csv_file,
-# 	os.path.join(directories.stage_2_saved_models, 'decision_tree.pkl')
-# )

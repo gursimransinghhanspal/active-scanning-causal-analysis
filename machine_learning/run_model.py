@@ -39,11 +39,11 @@ def run(model_file: str, in_file: str, out_file: str, stage: int = None):
 	# merge arrays to create output array
 	# TODO: check
 	output_array = np.concatenate((x_test, z_extra), axis = 1)
-	output_array = np.concatenate((output_array, y_pred.T), axis = 1)
+	output_array = np.concatenate((output_array, np.vstack(y_pred)), axis = 1)
 
 	# create a dataframe
 	header = get_processed_data_file_header_segregation(for_training = False)
-	header = header[0] + header[1] + 'prediction__label'
+	header = header[0] + header[1] + ['prediction__label', ]
 
 	# if stage is given add name of labels too
 	if stage is not None:
@@ -64,9 +64,10 @@ def run(model_file: str, in_file: str, out_file: str, stage: int = None):
 			for label in y_pred:
 				y_pred_names.append(reverse_mapping[label].name)
 
+			y_pred_names = np.array(y_pred_names)
 			# TODO: check
-			output_array = np.concatenate((output_array, y_pred_names), axis = 1)
-			header = header + 'prediction__name'
+			output_array = np.concatenate((output_array, np.vstack(y_pred_names)), axis = 1)
+			header = header + ['prediction__name', ]
 
 	dataframe = pd.DataFrame(data = output_array, columns = header)
 
@@ -76,5 +77,8 @@ def run(model_file: str, in_file: str, out_file: str, stage: int = None):
 
 if __name__ == '__main__':
 	run(
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_1/random_forest.pkl',
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_1/unlabeled_data.csv')
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_2/bagging.pkl',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/iitb_reduced_testing_dataset.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/output/iitb_test_predictions_bagging.csv',
+		stage = 2
+	)

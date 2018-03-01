@@ -49,12 +49,12 @@ def learn_boosting(stratified_data_csv_file, save_filepath):
 
 if __name__ == '__main__':
 	# stage 1
-	learn_boosting(
-		directories.stage_1_stratified_data_csv_file,
-		os.path.join(directories.stage_1_saved_models, 'boosting.pkl')
-	)
+	# learn_boosting(
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_1/training_dataset.csv',
+	# 	os.path.join(directories.stage_1_saved_models, 'boosting.pkl')
+	# )
 	# stage 2
 	learn_boosting(
-		directories.stage_2_training_dataset_csv_file,
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/stratified_training_dataset.csv',
 		os.path.join(directories.stage_2_saved_models, 'boosting.pkl')
 	)

@@ -55,7 +55,7 @@ def learn_logreg(stratified_data_csv_file, save_filepath):
 if __name__ == '__main__':
 	# stage 1
 	learn_logreg(
-		directories.stage_1_stratified_data_csv_file,
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_1/training_dataset.csv',
 		os.path.join(directories.stage_1_saved_models, 'logistic_regression.pkl')
 	)
 # stage 2
