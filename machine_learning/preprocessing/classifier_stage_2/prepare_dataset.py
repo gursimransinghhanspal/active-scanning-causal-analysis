@@ -2,11 +2,11 @@ import os
 
 import numpy as np
 
-from machine_learning.aux import constants, directories, helpers
+from machine_learning.aux import constants, helpers
 from machine_learning.aux.constants import get_processed_data_file_header_segregation
 from machine_learning.aux.helpers import read_dataset_csv_file_as_np_arrays
 from machine_learning.aux.persist import load_model
-from machine_learning.preprocessing.stage_1.prepare_dataset import get_training_labels as get_stage_1_training_labels, \
+from machine_learning.preprocessing.classifier_stage_1.prepare_dataset import get_training_labels as get_stage_1_training_labels, \
 	merge_and_label_processed_csv_files
 
 
@@ -73,7 +73,10 @@ def identify_pscans_using_stage_1_classifier(infile, outfile, classifier_filepat
 	Removes periodic scan instances from the training dataset using stage 1 classifier
 	"""
 
-	def remove_unassociated_pscans(_dataframe, pred):
+	def remove_unassociated_pscans(_dataframe, _pred):
+		pass
+
+	def remove_pscans(_dataframe, pred):
 		# stage 1 training labels
 		stage_1_training_labels = get_stage_1_training_labels()
 
@@ -82,14 +85,6 @@ def identify_pscans_using_stage_1_classifier(infile, outfile, classifier_filepat
 			if label == stage_1_training_labels[constants.ASCause.pscan_unassoc]:
 				indexes_to_drop.append(idx)
 
-		indexes_to_keep = set(range(_dataframe.shape[0])) - set(indexes_to_drop)
-		return _dataframe.take(list(indexes_to_keep))
-
-	def remove_associated_pscans(_dataframe, pred):
-		# stage 1 training labels
-		stage_1_training_labels = get_stage_1_training_labels()
-
-		indexes_to_drop = list()
 		for idx, label in enumerate(pred):
 			if label == stage_1_training_labels[constants.ASCause.pscan_assoc]:
 				indexes_to_drop.append(idx)
@@ -114,12 +109,9 @@ def identify_pscans_using_stage_1_classifier(infile, outfile, classifier_filepat
 	# read in the datafile
 	dataframe = helpers.read_csv_file(infile)
 	print('• Dataframe shape before dropping identified pscans:', dataframe.shape)
-	# remove unassociated per_scans
-	dataframe = remove_unassociated_pscans(dataframe, y_pred)
-	print('• Dataframe shape after dropping identified unassociated pscans:', dataframe.shape)
-	# remove associated per_scans
-	dataframe = remove_associated_pscans(dataframe, y_pred)
-	print('• Dataframe shape after dropping identified associated pscans:', dataframe.shape)
+	# remove per_scans
+	dataframe = remove_pscans(dataframe, y_pred)
+	print('• Dataframe shape after dropping identified pscans:', dataframe.shape)
 
 	# write the file back
 	if for_training:
@@ -133,21 +125,21 @@ def identify_pscans_using_stage_1_classifier(infile, outfile, classifier_filepat
 
 if __name__ == '__main__':
 	merge_and_label_processed_csv_files(
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/merged_testing_dataset.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase__python/machine_learning/data/test_4_andr.csv',
 		get_training_labels(),
 		for_training = False
 	)
 
 	identify_pscans_using_stage_1_classifier(
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/merged_testing_dataset.csv',
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/reduced_testing_dataset.csv',
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_1/random_forest.pkl',
-		for_training = True
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase__python/machine_learning/data/test_4_andr.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase__python/machine_learning/data/test_4_andr_reduced.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase__python/machine_learning/saved_models/classifier_stage_1/random_forest.pkl',
+		for_training = False
 	)
 
 	# create_training_dataset(
-	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/reduced_dataset.csv',
-	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/training_dataset.csv',
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/classifier_stage_2/reduced_dataset.csv',
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/classifier_stage_2/training_dataset.csv',
 	# 	get_training_label_proportions()
 	# )
 	pass

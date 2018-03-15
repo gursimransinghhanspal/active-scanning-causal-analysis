@@ -51,11 +51,11 @@ def learn_knn(stratified_data_csv_file, save_filepath):
 if __name__ == '__main__':
 	# stage 1
 	# learn_knn(
-	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_1/training_dataset.csv',
+	# 	'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/classifier_stage_1/training_dataset.csv',
 	# 	os.path.join(directories.stage_1_saved_models, 'knn.pkl')
 	# )
 	# stage 2
 	learn_knn(
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/training_dataset.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/classifier_stage_2/training_dataset.csv',
 		os.path.join(directories.stage_2_saved_models, 'knn.pkl')
 	)

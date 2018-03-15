@@ -76,7 +76,7 @@ def get_processed_data_file_header_segregation(for_training = False):
 	features.sort()
 	# required properties
 	properties = [
-		EpisodeProperties.associated_client.value,
+		EpisodeProperties.associated_client__mac.value,
 	]
 
 	if for_training:
@@ -85,8 +85,25 @@ def get_processed_data_file_header_segregation(for_training = False):
 		return features, properties
 
 
+def get_required_header(for_training = False):
+	header = get_processed_data_file_header_segregation(for_training)
+
+	if for_training:
+		head = header[0] + header[2] + header[1]
+	else:
+		head = header[0] + header[1]
+
+
 def get_training_label_header():
 	return 'training_label'
+
+
+def get_cluster_label_header():
+	return 'cluster_label'
+
+
+def get_dataset_label_header():
+	return 'dataset_label'
 
 
 if __name__ == '__main__':

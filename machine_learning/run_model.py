@@ -49,10 +49,10 @@ def run(model_file: str, in_file: str, out_file: str, stage: int = None):
 	if stage is not None:
 		mapping = None
 		if stage == 1:
-			from machine_learning.preprocessing.stage_1.prepare_dataset import get_training_labels
+			from machine_learning.preprocessing.classifier_stage_1.prepare_dataset import get_training_labels
 			mapping = get_training_labels()
 		if stage == 2:
-			from machine_learning.preprocessing.stage_2.prepare_dataset import get_training_labels
+			from machine_learning.preprocessing.classifier_stage_2.prepare_dataset import get_training_labels
 			mapping = get_training_labels()
 
 		if mapping is not None:
@@ -77,8 +77,8 @@ def run(model_file: str, in_file: str, out_file: str, stage: int = None):
 
 if __name__ == '__main__':
 	run(
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/saved_models/stage_2/bagging.pkl',
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/data/stage_2/iitb_reduced_testing_dataset.csv',
-		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase/machine_learning/output/iitb_test_predictions_bagging.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase__python/machine_learning/saved_models/classifier_stage_2/random_forest.pkl',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase__python/machine_learning/data/test_4_andr_reduced.csv',
+		'/Users/gursimran/Workspace/active-scanning-cause-analysis/codebase__python/machine_learning/output/test_4_andr.csv',
 		stage = 2
-	)
+		)

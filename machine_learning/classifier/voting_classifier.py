@@ -21,7 +21,7 @@ def learn_voting_classifier(stratified_data_csv_file, save_filepath):
 	# do a 70-30 train-test split.
 	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.30, random_state = 10)
 
-	# classifiers to test
+	# classifier to test
 	classifiers = [
 		# ('dt', DecisionTreeClassifier(max_depth = None, min_samples_split = 2)),
 		('knn', KNeighborsClassifier(n_neighbors = 5)),

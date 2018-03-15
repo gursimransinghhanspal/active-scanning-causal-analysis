@@ -1,7 +1,12 @@
+import datetime
 import enum
 import os
+from uuid import uuid4
 
 import pandas as pd
+from numpy import NaN
+
+from preprocessor import directories
 
 
 class RBSCauses(enum.Enum):
@@ -34,10 +39,19 @@ class EpisodeFeatures(enum.Enum):
 
 
 class EpisodeProperties(enum.Enum):
+	frames_file__uuid = 'frames_file__uuid'
+	episode__id = 'episode__id'
 	start__time_epoch = 'start__time_epoch'
 	end__time_epoch = 'end__time_epoch'
 	episode_duration = 'episode_duration'
-	associated_client = 'associated_client'
+	associated_client__mac = 'associated_client__mac'
+
+
+class MappingParameters(enum.Enum):
+	timestamp__date = 'timestamp__date'
+	timestamp__time = 'timestamp__time'
+	frames_file__name = 'frames_file__name'
+	frames_file__uuid = 'frames_file__uuid'
 
 
 def get_skeleton_features_dictionary(default_to_list = False):
@@ -141,17 +155,17 @@ def define_episodes_from_frames(dataframe: pd.DataFrame):
 	for episode_index, current_epoch in enumerate(episode_start_epochs):
 		dataframe.loc[
 			(dataframe['frame.time_epoch'] <= current_epoch) & (dataframe['frame.time_epoch'] > last_epoch),
-			'episode_index'
+			EpisodeProperties.episode__id.value
 		] = episode_index
 		last_epoch = current_epoch
 
 	# make sure all episodes have non negative indexes
 	# this also removes frames that could not be assigned to any episode
-	dataframe = dataframe[(dataframe['episode_index'] > -1)]
-	dataframe['episode_index'] = dataframe['episode_index'].astype(int)
+	dataframe = dataframe[(dataframe[EpisodeProperties.episode__id.value] > -1)]
+	dataframe[EpisodeProperties.episode__id.value] = dataframe[EpisodeProperties.episode__id.value].astype(int)
 
 	# list of episode indexes
-	ep_indexes = list(dataframe['episode_index'].unique())
+	ep_indexes = list(dataframe[EpisodeProperties.episode__id.value].unique())
 
 	return dataframe, len(ep_indexes), ep_indexes
 
@@ -172,9 +186,7 @@ def filter_out_irrelevant_frames(dataframe: pd.DataFrame, clients: list, access_
 	#   OR
 	#   - packet type is `beacon` AND the source address or transmitter address is in access points
 	if access_points is not None:
-		from pprint import pprint
-		print('• Using access points to filter beacon packets. Access points:')
-		pprint(access_points, indent = 4)
+		print('• Using access points to filter beacon packets. Access points:', access_points)
 
 		_df = dataframe[
 			((dataframe['wlan.sa'].isin(clients)) |
@@ -249,7 +261,7 @@ def find_all_client_mac_addresses(dataframe):
 	return client_mac_addresses
 
 
-def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str):
+def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str, episode__id, frames_file__uuid):
 	"""
 	Computes all the features required by the machine learning model for an episode dataframe
 	Computes all the episode properties required for processing the output of ML model
@@ -270,6 +282,21 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 		1. EpisodeFeatures.rssi__mean
 		2. EpisodeFeatures.rssi__sd
 		"""
+
+		# make sure every available value is a float
+		try:
+			client_origin_df['radiotap.dbm_antsignal'] = client_origin_df['radiotap.dbm_antsignal'].astype(float,
+			                                                                                               errors = 'raise')
+		except:
+			from uuid import uuid4
+			file_id = uuid4()
+			file_name = str(file_id) + '.csv'
+			file_path = os.path.join(directories.temporary, file_name)
+
+			client_origin_df.to_csv(file_path, index = False, header = True)
+			print('† Exception raised while converting `radiotap.dbm_antsignal` to float for episode. '
+			      'The episode is saved to {:s}'.format(file_name))
+			return NaN, NaN
 
 		_rssi_mean = client_origin_df['radiotap.dbm_antsignal'].mean()
 		_rssi_stddev = client_origin_df['radiotap.dbm_antsignal'].std()
@@ -491,9 +518,11 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 
 	def __p2():
 		"""
-		1. EpisodeProperties.associated_client
+		1. EpisodeProperties.associated_client__mac
+		2. EpisodeProperties.episode__id
+		3. EpisodeProperties.frames_file__uuid
 		"""
-		return the_client
+		return the_client, episode__id, frames_file__uuid
 
 	out_features[EpisodeFeatures.rssi__mean], out_features[EpisodeFeatures.rssi__sd] = __f1()
 	out_features[EpisodeFeatures.frame__loss_rate] = __f2()
@@ -508,7 +537,8 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str)
 
 	out_properties[EpisodeProperties.start__time_epoch], out_properties[EpisodeProperties.end__time_epoch], \
 	out_properties[EpisodeProperties.episode_duration] = __p1()
-	out_properties[EpisodeProperties.associated_client] = __p2()
+	out_properties[EpisodeProperties.associated_client__mac], out_properties[EpisodeProperties.episode__id], \
+	out_properties[EpisodeProperties.frames_file__uuid] = __p2()
 
 	return out_features, out_properties
 
@@ -678,48 +708,49 @@ def convert_ep_characteristics_to_dataframe(episode_characteristics: list):
 
 # #############################################################################
 
-# get current directory
-PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
-# frames csv directory
-FRAMES_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'frames_csv_files')
-# processed episode csv directory
-PROCESSED_EPISODE_CSV_FILES_DIR = os.path.join(PROJECT_DIR, 'processed_episode_csv_files')
-
-# Supported Extensions - only files with supported extensions shall be read
-SUPPORTED_EXTS = ['.csv', ]
-
-
 def prepare_environment():
 	# create directories if they don't exist
-	if not os.path.exists(FRAMES_CSV_FILES_DIR) or not os.path.isdir(FRAMES_CSV_FILES_DIR):
-		os.mkdir(FRAMES_CSV_FILES_DIR)
-	if not os.path.exists(PROCESSED_EPISODE_CSV_FILES_DIR) or not os.path.isdir(PROCESSED_EPISODE_CSV_FILES_DIR):
-		os.mkdir(PROCESSED_EPISODE_CSV_FILES_DIR)
+	if not os.path.exists(directories.frames_csv_files) or not os.path.isdir(directories.frames_csv_files):
+		os.mkdir(directories.frames_csv_files)
+	if not os.path.exists(directories.semi_processed_frames_csv_files) or not os.path.isdir(
+			directories.semi_processed_frames_csv_files):
+		os.mkdir(directories.semi_processed_frames_csv_files)
+	if not os.path.exists(directories.processed_episode_csv_files) or not os.path.isdir(
+			directories.processed_episode_csv_files):
+		os.mkdir(directories.processed_episode_csv_files)
+	if not os.path.exists(directories.temporary) or not os.path.isdir(directories.temporary):
+		os.mkdir(directories.temporary)
 
-	# make sure FRAMES_CSV_FILES_DIR is not empty
-	if len(os.listdir(FRAMES_CSV_FILES_DIR)) == 0:
+	# make sure directories.frames_csv_files is not empty
+	if len(os.listdir(directories.frames_csv_files)) == 0:
 		print('"{:s}" is empty! Please create `frames csv file` and try again!'.format(
-			FRAMES_CSV_FILES_DIR))
+			directories.frames_csv_files))
 		exit(0)
-	# make sure PROCESSED_EPISODE_CSV_FILES_DIR is empty
-	if len(os.listdir(PROCESSED_EPISODE_CSV_FILES_DIR)) != 0:
-		print('"{:s}" is not empty! Please empty the directory and try again!'.format(PROCESSED_EPISODE_CSV_FILES_DIR))
+	# make sure directories.semi_processed_frames_csv_files is empty
+	if len(os.listdir(directories.semi_processed_frames_csv_files)) != 0:
+		print('"{:s}" is not empty! Please empty the directory and try again!'.format(
+			directories.semi_processed_frames_csv_files))
+		exit(0)
+	# make sure directories.processed_episode_csv_files is empty
+	if len(os.listdir(directories.processed_episode_csv_files)) != 0:
+		print('"{:s}" is not empty! Please empty the directory and try again!'.format(
+			directories.processed_episode_csv_files))
 		exit(0)
 
 
 def get_frames_csv_file_names():
 	"""
-	Read all the file names present in the FRAMES_CSV_FILES_DIR
+	Read all the file names present in the directories.frames_csv_files
 	"""
 
 	frames_csv_file_names = list()
-	for file in os.listdir(FRAMES_CSV_FILES_DIR):
-		if os.path.splitext(file)[1] in SUPPORTED_EXTS:
+	for file in os.listdir(directories.frames_csv_files):
+		if os.path.splitext(file)[1] in directories.csv_files_extensions:
 			frames_csv_file_names.append(file)
 
 	# sort so that we always read in a predefined order
 	# key: smallest file first
-	frames_csv_file_names.sort(key = lambda f: os.path.getsize(os.path.join(FRAMES_CSV_FILES_DIR, f)))
+	frames_csv_file_names.sort(key = lambda f: os.path.getsize(os.path.join(directories.frames_csv_files, f)))
 	return frames_csv_file_names
 
 
@@ -748,11 +779,16 @@ def read_frames_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines
 		warn_bad_lines = warn_bad_lines
 	)
 
+	# drop unnecessary columns
+	csv_dataframe.drop(columns = ['radiotap.dbm_antsignal_2', 'radiotap.dbm_antsignal_3', 'radiotap.dbm_antsignal_4',
+	                              'radiotap.dbm_antsignal_5', ], inplace = True)
+
 	print('• Dataframe shape (on read):', csv_dataframe.shape)
 
 	# sanitize data
 	#   - drop not available values
 	csv_dataframe.dropna(axis = 0, subset = ['frame.time_epoch', 'radiotap.dbm_antsignal', ], inplace = True)
+	print('• Dataframe shape (after dropping null values):', csv_dataframe.shape)
 
 	# sort the dataframe by `frame.time_epoch`
 	csv_dataframe.sort_values(
@@ -766,10 +802,12 @@ def read_frames_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines
 	return csv_dataframe
 
 
-def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_rbs_tags, separate_client_files):
+def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_rbs_tags, separate_client_files,
+                           mapping_file):
 	"""
 	Processes a given frame csv file to generate episode characteristics.
 
+	:param mapping_file:
 	:param frames_csv_name:
 	:param access_points:
 	:param clients:
@@ -778,14 +816,44 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 	:return:
 	"""
 
+	# current time
+	timestamp = datetime.datetime.now()
+
 	# frames csv file
-	frames_csv_file = os.path.join(FRAMES_CSV_FILES_DIR, frames_csv_name)
+	frames_csv_file = os.path.join(directories.frames_csv_files, frames_csv_name)
 	# read the frames csv file
 	main_dataframe = read_frames_csv_file(frames_csv_file)
-	print('• Dataframe shape (after dropping null values):', main_dataframe.shape)
+	frames_file__uuid = str(uuid4())
+	frames_file__uuid = timestamp.strftime('%d%m%Y%H%M%S') + '.' + frames_file__uuid
+	print('• UUID generated for the file {:s}: {:s}'.format(frames_csv_name, frames_file__uuid))
 
 	if clients is None:
 		clients = find_all_client_mac_addresses(main_dataframe)
+
+	# output column orders
+	semi_processed_output_column_order = main_dataframe.columns.values.tolist()
+	semi_processed_output_column_order.sort()
+	semi_processed_output_column_order.append(EpisodeProperties.episode__id.value)
+	semi_processed_output_column_order.append(EpisodeProperties.associated_client__mac.value)
+	semi_processed_output_column_order.append(EpisodeProperties.frames_file__uuid.value)
+
+	processed_output_column_order = get_output_column_order()
+	if assign_rbs_tags:
+		processed_output_column_order.append('rbs__cause_tags')
+
+	# update mapping file
+	mapping = {
+		MappingParameters.timestamp__date.value: [timestamp.strftime('%d-%m-%Y'), ],
+		MappingParameters.timestamp__time.value: [timestamp.strftime('%H-%M-%S'), ],
+		MappingParameters.frames_file__name.value: [frames_csv_name, ],
+		MappingParameters.frames_file__uuid.value: [frames_file__uuid, ],
+	}
+	mapping_df = pd.DataFrame.from_dict(mapping)
+	mapping_columns = mapping_df.columns.values.tolist()
+	mapping_columns.sort()
+	mapping_headers = not os.path.exists(mapping_file)
+	mapping_df.to_csv(mapping_file, mode = 'a', index = False, header = mapping_headers,
+	                  columns = mapping_columns)
 
 	# all episodes characteristics as list of 2-tuples
 	#   - 1. features
@@ -805,7 +873,7 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 		# 2.b. filter frames belonging to the client
 		dataframe = filter_client_frames(dataframe, the_client)
 		if dataframe is None:
-			print('• No relevant frames found for client {:s} -'.format(the_client))
+			print('• No relevant frames found for client {:s}'.format(the_client))
 			continue
 
 		# 2.c. define episodes on frames
@@ -820,11 +888,25 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 			print('• Episodes generated for client {:s} -'.format(the_client), 0)
 			continue
 
+		# 2.c.1 save semi_processed csv file for later (can be used to link predictions for episodes back to frames)
+		#   - add client to semi processed csv
+		#   - add frames file uid to semi processed csv
+		dataframe[EpisodeProperties.associated_client__mac.value] = the_client
+		dataframe[EpisodeProperties.frames_file__uuid.value] = frames_file__uuid
+		# write to file
+		output_csvname = frames_file__uuid + '.csv'
+		output_csvfile = os.path.join(directories.semi_processed_frames_csv_files, output_csvname)
+		dataframe.to_csv(output_csvfile, sep = ',', mode = 'a', index = False, header = True,
+		                 columns = semi_processed_output_column_order)
+		# drop unnecessary columns
+		dataframe.drop(columns = [EpisodeProperties.associated_client__mac.value,
+		                          EpisodeProperties.frames_file__uuid.value], inplace = True)
+
 		# 2.d. for each episode...
 		for episode_idx in ep_indexes:
 			# 2.d.1. get all frames belonging to the episode
 			_episode_df = dataframe[
-				(dataframe['episode_index'] == episode_idx)
+				(dataframe[EpisodeProperties.episode__id.value] == episode_idx)
 			]
 			# 2.d.2. sort the dataframe by `frame.time_epoch`
 			_episode_df.sort_values(
@@ -836,7 +918,8 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 			)
 
 			# 2.d.3. compute episode characteristics
-			ep_features, ep_properties = compute_episode_characteristics(_episode_df, the_client)
+			ep_features, ep_properties = compute_episode_characteristics(_episode_df, the_client, episode_idx,
+			                                                             frames_file__uuid)
 
 			# 2.d.4. append to output
 			ep_characteristics_list.append((ep_features, ep_properties))
@@ -853,30 +936,28 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 		ep_characteristics_df = assign_rule_based_system_tags_to_episodes(ep_characteristics_df)
 
 	# 5. generate a csv file as an output
-	output_column_order = get_output_column_order()
-	if assign_rbs_tags:
-		output_column_order.append('rbs__cause_tags')
-
 	if separate_client_files:
 		for the_client in clients:
 			_df = ep_characteristics_df[
-				(ep_characteristics_df[EpisodeProperties.associated_client.value] == the_client)
+				(ep_characteristics_df[EpisodeProperties.associated_client__mac.value] == the_client)
 			]
 			name, extension = os.path.splitext(os.path.basename(frames_csv_file))
 			output_csvname = str.format('{:s}_{:s}{:s}', name, the_client, extension)
-			output_csvfile = os.path.join(PROCESSED_EPISODE_CSV_FILES_DIR, output_csvname)
-			_df.to_csv(output_csvfile, sep = ',', index = False, columns = output_column_order)
+			output_csvfile = os.path.join(directories.processed_episode_csv_files, output_csvname)
+			_df.to_csv(output_csvfile, sep = ',', index = False, header = True, columns = processed_output_column_order)
 	else:
 		output_csvname = os.path.basename(frames_csv_file)
-		output_csvfile = os.path.join(PROCESSED_EPISODE_CSV_FILES_DIR, output_csvname)
-		ep_characteristics_df.to_csv(output_csvfile, sep = ',', index = False, columns = output_column_order)
+		output_csvfile = os.path.join(directories.processed_episode_csv_files, output_csvname)
+		ep_characteristics_df.to_csv(output_csvfile, sep = ',', index = False, header = True,
+		                             columns = processed_output_column_order)
 
 
 def process_frame_csv_files(frames_csv_file_names: list, access_points, clients, assign_rbs_tags,
-                            separate_client_files):
+                            separate_client_files, mapping_file):
 	"""
 	Run `process_frame_csv_file` for multiple files sequentially.
 
+	:param mapping_file:
 	:param frames_csv_file_names:
 	:param access_points:
 	:param clients: `None` -- process all clients
@@ -888,16 +969,19 @@ def process_frame_csv_files(frames_csv_file_names: list, access_points, clients,
 	for idx, frames_csv_name in enumerate(frames_csv_file_names):
 		print('Started processing file: {:s}'.format(frames_csv_name))
 		process_frame_csv_file(frames_csv_name, access_points = access_points, clients = clients,
-		                       assign_rbs_tags = assign_rbs_tags, separate_client_files = separate_client_files)
+		                       assign_rbs_tags = assign_rbs_tags, separate_client_files = separate_client_files,
+		                       mapping_file = mapping_file)
 		print('-' * 40)
 		print()
 
 
-def main(access_points = None, clients = None, assign_rbs_tags = True, separate_client_files = False):
+def main(access_points = None, clients = None, assign_rbs_tags = True, separate_client_files = False,
+         mapping_file = directories.conversion_mapping_file):
 	prepare_environment()
 	frames_csv_file_names = get_frames_csv_file_names()
 	process_frame_csv_files(frames_csv_file_names, access_points = access_points, clients = clients,
-	                        assign_rbs_tags = assign_rbs_tags, separate_client_files = separate_client_files)
+	                        assign_rbs_tags = assign_rbs_tags, separate_client_files = separate_client_files,
+	                        mapping_file = mapping_file)
 
 
 if __name__ == '__main__':
@@ -906,12 +990,15 @@ if __name__ == '__main__':
 
 	# client devices to process for
 	_clients = [
+
 	]
 
 	# access points
 	_access_points = [
+
 	]
 
 	#   - clients = None, to process all clients
 	#   - access points = None, to use all beacon frames
-	main(clients = None, access_points = None, assign_rbs_tags = False, separate_client_files = False)
+	main(clients = _clients, access_points = _access_points, assign_rbs_tags = False, separate_client_files = False,
+	     mapping_file = directories.conversion_mapping_file)

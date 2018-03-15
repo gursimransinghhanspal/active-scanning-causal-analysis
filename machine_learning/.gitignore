@@ -1,7 +1,6 @@
 temporary/
 output/
-data/stage_1/
-data/stage_2/
+data/
 processed_csv_files/testing/
 processed_csv_files/training/ap_side_procedures/
 processed_csv_files/training/beacon_loss/

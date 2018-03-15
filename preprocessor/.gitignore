@@ -1,4 +1,5 @@
 .env
+conversion_mapping.csv
 
 capture_files/
 frames_csv_files/

@@ -21,15 +21,16 @@ __TRAINING_CAUSE_PSCAN_UNASSOC_DIR_NAME = 'periodic_scan_unassociated'
 __TRAINING_CAUSE_PWR_STATE_DIR_NAME = 'power_state_low_to_high'
 
 __DATA_DIR_NAME = 'data'
-__DATA_STAGE_1_DIR_NAME = 'stage_1'
-__DATA_STAGE_2_DIR_NAME = 'stage_2'
+__DATA_STAGE_1_DIR_NAME = 'classifier_stage_1'
+__DATA_STAGE_2_DIR_NAME = 'classifier_stage_2'
+__DATA_CLUSTER_DIR_NAME = 'cluster'
 __LABELED_DATA_CSV_FILE_NAME = 'labeled_data.csv'
 __UNLABELED_DATA_CSV_FILE_NAME = 'unlabeled_data.csv'
 __STRATIFIED_DATA_CSV_FILE_NAME = 'stratified_data.csv'
 
 __SAVED_MODEL_DIR_NAME = 'saved_models'
-__STAGE_1_SAVED_MODEL_DIR_NAME = 'stage_1'
-__STAGE_2_SAVED_MODEL_DIR_NAME = 'stage_2'
+__STAGE_1_SAVED_MODEL_DIR_NAME = 'classifier_stage_1'
+__STAGE_2_SAVED_MODEL_DIR_NAME = 'classifier_stage_2'
 
 __TEMPORARY_DIR_NAME = 'temporary'
 
@@ -51,6 +52,7 @@ training_cause_pwr_state = os.path.join(processed_files_training, __TRAINING_CAU
 data = os.path.join(project, __DATA_DIR_NAME)
 data_stage_1 = os.path.join(data, __DATA_STAGE_1_DIR_NAME)
 data_stage_2 = os.path.join(data, __DATA_STAGE_2_DIR_NAME)
+data_cluster = os.path.join(data, __DATA_CLUSTER_DIR_NAME)
 stage_1_unlabeled_data_csv_file = os.path.join(data_stage_1, __UNLABELED_DATA_CSV_FILE_NAME)
 stage_1_labeled_data_csv_file = os.path.join(data_stage_1, __LABELED_DATA_CSV_FILE_NAME)
 stage_1_stratified_data_csv_file = os.path.join(data_stage_1, __STRATIFIED_DATA_CSV_FILE_NAME)
