@@ -68,59 +68,7 @@ def get_processed_csv_file_names(directory_path):
 	return processed_csv_file_names
 
 
-def identify_pscans_using_stage_1_classifier(infile, outfile, classifier_filepath, for_training):
-	"""
-	Removes periodic scan instances from the training dataset using stage 1 classifier
-	"""
 
-	def remove_unassociated_pscans(_dataframe, _pred):
-		pass
-
-	def remove_pscans(_dataframe, pred):
-		# stage 1 training labels
-		stage_1_training_labels = get_stage_1_training_labels()
-
-		indexes_to_drop = list()
-		for idx, label in enumerate(pred):
-			if label == stage_1_training_labels[constants.ASCause.pscan_unassoc]:
-				indexes_to_drop.append(idx)
-
-		for idx, label in enumerate(pred):
-			if label == stage_1_training_labels[constants.ASCause.pscan_assoc]:
-				indexes_to_drop.append(idx)
-
-		indexes_to_keep = set(range(_dataframe.shape[0])) - set(indexes_to_drop)
-		return _dataframe.take(list(indexes_to_keep))
-
-	infile = os.path.abspath(infile)
-	outfile = os.path.abspath(outfile)
-	classifier_filepath = os.path.abspath(classifier_filepath)
-	classifier = load_model(classifier_filepath)
-
-	# read the data to predict labels for
-	features_x, _ = read_dataset_csv_file_as_np_arrays(filepath = infile, for_training = False)
-	y_pred = classifier.predict(features_x)
-
-	# some insight
-	n_pred = y_pred.shape[0]
-	print('• Periodic Scans prediction count: {}'.format(np.bincount(y_pred.astype(int))))
-	print('• Periodic Scans prediction proportion: {}'.format(np.divide(np.bincount(y_pred.astype(int)), n_pred)))
-
-	# read in the datafile
-	dataframe = helpers.read_csv_file(infile)
-	print('• Dataframe shape before dropping identified pscans:', dataframe.shape)
-	# remove per_scans
-	dataframe = remove_pscans(dataframe, y_pred)
-	print('• Dataframe shape after dropping identified pscans:', dataframe.shape)
-
-	# write the file back
-	if for_training:
-		head_features, head_training, head_properties = get_processed_data_file_header_segregation(for_training = True)
-		header = head_features + head_properties + head_training
-	else:
-		head_features, head_properties = get_processed_data_file_header_segregation(for_training = False)
-		header = head_features + head_properties
-	dataframe.to_csv(outfile, columns = header, header = True, index = False, mode = 'w')
 
 
 if __name__ == '__main__':

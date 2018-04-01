@@ -15,17 +15,17 @@ class ASCause(enum.Enum):
 	pwr_state = 'power_state_low_to_high'
 
 
-def get_active_scanning_causes_as_list():
-	"""
-	Returns all active scanning causes as a list
-	"""
-
-	active_scanning_causes = [
-		cause for cause in ASCause
-	]
-	# sort so the order remains same every time
-	active_scanning_causes.sort(key = lambda k: k.name)
-	return active_scanning_causes
+# def get_active_scanning_causes_as_list():
+# 	"""
+# 	Returns all active scanning causes as a list
+# 	"""
+#
+# 	active_scanning_causes = [
+# 		cause for cause in ASCause
+# 	]
+# 	# sort so the order remains same every time
+# 	active_scanning_causes.sort(key = lambda k: k.name)
+# 	return active_scanning_causes
 
 
 def get_training_data_directories():
@@ -104,6 +104,10 @@ def get_cluster_label_header():
 
 def get_dataset_label_header():
 	return 'dataset_label'
+
+
+def get_training_data_file_prefix():
+	return 'training_'
 
 
 if __name__ == '__main__':

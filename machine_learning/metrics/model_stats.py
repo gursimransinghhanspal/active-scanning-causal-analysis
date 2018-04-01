@@ -14,12 +14,17 @@ def compute_basic_stats(y_true, y_pred):
 
 def compute_roc_score(y_true, y_pred):
 	n_labels = np.unique(y_true).shape[0]
+	print(n_labels)
+	print(np.unique(y_true))
 	y_true_binarized_labels = label_binarize(y_true, classes = range(n_labels))
 	y_pred_binarized_labels = label_binarize(y_pred, classes = range(n_labels))
 	print('ROC AUC Score:')
 	for i in range(n_labels):
-		print('Class {0} v/s Rest: {1}'.format(i, roc_auc_score(
-			y_true_binarized_labels[:, i], y_pred_binarized_labels[:, i], average = None)))
+		try:
+			print('Class {0} v/s Rest: {1}'.format(i, roc_auc_score(
+				y_true_binarized_labels[:, i], y_pred_binarized_labels[:, i], average = None)))
+		except Exception:
+			pass
 
 
 # Plot the normalized confusion matrix.

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from machine_learning.aux.constants import get_processed_data_file_header_segregation
+from machine_learning.aux.constants import get_training_label_header
 
 
 def read_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines: bool = True):
@@ -29,7 +29,7 @@ def read_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines: bool 
 	return csv_dataframe
 
 
-def read_dataset_csv_file_as_np_arrays(filepath, for_training: bool):
+def read_dataset_csv_file_as_np_arrays(filepath, features, for_training: bool):
 	"""
 	Read a dataset csv file.
 
@@ -41,17 +41,17 @@ def read_dataset_csv_file_as_np_arrays(filepath, for_training: bool):
 	dataframe = read_csv_file(filepath)
 
 	if for_training:
-		feature_set, target_set, extra_properties = get_processed_data_file_header_segregation(for_training = True)
+		# feature_set, target_set, extra_properties = get_processed_data_file_header_segregation(for_training = True)
 
-		features_x = np.array(dataframe[feature_set])
-		target_y = np.array(dataframe[target_set])
-		extra_z = np.array(dataframe[extra_properties])
+		features_x = np.array(dataframe[features])
+		target_y = np.array(dataframe[get_training_label_header()])
+		# extra_z = np.array(dataframe[extra_properties])
 
 		target_y = np.reshape(target_y, target_y.shape[0])
-		return features_x, target_y, extra_z
+		return features_x, target_y
 	else:
-		feature_set, extra_properties = get_processed_data_file_header_segregation(for_training = False)
+		# feature_set, extra_properties = get_processed_data_file_header_segregation(for_training = False)
 
-		features_x = np.array(dataframe[feature_set])
-		extra_z = np.array(dataframe[extra_properties])
-		return features_x, extra_z
+		features_x = np.array(dataframe[features])
+		# extra_z = np.array(dataframe[extra_properties])
+		return features_x

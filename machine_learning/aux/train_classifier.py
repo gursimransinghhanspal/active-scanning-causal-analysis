@@ -1,24 +1,23 @@
-import itertools
 import os
 
 import numpy as np
-from sklearn.ensemble import BaggingClassifier, RandomForestClassifier, VotingClassifier
-from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, f1_score, make_scorer, precision_score, recall_score, roc_auc_score
-from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from machine_learning.aux.persist import save_model
 from machine_learning.metrics import model_stats
 
 
-def learn(training_data_infile, trained_model_outfile = None, display_metrics: bool = False, gs_verbose: int = 0,
-          n_jobs = 1):
+def train_classifier_using_grid_search(classifier_name: str, classifier_object, gs_params: dict, training_data_infile,
+                                       trained_model_outfile = None, display_metrics: bool = False, gs_verbose: int = 0,
+                                       n_jobs = 1, normalize: bool = False):
 	"""
-	Trains a voting classifier
+	Trains a given classifier model
 
+	:param classifier_name:
+	:param classifier_object:
+	:param gs_params: Parameters for GridSearchCV
 	:param training_data_infile: Csv file containing training data (labeled)
 								 • The last column should be training labels
 								 • Csv file can contain header (line 1 is skipped)
@@ -28,14 +27,15 @@ def learn(training_data_infile, trained_model_outfile = None, display_metrics: b
 	:param display_metrics: whether to print model metrics or not
 	:param gs_verbose: verbosity of GridSearch
 	:param n_jobs: GridSearch parallel jobs
-	:return:
+	:param normalize:
+	:return: trained model
 	"""
 
 	training_data_infile = os.path.abspath(training_data_infile)
 
 	# start
 	print('-' * 25)
-	print('Starting learning for `Voting Classifier`')
+	print('Starting learning for `{:s}`'.format(classifier_name))
 	print('training_infile: {:s}'.format(str(os.path.relpath(training_data_infile))))
 	print('trained_outfile: {:s}'.format(
 		str(os.path.relpath(trained_model_outfile)) if trained_model_outfile is not None else 'None'
@@ -47,46 +47,27 @@ def learn(training_data_infile, trained_model_outfile = None, display_metrics: b
 	data = np.genfromtxt(training_data_infile, delimiter = ',', skip_header = 1)
 	features_x, target_y = data[:, :-1], data[:, -1]
 
+	# print(features_x.shape)
+	# print(target_y.shape)
+
 	# do a 70-30 train-test split.
 	x_train, x_test, y_train, y_test = train_test_split(features_x, target_y, test_size = 0.30)
 
-	scaler = StandardScaler()
-	features_x = scaler.fit_transform(features_x)
-	x_train = scaler.fit_transform(x_train)
-	x_test = scaler.fit_transform(x_test)
+	# print(x_train.shape)
+	# print(x_test.shape)
+	# print(y_train.shape)
+	# print(y_test.shape)
 
-	# classifier to test
-	classifiers = [
-		# ('dt', DecisionTreeClassifier(max_depth = None, min_samples_split = 2)),
-		('knn', KNeighborsClassifier(n_neighbors = 5)),
-		# ('lin_svm', SVC(C = 100.0, kernel = 'linear')),
-		# ('logreg', LogisticRegression(C = '100.0', max_iter = '200', penalty = 'l1')),
-		('nb', GaussianNB()),
-		# ('rbf_svm', SVC(C = 100.0, gamma = 0.1, kernel = 'rbf')),
-		('rf', RandomForestClassifier(max_depth = 20, min_samples_split = 5, n_estimators = 30)),
-		('sgd', SGDClassifier(alpha = 0.0001, loss = 'log', max_iter = 200, penalty = 'l2')),
-		('bagging', BaggingClassifier(
-			base_estimator = None, max_features = 0.75, max_samples = 0.5, n_estimators = 30
-		)),
-		# ('boosting', GradientBoostingClassifier(
-		# 	learning_rate = 0.1, max_depth = 5, min_samples_split = 5, n_estimators = 300
-		# ))
-	]
+	if normalize:
+		scaler = StandardScaler()
+		features_x = scaler.fit_transform(features_x)
+		x_train = scaler.fit_transform(x_train)
+		x_test = scaler.fit_transform(x_test)
 
-	# create all possible combinations
-	combinations_ = list()
-	for i in range(len(classifiers)):
-		combinations_.extend(list(itertools.combinations(classifiers, i + 1)))
-
-	# testing parameters
-	params = {
-		'estimators': combinations_,
-		'voting': ['soft', 'hard', ],
-	}
 	stratified_k_fold = StratifiedKFold(n_splits = 10)
-	classifier = RandomizedSearchCV(
-		VotingClassifier(estimators = None),
-		params,
+	classifier = GridSearchCV(
+		classifier_object(),
+		gs_params,
 		cv = stratified_k_fold,
 		scoring = {
 			'accuracy': make_scorer(accuracy_score),
@@ -100,20 +81,22 @@ def learn(training_data_infile, trained_model_outfile = None, display_metrics: b
 		n_jobs = n_jobs
 	)
 
-	classifier.fit(x_train, y_train)
-	best_classifier = classifier.best_estimator_
-	y_pred = best_classifier.predict(x_test)
+	# print best model metrics
+	if display_metrics:
+		classifier.fit(x_train, y_train)
+		best_classifier = classifier.best_estimator_
+		y_pred = best_classifier.predict(x_test)
 
-	print('Voting Classifier Statistics')
-	print('Best params: {}'.format(classifier.best_params_))
-	model_stats.compute_basic_stats(y_test, y_pred)
-	model_stats.compute_roc_score(y_test, y_pred)
-	model_stats.plot_normalized_confusion_matrix(
-		y_test, y_pred, 'Voting Classifier Normalized Confusion Matrix'
-	)
+		print('{:s} Classifier Statistics'.format(classifier_name))
+		print('Best params: {}'.format(classifier.best_params_))
+		model_stats.compute_basic_stats(y_test, y_pred)
+		model_stats.compute_roc_score(y_test, y_pred)
+		model_stats.plot_normalized_confusion_matrix(
+			y_test, y_pred, '{:s} Classifier Normalized Confusion Matrix'.format(classifier_name)
+		)
 
 	# fit the classifier on the complete dataset once we get best parameters
-	complete_classifier = VotingClassifier(**classifier.best_params_)
+	complete_classifier = classifier_object(**classifier.best_params_)
 	complete_classifier.fit(features_x, target_y)
 
 	# save the model
@@ -129,7 +112,3 @@ def learn(training_data_infile, trained_model_outfile = None, display_metrics: b
 
 	print('-' * 25)
 	return complete_classifier
-
-
-if __name__ == '__main__':
-	pass

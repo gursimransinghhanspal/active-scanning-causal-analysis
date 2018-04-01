@@ -10,5 +10,4 @@ processed_csv_files/training/low_rssi/
 processed_csv_files/training/periodic_scan_associated/
 processed_csv_files/training/periodic_scan_unassociated/
 processed_csv_files/training/power_state_low_to_high/
-saved_models/stage_1/
-saved_models/stage_2/
+saved_models/

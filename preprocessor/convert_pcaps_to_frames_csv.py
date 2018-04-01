@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from preprocessor import directories
+from preprocessor.constants import FrameFields
 
 
 def prepare_environment():
@@ -25,66 +26,36 @@ def prepare_and_get_command_format_string():
 	"""
 	Use Tshark to convert capture files to csv format.
 	NOTE: use tshark version 2.2.13 for consistency
+
+	`wlan_mgt.fixed.status_code` is not required for machine learning flow, but it is required only when assigning
+	rbs tags for all the causes. Including it here since storage capacity is not a big concern.
 	"""
 
-	command = (
-		'tshark -E separator=, -T fields '
-		# '-e frame.number '
-		'-e frame.time_epoch '
-		# '-e frame.len '
-		# '-e wlan.duration '
-		# '-e wlan.bssid '
-		'-e wlan.ra '
-		'-e wlan.ta '
-		'-e wlan.sa '
-		'-e wlan.da '
-		# '-e wlan.seq '
-		# '-e wlan_mgt.ssid '
-		# '-e wlan_mgt.ds.current_channel '
-		# '-e wlan_mgt.qbss.scount '
-		# '-e wlan_mgt.fixed.reason_code '
-		'-e wlan_mgt.fixed.status_code '
-		# '-e wlan.fc.type '
-		'-e wlan.fc.type_subtype '
-		'-e wlan.fc.retry '
-		'-e wlan.fc.pwrmgt '
-		# '-e wlan.fc.moredata '
-		# '-e wlan.fc.frag '
-		# '-e wlan.fc.ds '
-		# '-e wlan.qos.priority '
-		# '-e wlan.qos.amsdupresent '
-		# '-e radiotap.channel.freq '
-		# '-e radiotap.mactime '
-		# '-e radiotap.datarate '
-		'-e radiotap.dbm_antsignal '
-		'-r \'{0}\' >> \'{1}\''
-	)
+	header_items = [item.value for item in FrameFields]
+
+	command = 'tshark -E separator=, -T fields '
+	for item in header_items:
+		command += '-e ' + item + ' '
+	command += '-r \'{0}\' >> \'{1}\''
 	return command
 
 
-def prepare_and_get_csv_header(command_format_string: str):
+def get_csv_header():
 	"""
 	Create a csv header string for the csv files
 	"""
 
-	split_command = command_format_string.split(' ')
-
-	# choose the elements which have `-e` as their previous element
-	# i.e., choose the property names to be extracted from the capture file
-	csv_header = list()
-	for i in range(1, len(split_command)):
-		if split_command[i - 1] == '-e':
-			csv_header.append(split_command[i])
+	header_items = [item.value for item in FrameFields]
 
 	# for MIMO devices, radiotap.dbm_antsignal is itself a comma separated field
 	# since handling this elegantly requires much more processing, we handle this by appending extra columns to
 	# the csv file which would not be used mostly.
 	# assuming MIMO 4x4 is the max (appending 4 extra headers [one for assurance])
 	for i in range(4):
-		csv_header.append('radiotap.dbm_antsignal_' + str(i + 2))
+		header_items.append(FrameFields.radiotap_dbm_antsignal.value + '_' + str(i + 2))
 
 	# join the list to form a comma separated string. also add `newline` char
-	csv_header_string = str.join(',', csv_header)
+	csv_header_string = str.join(',', header_items)
 	csv_header_string += '\n'
 	return csv_header_string
 
@@ -150,7 +121,7 @@ def generate_output_csv_files(capture_file_names: list, command_format_string: s
 def main():
 	prepare_environment()
 	command_format_string = prepare_and_get_command_format_string()
-	csv_file_header = prepare_and_get_csv_header(command_format_string)
+	csv_file_header = get_csv_header()
 	capture_file_names = get_capture_file_names()
 	generate_output_csv_files(capture_file_names, command_format_string, csv_file_header)
 

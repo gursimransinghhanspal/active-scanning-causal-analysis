@@ -1,173 +1,107 @@
 import datetime
-import enum
 import os
 from uuid import uuid4
 
+import numpy as np
 import pandas as pd
-from numpy import NaN
+from scipy.stats import linregress
 
-from preprocessor import directories
-
-
-class RBSCauses(enum.Enum):
-	low_rssi = 'd'
-	data_frame_loss = 'i'
-	power_state = 'e'
-	power_state_v2 = 'f'
-	ap_side_procedure = 'g'
-	client_deauth = 'm'
-	beacon_loss = 'h'
-	unsuccessful_association = 'a'
-	successful_association = 'c'
-	class_3_frames = 'b'
+from preprocessor import constants, directories
+from preprocessor.constants import EpisodeProperties, FrameFields, FrameSubtypes, WindowMetrics, \
+	WindowProperties
 
 
-class EpisodeFeatures(enum.Enum):
-	rssi__mean = 'rssi__mean'
-	rssi__sd = 'rssi__sd'
-	frame__loss_rate = 'frame__loss_rate'
-	frame__frequency = 'frame__frequency'
-	ap_deauth__count = 'ap_deauth__count'
-	client_deauth__count = 'client_deauth__count'
-	beacon__count = 'beacon__count'
-	max_consecutive_beacons__count = 'max_consecutive_beacons__count'
-	ack__count = 'ack__count'
-	null_dataframe__count = 'null_dataframe__count'
-	failure_assoc__count = 'failure_assoc__count'
-	success_assoc__count = 'success_assoc__count'
-	class_3_frames__count = 'class_3_frames__count'
-
-
-class EpisodeProperties(enum.Enum):
-	frames_file__uuid = 'frames_file__uuid'
-	episode__id = 'episode__id'
-	start__time_epoch = 'start__time_epoch'
-	end__time_epoch = 'end__time_epoch'
-	episode_duration = 'episode_duration'
-	associated_client__mac = 'associated_client__mac'
-
-
-class MappingParameters(enum.Enum):
-	timestamp__date = 'timestamp__date'
-	timestamp__time = 'timestamp__time'
-	frames_file__name = 'frames_file__name'
-	frames_file__uuid = 'frames_file__uuid'
-
-
-def get_skeleton_features_dictionary(default_to_list = False):
+def define_episodes_and_windows_from_frames(dataframe: pd.DataFrame):
 	"""
-	Returns a dictionary with all the episode features as keys
-	All the values are set by default to 0
-	"""
+	Definition of an episode:
+	  for each client whose frames have been captured by the sniffer, we partition captured AS frames corresponding to
+	  the client into non-overlapping episodes of AS. Specifically, if a PReq from a client is separated from its
+	  previous PReq in the capture by more than a second, we treat this PReq as the start of a new episode of AS by the
+	  client.
+	  Ideally, the duration of an episode is expected to be less than 1 second
 
-	skeleton_features = dict()
-	for _feature in EpisodeFeatures:
-		if default_to_list:
-			skeleton_features[_feature] = list()
-		else:
-			skeleton_features[_feature] = 0
+	Definition of a window:
+	  We derive metrics and simple rules to infer the cause of a given episode of AS. The metrics are calculated
+	  using a window of frames that precedes the AS episode. This window extends to the end of the episode of AS,
+	  of the same client, that preceded the current episode.
 
-	return skeleton_features
-
-
-def get_skeleton_properties_dictionary(default_to_list = False):
-	"""
-	Returns a dictionary all the episode properties as keys.
-	All the values are set by default to ''
-	"""
-
-	skeleton_properties = dict()
-	for _property in EpisodeProperties:
-		if default_to_list:
-			skeleton_properties[_property] = list()
-		else:
-			skeleton_properties[_property] = ''
-
-	return skeleton_properties
-
-
-def get_skeleton_rbs_causes_dictionary():
-	"""
-	Returns a dictionary all the rbs causes as keys.
-	All the values are set by default to False
-	"""
-
-	skeleton_causes = dict()
-	for _cause in RBSCauses:
-		skeleton_causes[_cause] = False
-	return skeleton_causes
-
-
-def get_output_column_order():
-	features = [item.value for item in EpisodeFeatures]
-	features.sort()
-
-	properties = [item.value for item in EpisodeProperties]
-	properties.sort()
-
-	output = list()
-	output.extend(features)
-	output.extend(properties)
-	return output
-
-
-def define_episodes_from_frames(dataframe: pd.DataFrame):
-	"""
-	Bundle frames into episodes by assigning a `episode_index` field to each frame.
+	Bundle frames into episodes and windows by assigning a `window_index` field to each frame.
 	Returns:
-		1. dataframe with 'episode_index' field
-		2. episode__count
-		3. episode__indexes
+		1. dataframe with `window__id` and `episode__id` field
+		2. count
+		3. indexes
 	"""
 
 	# filter: packet type = `probe request`
-	_df_preqs = dataframe[dataframe['wlan.fc.type_subtype'] == 4]
+	_df_preqs = dataframe[dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.probe_request.value]
+	# if no probe requests found return
+	if len(_df_preqs) == 0:
+		return None
+
 	# sort the dataframe by `frame.time_epoch`
 	_df_preqs.sort_values(
-		by = 'frame.time_epoch',
+		by = FrameFields.frame_time_epoch.value,
 		axis = 0,
 		ascending = True,
 		inplace = True,
 		na_position = 'last'
 	)
 
-	if len(_df_preqs) == 0:
-		return None
+	# define episode start and end boundaries
+	episode_bounds = list()
+	current_episode_bounds = [0, ]
+	previous_epoch = 0
+	for idx, series in _df_preqs.iterrows():
+		current_epoch = float(series[FrameFields.frame_time_epoch.value])
+		if abs(current_epoch - previous_epoch) > 1:
+			current_episode_bounds.append(previous_epoch)
+			episode_bounds.append(tuple(current_episode_bounds))
+			current_episode_bounds = [current_epoch, ]
+		previous_epoch = current_epoch
+	del _df_preqs
 
-	# reverse the probe request dataframe
-	_df_reverse: pd.DataFrame = _df_preqs.iloc[::-1]
+	# some metrics regarding episodes
+	_ep_durations = [abs(a - b) for a, b in episode_bounds]
+	_ep_durations = np.array(_ep_durations)
+	print('\t', '•• Number of episodes:', str(_ep_durations.shape[0]))
+	print('\t', '•• Max episode duration:', str(_ep_durations.max()))
+	print('\t', '•• Mean episode duration:', str(_ep_durations.mean()))
+	print('\t', '•• Std. dev for episode duration:', str(_ep_durations.std()))
 
-	# calculate episode windows
-	last_epoch = 0
-	episode_start_epochs = list()
-	for idx, series in _df_reverse.iterrows():
-		current_epoch = float(series['frame.time_epoch'])
-		if abs(last_epoch - current_epoch) > 1:
-			episode_start_epochs.append(current_epoch)
-		last_epoch = current_epoch
-	episode_start_epochs.sort()
+	# add `window__id` and `episode__id` field to all the frames
+	dataframe.loc[:, WindowProperties.window__id.value] = -1
+	dataframe.loc[:, EpisodeProperties.episode__id.value] = -1
+	# give sensible `window__id` and `episode__id` to respective frames
+	# NOTE: `window__id` and `episode__id` start from 1 not 0.
+	for _idx in range(1, len(episode_bounds)):
+		_previous_bound = episode_bounds[_idx - 1]
+		_current_bound = episode_bounds[_idx]
 
-	if len(episode_start_epochs) == 0:
-		return None
-
-	# add `episode_index` field to each frame
-	last_epoch = 0
-	for episode_index, current_epoch in enumerate(episode_start_epochs):
 		dataframe.loc[
-			(dataframe['frame.time_epoch'] <= current_epoch) & (dataframe['frame.time_epoch'] > last_epoch),
+			((dataframe[FrameFields.frame_time_epoch.value] > _previous_bound[1]) &
+			 (dataframe[FrameFields.frame_time_epoch.value] < _current_bound[0])),
+			WindowProperties.window__id.value
+		] = _idx
+
+		dataframe.loc[
+			((dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.probe_request.value) &
+			 (dataframe[FrameFields.frame_time_epoch.value] >= _current_bound[0]) &
+			 (dataframe[FrameFields.frame_time_epoch.value] <= _current_bound[1])),
 			EpisodeProperties.episode__id.value
-		] = episode_index
-		last_epoch = current_epoch
+		] = _idx
 
-	# make sure all episodes have non negative indexes
-	# this also removes frames that could not be assigned to any episode
-	dataframe = dataframe[(dataframe[EpisodeProperties.episode__id.value] > -1)]
+	# this removes frames that could not be assigned to any window or episode
+	dataframe[WindowProperties.window__id.value] = dataframe[WindowProperties.window__id.value].astype(int)
 	dataframe[EpisodeProperties.episode__id.value] = dataframe[EpisodeProperties.episode__id.value].astype(int)
+	dataframe = dataframe[
+		((dataframe[WindowProperties.window__id.value] > 0) |
+		 (dataframe[EpisodeProperties.episode__id.value] > 0))
+	]
 
-	# list of episode indexes
-	ep_indexes = list(dataframe[EpisodeProperties.episode__id.value].unique())
-
-	return dataframe, len(ep_indexes), ep_indexes
+	# indexes
+	indexes = list(dataframe[WindowProperties.window__id.value].unique())
+	indexes.sort()
+	return dataframe, len(indexes), indexes
 
 
 def filter_out_irrelevant_frames(dataframe: pd.DataFrame, clients: list, access_points: list = None):
@@ -189,20 +123,29 @@ def filter_out_irrelevant_frames(dataframe: pd.DataFrame, clients: list, access_
 		print('• Using access points to filter beacon packets. Access points:', access_points)
 
 		_df = dataframe[
-			((dataframe['wlan.sa'].isin(clients)) |
-			 (dataframe['wlan.da'].isin(clients)) |
-			 (dataframe['wlan.ra'].isin(clients)) |
-			 (dataframe['wlan.ta'].isin(clients)) |
-			 ((dataframe['wlan.fc.type_subtype'] == 8) &
-			  ((dataframe['wlan.sa'].isin(access_points)) | (dataframe['wlan.ta'].isin(access_points)))))
+			(
+				(dataframe[FrameFields.wlan_sa.value].isin(clients)) |
+				(dataframe[FrameFields.wlan_da.value].isin(clients)) |
+				(dataframe[FrameFields.wlan_ta.value].isin(clients)) |
+				(dataframe[FrameFields.wlan_ra.value].isin(clients)) |
+				(
+					(dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value) &
+					(
+						(dataframe[FrameFields.wlan_bssid.value].isin(access_points)) |
+						(dataframe[FrameFields.wlan_ta.value].isin(access_points))
+					)
+				)
+			)
 		]
 	else:
 		_df = dataframe[
-			((dataframe['wlan.sa'].isin(clients)) |
-			 (dataframe['wlan.da'].isin(clients)) |
-			 (dataframe['wlan.ra'].isin(clients)) |
-			 (dataframe['wlan.ta'].isin(clients)) |
-			 (dataframe['wlan.fc.type_subtype'] == 8))
+			(
+				(dataframe[FrameFields.wlan_sa.value].isin(clients)) |
+				(dataframe[FrameFields.wlan_da.value].isin(clients)) |
+				(dataframe[FrameFields.wlan_ta.value].isin(clients)) |
+				(dataframe[FrameFields.wlan_ra.value].isin(clients)) |
+				(dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value)
+			)
 		]
 
 	if len(_df) == 0:
@@ -226,11 +169,13 @@ def filter_client_frames(dataframe: pd.DataFrame, client_mac: str):
 	#   OR
 	#   - packet type is `beacon`
 	_df = dataframe[
-		((dataframe['wlan.sa'] == client_mac) |
-		 (dataframe['wlan.da'] == client_mac) |
-		 (dataframe['wlan.ra'] == client_mac) |
-		 (dataframe['wlan.ta'] == client_mac) |
-		 (dataframe['wlan.fc.type_subtype'] == 8))
+		(
+			(dataframe[FrameFields.wlan_sa.value] == client_mac) |
+			(dataframe[FrameFields.wlan_da.value] == client_mac) |
+			(dataframe[FrameFields.wlan_ta.value] == client_mac) |
+			(dataframe[FrameFields.wlan_ra.value] == client_mac) |
+			(dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value)
+		)
 	]
 
 	if len(_df) == 0:
@@ -238,19 +183,116 @@ def filter_client_frames(dataframe: pd.DataFrame, client_mac: str):
 	return _df
 
 
-def find_all_client_mac_addresses(dataframe):
+def get_associated_ap_for_client(dataframe, the_client):
+	"""
+	Returns the mac address of the access point the client is connected to.
+	If could not be determined, returns None
+
+	:param the_client:
+	:param dataframe:
+	:return:
+	"""
+
+	client_df = dataframe[
+		(dataframe[FrameFields.wlan_sa.value] == the_client)
+	]
+
+	associated_bssid = set()
+	associated_bssid.update(
+		set(client_df[FrameFields.wlan_bssid.value][client_df[FrameFields.wlan_bssid.value].notna()].unique())
+	)
+	associated_bssid = associated_bssid.difference({'ff:ff:ff:ff:ff:ff', })
+	associated_bssid = list(associated_bssid)
+
+	if len(associated_bssid) == 1:
+		return associated_bssid[0]
+
+	# if len(associated_bssid) > 1:
+	# 	associated_bssid_list = client_df[FrameFields.wlan_bssid.value].tolist()
+	# 	max_counted = (0, None)
+	# 	for bssid in associated_bssid:
+	# 		count = associated_bssid_list.count(bssid)
+	# 		if count > max_counted[0]:
+	# 			max_counted = (count, bssid)
+	# 	return max_counted[1]
+
+	return None
+
+
+def get_linear_beacon_count_trend_for_aps(dataframe, ap_bssid_list):
+	ap_trends = dict()
+	for bssid in ap_bssid_list:
+		_df = dataframe[
+			(
+				(dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value) &
+				(
+					(dataframe[FrameFields.wlan_bssid.value] == bssid) |
+					(dataframe[FrameFields.wlan_sa.value] == bssid)
+				)
+			)
+		]
+
+		_df.sort_values(
+			by = FrameFields.frame_time_epoch.value,
+			axis = 0,
+			ascending = True,
+			inplace = True,
+			na_position = 'last'
+		)
+
+		_epoch_series = _df[FrameFields.frame_time_epoch.value]
+		_beacon_cdf = np.cumsum(np.ones(_epoch_series.shape[0]))
+		lin_reg = linregress(_epoch_series, _beacon_cdf)
+		ap_trends[bssid] = lin_reg
+
+	return ap_trends
+
+
+def extract_all_ap_bssid(dataframe):
+	"""
+	Returns a list of all access points' mac addresses (bssid)
+	"""
+
+	print('• Extracting mac addresses for all the access points present in the file')
+
+	# look at only beacons
+	_beacon_df = dataframe[(dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value)]
+
+	access_points_bssid = set()
+	access_points_bssid.update(
+		set(_beacon_df[FrameFields.wlan_bssid.value][_beacon_df[FrameFields.wlan_bssid.value].notna()].unique())
+	)
+	del _beacon_df
+
+	# remove `broadcast`
+	access_points_bssid = access_points_bssid.difference({'ff:ff:ff:ff:ff:ff', })
+
+	# convert to list
+	access_points_bssid = list(access_points_bssid)
+	access_points_bssid.sort()
+	print('\t', '•• Found {:d} unique mac addresses'.format(len(access_points_bssid)))
+
+	return access_points_bssid
+
+
+def extract_all_client_mac_addresses(dataframe):
 	"""
 	Returns a list of all the client mac addresses present in the csv dataframe.
 	"""
 
+	print('• Extracting mac addresses for all the clients present in the file')
+
 	# look at only probe requests
-	_preq_df = dataframe[dataframe['wlan.fc.type_subtype'] == 4]
+	_preq_df = dataframe[(dataframe[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.probe_request.value)]
 
 	client_mac_addresses = set()
-	client_mac_addresses.update(set(_preq_df['wlan.sa'][_preq_df['wlan.sa'].notna()].unique()))
-	client_mac_addresses.update(set(_preq_df['wlan.da'][_preq_df['wlan.da'].notna()].unique()))
-	client_mac_addresses.update(set(_preq_df['wlan.ta'][_preq_df['wlan.ta'].notna()].unique()))
-	client_mac_addresses.update(set(_preq_df['wlan.ra'][_preq_df['wlan.ra'].notna()].unique()))
+	client_mac_addresses.update(
+		set(_preq_df[FrameFields.wlan_sa.value][_preq_df[FrameFields.wlan_sa.value].notna()].unique())
+	)
+	client_mac_addresses.update(
+		set(_preq_df[FrameFields.wlan_ta.value][_preq_df[FrameFields.wlan_ta.value].notna()].unique())
+	)
+	del _preq_df
 
 	# remove `broadcast`
 	client_mac_addresses = client_mac_addresses.difference({'ff:ff:ff:ff:ff:ff', })
@@ -258,151 +300,218 @@ def find_all_client_mac_addresses(dataframe):
 	# convert to list
 	client_mac_addresses = list(client_mac_addresses)
 	client_mac_addresses.sort()
+	print('\t', '•• Found {:d} unique mac addresses'.format(len(client_mac_addresses)))
+
 	return client_mac_addresses
 
 
-def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str, episode__id, frames_file__uuid):
+def get_output_column_order(features):
+	order = [item.value for item in features]
+	return order
+
+
+def compute_features_and_properties(dataframe: pd.DataFrame, the_client: str, index: int,
+                                    ap_beacon_count_linear_trends: dict,
+                                    required_features: set):
 	"""
-	Computes all the features required by the machine learning model for an episode dataframe
-	Computes all the episode properties required for processing the output of ML model
+	Computes all the features in `required_features` set and returns a dictionary
+
+	:param ap_beacon_count_linear_trends:
+	:param dataframe:
+	:param the_client:
+	:param index:
+	:param required_features:
+	:return:
 	"""
 
-	out_features = get_skeleton_features_dictionary()
-	out_properties = get_skeleton_properties_dictionary()
+	# separate the dataframe into `window` frames and `episode` frames
+	window_df = dataframe[dataframe[WindowProperties.window__id.value] == index]
+	episode_df = dataframe[dataframe[EpisodeProperties.episode__id.value] == index]
 
-	# Filter
-	#   - either `source addr` or `transmitter addr` belongs to the client
-	client_origin_df = ep_dataframe[
-		((ep_dataframe['wlan.sa'] == the_client) |
-		 (ep_dataframe['wlan.ta'] == the_client))
-	]
+	#  sort the dataframes by `frame.time_epoch`
+	window_df.sort_values(
+		by = FrameFields.frame_time_epoch.value,
+		axis = 0,
+		ascending = True,
+		inplace = True,
+		na_position = 'last'
+	)
+	episode_df.sort_values(
+		by = FrameFields.frame_time_epoch.value,
+		axis = 0,
+		ascending = True,
+		inplace = True,
+		na_position = 'last'
+	)
 
-	def __f1():
+	# *** helper functions ***
+	def f__class_3_frames__count():
 		"""
-		1. EpisodeFeatures.rssi__mean
-		2. EpisodeFeatures.rssi__sd
-		"""
-
-		# make sure every available value is a float
-		try:
-			client_origin_df['radiotap.dbm_antsignal'] = client_origin_df['radiotap.dbm_antsignal'].astype(float,
-			                                                                                               errors = 'raise')
-		except:
-			from uuid import uuid4
-			file_id = uuid4()
-			file_name = str(file_id) + '.csv'
-			file_path = os.path.join(directories.temporary, file_name)
-
-			client_origin_df.to_csv(file_path, index = False, header = True)
-			print('† Exception raised while converting `radiotap.dbm_antsignal` to float for episode. '
-			      'The episode is saved to {:s}'.format(file_name))
-			return NaN, NaN
-
-		_rssi_mean = client_origin_df['radiotap.dbm_antsignal'].mean()
-		_rssi_stddev = client_origin_df['radiotap.dbm_antsignal'].std()
-		return _rssi_mean, _rssi_stddev
-
-	def __f2():
-		"""
-		1. EpisodeFeatures.frame__loss_rate
+		Number of class 3 frames in the window
 		"""
 
-		_df_retry_true = client_origin_df[
-			(client_origin_df['wlan.fc.retry'] == 1)
+		# filter:
+		#   - packet subtype in `class_3_frames_list`
+		_class_3_df = window_df[
+			window_df[FrameFields.wlan_fc_subtype.value].isin(constants.class_3_frames_subtypes)
 		]
-		_df_retry_false = client_origin_df[
-			(client_origin_df['wlan.fc.retry'] == 0)
+		return _class_3_df.shape[0]
+
+	# def f__class_3_frames__bool():
+	# 	"""
+	# 	Is class 3 frames count > 0
+	# 	"""
+	# 	return int(f__class_3_frames__count() > 0)
+
+	def f__client_associated__bool():
+		"""
+		Is the client associated with an access point
+		"""
+		return int(get_associated_ap_for_client(dataframe, the_client) is not None)
+
+	def f__frames__arrival_rate():
+		"""
+		Number of frames originated at or transmitted by the client / window duration
+		"""
+
+		# filter
+		#   - either `source addr` or `transmitter addr` belongs to the client
+		_client_df = window_df[
+			(
+				(window_df[FrameFields.wlan_sa.value] == the_client) |
+				(window_df[FrameFields.wlan_ta.value] == the_client)
+			)
 		]
 
-		_num_true = len(_df_retry_true)
-		_num_false = len(_df_retry_false)
+		_, _, _window_duration = wp__window__time_epoch()
+		_num_frames = _client_df.shape[0]
 
-		if _num_true + _num_false > 0:
-			_loss_rate = float(_num_true) / float(_num_true + _num_false)
-		else:
-			_loss_rate = -1  # could not calculate
+		# if no client associated frames are found in the window or window duration is 0, return np.NaN
+		# NOTE: returning np.NaN and not 0, because metrics do not make sense if there are no client associated
+		#       frames in the window or window duration is 0
+		_arrival_rate = np.NaN
+		if _num_frames >= 0 and _window_duration > 0:
+			_arrival_rate = float(_num_frames) / float(_window_duration)
+		return _arrival_rate
 
-		return _loss_rate
-
-	def __f3():
+	def f__pspoll__count():
 		"""
-		1. EpisodeFeatures.frame__frequency
-		"""
-
-		# no frames in client source dataframe
-		if len(client_origin_df) == 0:
-			return 0
-
-		_, _, _ep_duration = __p1()
-		_num_frames = len(client_origin_df)
-
-		_frequency = -1
-		if _num_frames >= 0 and _ep_duration > 0:
-			_frequency = float(_num_frames) / float(_ep_duration)
-
-		return _frequency
-
-	def __f4():
-		"""
-		1. EpisodeFeatures.ap_deauth__count
+		Number of `ps_poll` frames in the window
 		"""
 
-		# Filter:
+		# filter:
+		#   - packet subtype == 0x1a
+		_pspoll_frames = window_df[
+			window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.ps_poll.value
+			]
+		return _pspoll_frames.shape[0]
+
+	# def f__pspoll__bool():
+	# 	"""
+	# 	Is pspoll count > 0
+	# 	"""
+	# 	return int(f__pspoll__count() > 0)
+
+	def f__pwrmgt_cycle__count():
+		"""
+		Number of cycles where cycle = frame with pwrmgt bit 1 then pwrmgt bit 0
+		"""
+
+		_num_cycles = 0
+		_state = 0  # 0: begin, 1: bit = 1 found, 2: bit = 0 found; count++, goto state 0
+		for idx, series in window_df.iterrows():
+			_bit = series[FrameFields.wlan_fc_pwrmgt.value]
+			if _bit is None:
+				continue
+
+			if _bit == 1 and _state == 0:
+				_state = 1
+			if _bit == 0 and _state == 1:
+				_state = 2
+			if _state == 2:
+				_num_cycles += 1
+				_state = 0
+
+		return _num_cycles
+
+	# def f__pwrmgt_cycle__bool():
+	# 	"""
+	# 	Is pwrmgt cycle count > 0
+	# 	"""
+	# 	return int(f__pwrmgt_cycle__count() > 0)
+
+	def f__rssi__slope():
+		"""
+		Slope of the line fitted through all points on rssi vs. time plot
+		"""
+
+		_epoch_time_series = window_df[FrameFields.frame_time_epoch.value]
+		_epoch_time_series = _epoch_time_series.tolist()
+		_rssi_series = window_df[FrameFields.radiotap_dbm_antsignal.value]
+		_rssi_series = _rssi_series.tolist()
+
+		_slope, _, _, _, _ = linregress(_epoch_time_series, _rssi_series)
+		return _slope
+
+	def f__ap_deauth_frames__count():
+		"""
+		Number of deauth frames directed towards the client
+		"""
+
+		# filter:
 		#   - packet type = `12` (deauth)
 		#   - destination should be `the client`
-		_deauth_ap_df = ep_dataframe[
-			((ep_dataframe['wlan.fc.type_subtype'] == 12) &
-			 (ep_dataframe['wlan.da'] == the_client))
+		_ap_deauth_df = window_df[
+			(
+				(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.deauthentication.value) &
+				(window_df[FrameFields.wlan_da.value] == the_client)
+			)
 		]
+		return _ap_deauth_df.shape[0]
 
-		_ap_deauth_count = len(_deauth_ap_df)
-		return _ap_deauth_count
+	# def f__ap_deauth_frames__bool():
+	# 	"""
+	# 	Is ap deauth frames count > 0
+	# 	"""
+	# 	return int(f__ap_deauth_frames__count() > 0)
 
-	def __f5():
+	def f__max_consecutive_beacon_loss__count():
 		"""
-		1. EpisodeFeatures.client_deauth__count
-		"""
-
-		# filter:
-		#   - packet type = `12` (deauth)
-		#   - source should be `the client`
-		_deauth_client_df = ep_dataframe[
-			((ep_dataframe['wlan.fc.type_subtype'] == 12) &
-			 (ep_dataframe['wlan.sa'] == the_client))
-		]
-
-		_client_deauth_count = len(_deauth_client_df)
-		return _client_deauth_count
-
-	def __f6():
-		"""
-		1. EpisodeFeatures.beacon__count
-		2. EpisodeFeatures.max_consecutive_beacons__count
-		3. EpisodeFeatures.ack__count
-		4. EpisodeFeatures.null_dataframe__count
+		Maximum number of consecutive beacon frames that are not received according to a
+		fixed time interval (assumed 105ms).
 		"""
 
-		# filter:
-		#   - packet type = `8` (beacon)
-		_beacon_df = ep_dataframe[
-			(ep_dataframe['wlan.fc.type_subtype'] == 8)
-		]
+		associated_ap_bssid = get_associated_ap_for_client(dataframe, the_client)
+		_beacons_df = window_df[window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value]
+		if associated_ap_bssid is not None:
+			_beacons_df = _beacons_df[
+				(
+					(_beacons_df[FrameFields.wlan_bssid.value] == associated_ap_bssid) |
+					(_beacons_df[FrameFields.wlan_ta.value] == associated_ap_bssid)
+				)
+			]
 
-		# beacon count
-		_beacon_count = len(_beacon_df)
+		# sort by `frame.time_epoch`
+		_beacons_df.sort_values(
+			by = FrameFields.frame_time_epoch.value,
+			axis = 0,
+			ascending = True,
+			inplace = True,
+			na_position = 'last'
+		)
 
-		# max consecutive beacon count (earlier `beacon interval count`)
-		#   - defines maximum number of consecutive beacons in the episodes
+		# max consecutive beacon loss count
+		#   - defines maximum number of consecutive beacons lost in a window
 		#   - consecutive == interval between packets < 105 milliseconds
 		_max_consecutive_beacon_count = 0
 		_beacon_interval_count = 0
-		if _beacon_count > 1:
-			_previous_epoch = float(_beacon_df.head(1)['frame.time_epoch'])
-			_beacon_df = _beacon_df.iloc[1:]
+		if _beacons_df.shape[0] > 1:
+			_previous_epoch = float(_beacons_df.head(1)[FrameFields.frame_time_epoch.value])
+			_beacon_df = _beacons_df.iloc[1:]
 
-			for index, frame in _beacon_df.iterrows():
-				_current_epoch = float(frame['frame.time_epoch'])
-				_delta_time = _previous_epoch - _current_epoch
+			for _, frame in _beacon_df.iterrows():
+				_current_epoch = float(frame[FrameFields.frame_time_epoch.value])
+				_delta_time = abs(_current_epoch - _previous_epoch)
 
 				if _delta_time > 0.105:
 					_beacon_interval_count += 1
@@ -412,294 +521,580 @@ def compute_episode_characteristics(ep_dataframe: pd.DataFrame, the_client: str,
 				_max_consecutive_beacon_count = max(_max_consecutive_beacon_count, _beacon_interval_count)
 				_previous_epoch = _current_epoch
 
-		# filter:
-		#   - packet type = `29` (ack)
-		#   - receiver should be `the client`
-		_ack_df = ep_dataframe[
-			((ep_dataframe['wlan.fc.type_subtype'] == 29) &
-			 (ep_dataframe['wlan.ra'] == the_client))
+		return _max_consecutive_beacon_count
+
+	# def f__max_consecutive_beacon_loss__bool():
+	# 	"""
+	# 	Is max consecutive beacon loss count > 7
+	# 	"""
+	# 	return int(f__max_consecutive_beacon_loss__count() > 7)
+
+	def f__beacons_linear_slope__difference():
+		"""
+
+		"""
+
+		associated_ap_bssid = get_associated_ap_for_client(dataframe, the_client)
+		_beacons_df = window_df[window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value]
+		if associated_ap_bssid is not None:
+			_beacons_df = _beacons_df[
+				(
+					(_beacons_df[FrameFields.wlan_bssid.value] == associated_ap_bssid) |
+					(_beacons_df[FrameFields.wlan_ta.value] == associated_ap_bssid)
+				)
+			]
+
+		# sort by `frame.time_epoch`
+		_beacons_df.sort_values(
+			by = FrameFields.frame_time_epoch.value,
+			axis = 0,
+			ascending = True,
+			inplace = True,
+			na_position = 'last'
+		)
+
+		# if no beacons are found in the window, return 0
+		# NOTE: returning 0 and not np.NaN, because it is understandable for a window to not have any beacons and
+		#       its other metrics to still make sense
+		if _beacons_df.shape[0] == 0:
+			return 0
+
+		_epoch_series = _beacons_df[FrameFields.frame_time_epoch.value]
+		_beacon_cdf = np.cumsum(np.ones(_epoch_series.shape[0]))
+
+		# calculate local linear regression
+		_local_trend = linregress(_epoch_series, _beacon_cdf)
+		_global_trend = _local_trend
+
+		if associated_ap_bssid is not None:
+			try:
+				# get global trend, if available
+				_global_trend = ap_beacon_count_linear_trends[associated_ap_bssid]
+			except KeyError:
+				pass
+
+		_g_slope, _, _, _, _ = _global_trend
+		_l_slope, _, _, _, _ = _local_trend
+		return abs(_g_slope - _l_slope)
+
+	def f__null_frames__ratio():
+		"""
+		Number of null frames originating at the client / Number of frames originating at the client
+		"""
+
+		# filter
+		#   - `source addr` belongs to the client
+		_client_df = window_df[
+			(window_df[FrameFields.wlan_sa.value] == the_client)
 		]
-		_ack_count = len(_ack_df)
 
 		# filter:
+		#   - source should be the client
 		#   - packet type = `36` or `44` (null, qos null)
+		_null_df = _client_df[
+			(
+				(_client_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.null.value) |
+				(_client_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.qos_null.value)
+			)
+		]
+
+		# if no client associated frames are found in the window, return np.NaN
+		# NOTE: returning np.NaN and not 0, because metrics do not make sense if there are no client associated
+		#       frames in the window
+		_null_count = np.NaN
+		if _client_df.shape[0] > 0:
+			_null_count = float(_null_df.shape[0]) / float(_client_df.shape[0])
+		return _null_count
+
+	def f__connection_frames__count():
+		"""
+		Number of connection frames in the window
+			- Association Response
+			- Reassociation Response
+		"""
+
+		# filter:
+		#   - destination should be `the client`
+		#   - packet type = `1` or `3` (association response, re-association response)
+		_connection_df = window_df[
+			(
+				(window_df[FrameFields.wlan_da.value] == the_client) &
+				(
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.association_response.value) |
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.reassociation_response.value)
+				)
+			)
+		]
+		return _connection_df.shape[0]
+
+	# def f__connection_frames__bool():
+	# 	"""
+	# 	Is connection frames count > 0
+	# 	"""
+	# 	return int(f__connection_frames__count() > 0)
+
+	def f__frames__loss_ratio():
+		"""
+		Number of frames from client with retry bit 1 / Number of frames from client
+		"""
+
+		# filter
+		#   - either `source addr` or `transmitter addr` belongs to the client
+		_client_df = window_df[
+			(
+				(window_df[FrameFields.wlan_sa.value] == the_client) |
+				(window_df[FrameFields.wlan_ta.value] == the_client)
+			)
+		]
+
+		_df_retransmitted = _client_df[
+			(_client_df[FrameFields.wlan_fc_retry.value] == 1)
+		]
+		_num_retry = _df_retransmitted.shape[0]
+
+		# if no client associated frames are found in the window, return np.NaN
+		# NOTE: returning np.NaN and not 0, because metrics do not make sense if there are no client associated
+		#       frames in the window
+		_loss_rate = np.NaN
+		if _client_df.shape[0] > 0:
+			_loss_rate = float(_num_retry) / float(_client_df.shape[0])
+		return _loss_rate
+
+	def f__ack_to_data__ratio():
+		"""
+		Number of acknowledgement frames from the client / Number of data frames from the client
+			- ack + block_ack / data + qos_data
+		"""
+
+		# filter
+		#   - `source addr` belongs to the client
+		#   - `type_subtype` is data/qos-data
+		_data_df = window_df[
+			(
+				(window_df[FrameFields.wlan_sa.value] == the_client) &
+				(
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.data.value) |
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.qos_data.value)
+				)
+			)
+		]
+
+		# filter
+		#   - `source addr` belongs to the client
+		#   - `type_subtype` is data/qos-data
+		_ack_df = window_df[
+			(
+				(window_df[FrameFields.wlan_da.value] == the_client) &
+				(
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.ack.value) |
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.block_ack.value)
+				)
+			)
+		]
+
+		_num_data = _data_df.shape[0]
+		_num_ack = _ack_df.shape[0]
+
+		# if no data frames are found in the window, return 0
+		# NOTE: returning 0 and not np.NaN, because other metrics can still make sense if there are no data
+		#       frames in the window
+		_ratio = 0
+		if _num_data > 0:
+			_ratio = float(_num_ack) / float(_num_data)
+		return _ratio
+
+	def f__datarate__slope():
+		"""
+		Slope of the line fitted through all points on datarate vs. time plot
+		"""
+
+		_epoch_time_series = window_df[FrameFields.frame_time_epoch.value]
+		_epoch_time_series = _epoch_time_series.tolist()
+		_datarate_series = window_df[FrameFields.radiotap_datarate.value]
+		_datarate_series = _datarate_series.tolist()
+
+		_slope, _, _, _, _ = linregress(_epoch_time_series, _datarate_series)
+		return _slope
+
+	def f__rssi__mean():
+		"""
+		Mean of rssi values in the window
+		"""
+
+		_rssi_series = window_df[FrameFields.radiotap_dbm_antsignal.value]
+		return _rssi_series.mean()
+
+	def f__rssi__sd():
+		"""
+		Standard Deviation of rssi values in the window
+		"""
+
+		_rssi_series = window_df[FrameFields.radiotap_dbm_antsignal.value]
+		return _rssi_series.std()
+
+	def f__client_deauth_frames__count():
+		"""
+		Number of deauth frames originating from the client
+		"""
+
+		# filter:
+		#   - packet type = `12` (deauth)
+		#   - source should be `the client`
+		_client_deauth_df = window_df[
+			(
+				(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.deauthentication.value) &
+				(window_df[FrameFields.wlan_sa.value] == the_client)
+			)
+		]
+		return _client_deauth_df.shape[0]
+
+	def f__beacons__count():
+		"""
+		Number of beacon frames from the associated ap in the window
+		"""
+
+		associated_ap_bssid = get_associated_ap_for_client(dataframe, the_client)
+		_beacons_df = window_df[window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.beacon.value]
+		if associated_ap_bssid is not None:
+			_beacons_df = _beacons_df[
+				(
+					(_beacons_df[FrameFields.wlan_bssid.value] == associated_ap_bssid) |
+					(_beacons_df[FrameFields.wlan_ta.value] == associated_ap_bssid)
+				)
+			]
+		return _beacons_df.shape[0]
+
+	def f__ack__count():
+		"""
+		Number of acknowledgement frames in the window
+		"""
+
+		_ack_frames = window_df[
+			(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.ack.value)
+		]
+		return _ack_frames.shape[0]
+
+	def f__null_frames__count():
+		"""
+		Number of null frames in the window
+		"""
+
+		# filter:
 		#   - source should be in clients
 		#   - power management bit = 0
-		_null_df = ep_dataframe[
-			(((ep_dataframe['wlan.fc.type_subtype'] == 36) | (ep_dataframe['wlan.fc.type_subtype'] == 44)) &
-			 (ep_dataframe['wlan.sa'] == the_client) &
-			 (ep_dataframe['wlan.fc.pwrmgt'] == 0))
+		#   - packet type = `36` or `44` (null, qos null)
+		_null_df = window_df[
+			(
+				(window_df[FrameFields.wlan_sa.value] == the_client) &
+				(window_df[FrameFields.wlan_fc_pwrmgt.value] == 0) &
+				(
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.null.value) |
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.qos_null.value)
+				)
+			)
 		]
-		_null_dataframe_count = len(_null_df)
-		return _beacon_count, _max_consecutive_beacon_count, _ack_count, _null_dataframe_count
+		return _null_df.shape[0]
 
-	def __f7():
+	def f__failure_assoc__count():
 		"""
-		1. EpisodeFeatures.failure_assoc__count
+
 		"""
 
 		# filter:
-		#   - packet type = `1` or `3` (association response, re-association response)
 		#   - `status code` != 0
 		#   - destination should be `the client`
-		_assoc_reassoc_failure_response_df = ep_dataframe[
-			(((ep_dataframe['wlan.fc.type_subtype'] == 1) | (ep_dataframe['wlan.fc.type_subtype'] == 3)) &
-			 (ep_dataframe['wlan_mgt.fixed.status_code'] != 0) &
-			 (ep_dataframe['wlan.da'] == the_client))
+		#   - packet type = `1` or `3` (association response, re-association response)
+		_assoc_reassoc_failure_response_df = window_df[
+			(
+				(window_df[FrameFields.wlan_mgt_fixed_status_code.value] != 0) &
+				(window_df[FrameFields.wlan_da.value] == the_client) &
+				(
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.association_response.value) |
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.reassociation_response.value)
+				)
+			)
 		]
-		_failure_assoc_reassoc_count = len(_assoc_reassoc_failure_response_df)
-		return _failure_assoc_reassoc_count
+		return _assoc_reassoc_failure_response_df.shape[0]
 
-	def __f8():
+	def f__success_assoc_count():
 		"""
-		1. EpisodeFeatures.success_assoc__count
+
 		"""
 
 		# filter:
-		#   - packet type = `1` or `3` (association response, re-association response)
 		#   - `status code` = 0
 		#   - destination should be `the client`
-		_assoc_reassoc_success_response_df = ep_dataframe[
-			(((ep_dataframe['wlan.fc.type_subtype'] == 1) | (ep_dataframe['wlan.fc.type_subtype'] == 3)) &
-			 (ep_dataframe['wlan_mgt.fixed.status_code'] == 0) &
-			 (ep_dataframe['wlan.da'] == the_client))
+		#   - packet type = `1` or `3` (association response, re-association response)
+		_assoc_reassoc_success_response_df = window_df[
+			(
+				(window_df[FrameFields.wlan_mgt_fixed_status_code.value] == 0) &
+				(window_df[FrameFields.wlan_da.value] == the_client) &
+				(
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.association_response.value) |
+					(window_df[FrameFields.wlan_fc_subtype.value] == FrameSubtypes.reassociation_response.value)
+				)
+			)
 		]
-		_success_assoc_reassoc_count = len(_assoc_reassoc_success_response_df)
-		return _success_assoc_reassoc_count
+		return _assoc_reassoc_success_response_df.shape[0]
 
-	def __f9():
+	def wp__window__time_epoch():
 		"""
-		1. EpisodeFeatures.class_3_frames__count
-		"""
-
-		class_3_frames_list = [
-			32,  # type 2 (data), data
-			33,  # type 2 (data), data + cf_ack
-			34,  # type 2 (data), data + cf_poll
-			35,  # type 2 (data), data + cf_ack + cf_poll
-			36,  # type 2 (data), null
-			37,  # type 2 (data), cf_ack
-			38,  # type 2 (data), cf_poll
-			39,  # type 2 (data), cf_ack + cf_poll
-			40,  # type 2 (data), QoS data
-			41,  # type 2 (data), QoS data + cf_ack
-			42,  # type 2 (data), QoS data + cf_poll
-			43,  # type 2 (data), QoS data + cf_ack + cf_poll
-			44,  # type 2 (data), QoS null
-			46,  # type 2 (data), QoS + cf_poll (no data)
-			47,  # type 2 (data), Qos + cf_ack (no data)
-			26,  # type 1 (control), ps_poll
-			24,  # type 1 (control), block ack request
-			25,  # type 1 (control), block ack
-			13,  # type 0 (management), action
-			14  # type 0 (management), reserved
-		]
-
-		# filter:
-		#   - packet subtype in `class_3_frames_list`
-		_class_3_df = ep_dataframe[
-			(ep_dataframe['wlan.fc.type_subtype'].isin(class_3_frames_list))
-		]
-		_class_3_frames_count = len(_class_3_df)
-
-		return _class_3_frames_count
-
-	def __p1():
-		"""
-		1. EpisodeProperties.start__time_epoch
-		2. EpisodeProperties.end__time_epoch
-		3. EpisodeProperties.episode_duration
+		1. Window start epoch time.
+		2. Window end epoch time.
+		3. Window duration.
 		"""
 
-		_ep_start_epoch = float(ep_dataframe.head(1)['frame.time_epoch'])
-		_ep_end_epoch = float((ep_dataframe.tail(1))['frame.time_epoch'])
-		_ep_duration = float(_ep_end_epoch - _ep_start_epoch)
-		return _ep_start_epoch, _ep_end_epoch, _ep_duration
+		_window_start_epoch = float(window_df.head(1)[FrameFields.frame_time_epoch.value])
+		_window_end_epoch = float((window_df.tail(1))[FrameFields.frame_time_epoch.value])
+		_window_duration = float(_window_end_epoch - _window_start_epoch)
+		_window_duration = abs(_window_duration)
+		return _window_start_epoch, _window_end_epoch, _window_duration
 
-	def __p2():
-		"""
-		1. EpisodeProperties.associated_client__mac
-		2. EpisodeProperties.episode__id
-		3. EpisodeProperties.frames_file__uuid
-		"""
-		return the_client, episode__id, frames_file__uuid
+	f__output = dict()
 
-	out_features[EpisodeFeatures.rssi__mean], out_features[EpisodeFeatures.rssi__sd] = __f1()
-	out_features[EpisodeFeatures.frame__loss_rate] = __f2()
-	out_features[EpisodeFeatures.frame__frequency] = __f3()
-	out_features[EpisodeFeatures.ap_deauth__count] = __f4()
-	out_features[EpisodeFeatures.client_deauth__count] = __f5()
-	out_features[EpisodeFeatures.beacon__count], out_features[EpisodeFeatures.max_consecutive_beacons__count], \
-	out_features[EpisodeFeatures.ack__count], out_features[EpisodeFeatures.null_dataframe__count] = __f6()
-	out_features[EpisodeFeatures.failure_assoc__count] = __f7()
-	out_features[EpisodeFeatures.success_assoc__count] = __f8()
-	out_features[EpisodeFeatures.class_3_frames__count] = __f9()
+	if WindowMetrics.class_3_frames__count in required_features:
+		f__output[WindowMetrics.class_3_frames__count] = f__class_3_frames__count()
 
-	out_properties[EpisodeProperties.start__time_epoch], out_properties[EpisodeProperties.end__time_epoch], \
-	out_properties[EpisodeProperties.episode_duration] = __p1()
-	out_properties[EpisodeProperties.associated_client__mac], out_properties[EpisodeProperties.episode__id], \
-	out_properties[EpisodeProperties.frames_file__uuid] = __p2()
+	# if WindowMetrics.class_3_frames__bool in required_features:
+	# 	f__output[WindowMetrics.class_3_frames__bool] = f__class_3_frames__bool()
 
-	return out_features, out_properties
+	if WindowMetrics.client_associated__bool in required_features:
+		f__output[WindowMetrics.client_associated__bool] = f__client_associated__bool()
 
+	if WindowMetrics.frames__arrival_rate in required_features:
+		f__output[WindowMetrics.frames__arrival_rate] = f__frames__arrival_rate()
 
-def assign_rule_based_system_tags_to_episodes(episodes_df: pd.DataFrame):
-	"""
-	Assigns a 'cause' field to each row of the dataframe with tags for each cause inferred
-	by the rule based checks.
-	"""
+	if WindowMetrics.pspoll__count in required_features:
+		f__output[WindowMetrics.pspoll__count] = f__pspoll__count()
 
-	def __low_rssi(episode):
-		"""
-		For every episode, calculate `mean` and `standard deviation` for rssi value.
-		check: `mean` < -72dB and `std dev` > 12dB
-		"""
+	# if WindowMetrics.pspoll__bool in required_features:
+	# 	f__output[WindowMetrics.pspoll__bool] = f__pspoll__bool()
 
-		if episode[EpisodeFeatures.rssi__mean.value] < -72 and episode[EpisodeFeatures.rssi__sd.value] > 12:
-			return True
-		return False
+	if WindowMetrics.pwrmgt_cycle__count in required_features:
+		f__output[WindowMetrics.pwrmgt_cycle__count] = f__pwrmgt_cycle__count()
 
-	def __data_frame_loss(episode):
-		"""
-		use `fc.retry` field
-		check: #(fc.retry == 1)/#(fc.retry == 1 || fc.retry == 0) > 0.5
-		"""
+	# if WindowMetrics.pwrmgt_cycle__bool in required_features:
+	# 	f__output[WindowMetrics.pwrmgt_cycle__bool] = f__pwrmgt_cycle__bool()
 
-		if episode[EpisodeFeatures.frame__loss_rate.value] > 0.5:
-			return True
-		return False
+	if WindowMetrics.rssi__slope in required_features:
+		f__output[WindowMetrics.rssi__slope] = f__rssi__slope()
 
-	def __power_state_low_to_high_v1(episode):
-		"""
-		calculate number of frames per second.
-		check: if #fps > 2
-		"""
+	if WindowMetrics.ap_deauth_frames__count in required_features:
+		f__output[WindowMetrics.ap_deauth_frames__count] = f__ap_deauth_frames__count()
 
-		_frame_frequency = episode[EpisodeFeatures.frame__frequency.value]
-		if _frame_frequency == -1:
-			return False
-		elif _frame_frequency > 2:
-			return True
-		return False
+	# if WindowMetrics.ap_deauth_frames__bool in required_features:
+	# 	f__output[WindowMetrics.ap_deauth_frames__bool] = f__ap_deauth_frames__bool()
 
-	def __power_state_low_to_high_v2(episode):
-		"""
-		calculate number of frames per second.
-		check: if #fps <= 2
-		"""
+	if WindowMetrics.max_consecutive_beacon_loss__count in required_features:
+		f__output[WindowMetrics.max_consecutive_beacon_loss__count] = f__max_consecutive_beacon_loss__count()
 
-		_frame_frequency = episode[EpisodeFeatures.frame__frequency.value]
-		if _frame_frequency == -1:
-			return False
-		elif _frame_frequency <= 2:
-			return True
-		return False
+	# if WindowMetrics.max_consecutive_beacon_loss__bool in required_features:
+	# 	f__output[WindowMetrics.max_consecutive_beacon_loss__bool] = f__max_consecutive_beacon_loss__bool()
 
-	def __ap_deauth(episode):
-		"""
-		check for deauth packet from ap
-		deauth: fc.type_subtype == 12
-		"""
+	if WindowMetrics.beacons_linear_slope__difference in required_features:
+		f__output[WindowMetrics.beacons_linear_slope__difference] = f__beacons_linear_slope__difference()
 
-		if episode[EpisodeFeatures.ap_deauth__count.value] > 0:
-			return True
-		return False
+	if WindowMetrics.null_frames__ratio in required_features:
+		f__output[WindowMetrics.null_frames__ratio] = f__null_frames__ratio()
 
-	def __client_deauth(episode):
-		"""
-		check for deauth packet from client
-		deauth: fc.type_subtype == 12
-		"""
+	if WindowMetrics.connection_frames__count in required_features:
+		f__output[WindowMetrics.connection_frames__count] = f__connection_frames__count()
 
-		if episode[EpisodeFeatures.client_deauth__count.value] > 0:
-			return True
-		return False
+	# if WindowMetrics.connection_frames__bool in required_features:
+	# 	f__output[WindowMetrics.connection_frames__bool] = f__connection_frames__bool()
 
-	def __beacon_loss(episode):
-		"""
-		beacon count is 0 or
-		if beacon interval > 105ms for 7 consecutive beacons or
-		count(wlan.sa = client and type_subtype = 36|44 and pwrmgt = 0) > 0 and count(wlan.ra = client && type_subtype = 29)
-		"""
+	if WindowMetrics.frames__loss_ratio in required_features:
+		f__output[WindowMetrics.frames__loss_ratio] = f__frames__loss_ratio()
 
-		if episode[EpisodeFeatures.beacon__count.value] == 0 or \
-				episode[EpisodeFeatures.max_consecutive_beacons__count.value] >= 8 or \
-				(episode[EpisodeFeatures.ack__count.value] == 0 and
-				 episode[EpisodeFeatures.null_dataframe__count.value] > 0):
-			return True
-		return False
+	if WindowMetrics.ack_to_data__ratio in required_features:
+		f__output[WindowMetrics.ack_to_data__ratio] = f__ack_to_data__ratio()
 
-	def __unsuccessful_assoc_auth_reassoc_deauth(episode):
-		if episode[EpisodeFeatures.ap_deauth__count.value] > 0 and \
-				episode[EpisodeFeatures.failure_assoc__count.value] == 0:
-			return True
-		return False
+	if WindowMetrics.datarate__slope in required_features:
+		f__output[WindowMetrics.datarate__slope] = f__datarate__slope()
 
-	def __successful_assoc_auth_reassoc_deauth(episode):
-		if episode[EpisodeFeatures.ap_deauth__count.value] == 0 and \
-				episode[EpisodeFeatures.success_assoc__count.value] > 0:
-			return True
-		return False
+	if WindowMetrics.rssi__mean in required_features:
+		f__output[WindowMetrics.rssi__mean] = f__rssi__mean()
 
-	def __class_3_frames(episode):
-		if episode[EpisodeFeatures.class_3_frames__count.value] > 0:
-			return True
-		return False
+	if WindowMetrics.rssi__sd in required_features:
+		f__output[WindowMetrics.rssi__sd] = f__rssi__sd()
 
-	for idx, _episode in episodes_df.iterrows():
+	if WindowMetrics.client_deauth_frames__count in required_features:
+		f__output[WindowMetrics.client_deauth_frames__count] = f__client_deauth_frames__count()
 
-		cause_str = ''
-		if __low_rssi(_episode):
-			cause_str += RBSCauses.low_rssi.value
+	if WindowMetrics.beacons__count in required_features:
+		f__output[WindowMetrics.beacons__count] = f__beacons__count()
 
-		if __data_frame_loss(_episode):
-			cause_str += RBSCauses.data_frame_loss.value
+	if WindowMetrics.ack__count in required_features:
+		f__output[WindowMetrics.ack__count] = f__ack__count()
 
-		if __power_state_low_to_high_v1(_episode):
-			cause_str += RBSCauses.power_state.value
+	if WindowMetrics.null_frames__count in required_features:
+		f__output[WindowMetrics.null_frames__count] = f__null_frames__count()
 
-		if __power_state_low_to_high_v2(_episode):
-			cause_str += RBSCauses.power_state_v2.value
+	if WindowMetrics.failure_assoc__count in required_features:
+		f__output[WindowMetrics.failure_assoc__count] = f__failure_assoc__count()
 
-		if __ap_deauth(_episode):
-			cause_str += RBSCauses.ap_side_procedure.value
+	if WindowMetrics.success_assoc__count in required_features:
+		f__output[WindowMetrics.success_assoc__count] = f__success_assoc_count()
 
-		if __client_deauth(_episode):
-			cause_str += RBSCauses.client_deauth.value
+	# wp__output = dict()
 
-		if __beacon_loss(_episode):
-			cause_str += RBSCauses.beacon_loss.value
-
-		if __unsuccessful_assoc_auth_reassoc_deauth(_episode):
-			cause_str += RBSCauses.unsuccessful_association.value
-
-		if __successful_assoc_auth_reassoc_deauth(_episode):
-			cause_str += RBSCauses.successful_association.value
-
-		if __class_3_frames(_episode):
-			cause_str += RBSCauses.class_3_frames.value
-
-		episodes_df.loc[idx, 'rbs__cause_tags'] = cause_str
-	return episodes_df
+	return f__output
 
 
-def convert_ep_characteristics_to_dataframe(episode_characteristics: list):
+# def assign_rule_based_system_tags_to_episodes(episodes_df: pd.DataFrame):
+# 	"""
+# 	Assigns a 'cause' field to each row of the dataframe with tags for each cause inferred
+# 	by the rule based checks.
+# 	"""
+#
+# 	def __low_rssi(episode):
+# 		"""
+# 		For every episode, calculate `mean` and `standard deviation` for rssi value.
+# 		check: `mean` < -72dB and `std dev` > 12dB
+# 		"""
+#
+# 		if episode[WindowMetrics.rssi__mean.value] < -72 and episode[WindowMetrics.rssi__sd.value] > 12:
+# 			return True
+# 		return False
+#
+# 	def __data_frame_loss(episode):
+# 		"""
+# 		use `fc.retry` field
+# 		check: #(fc.retry == 1)/#(fc.retry == 1 || fc.retry == 0) > 0.5
+# 		"""
+#
+# 		if episode[WindowMetrics.frame__loss_rate.value] > 0.5:
+# 			return True
+# 		return False
+#
+# 	def __power_state_low_to_high_v1(episode):
+# 		"""
+# 		calculate number of frames per second.
+# 		check: if #fps > 2
+# 		"""
+#
+# 		_frame_frequency = episode[WindowMetrics.frames__arrival_rate.value]
+# 		if _frame_frequency == -1:
+# 			return False
+# 		elif _frame_frequency > 2:
+# 			return True
+# 		return False
+#
+# 	def __power_state_low_to_high_v2(episode):
+# 		"""
+# 		calculate number of frames per second.
+# 		check: if #fps <= 2
+# 		"""
+#
+# 		_frame_frequency = episode[WindowMetrics.frames__arrival_rate.value]
+# 		if _frame_frequency == -1:
+# 			return False
+# 		elif _frame_frequency <= 2:
+# 			return True
+# 		return False
+#
+# 	def __ap_deauth(episode):
+# 		"""
+# 		check for deauth packet from ap
+# 		deauth: fc.type_subtype == 12
+# 		"""
+#
+# 		if episode[WindowMetrics.ap_deauth_frames__count.value] > 0:
+# 			return True
+# 		return False
+#
+# 	def __client_deauth(episode):
+# 		"""
+# 		check for deauth packet from client
+# 		deauth: fc.type_subtype == 12
+# 		"""
+#
+# 		if episode[WindowMetrics.client_deauth_frames__count.value] > 0:
+# 			return True
+# 		return False
+#
+# 	def __beacon_loss(episode):
+# 		"""
+# 		beacon count is 0 or
+# 		if beacon interval > 105ms for 7 consecutive beacons or
+# 		count(wlan.sa = client and type_subtype = 36|44 and pwrmgt = 0) > 0 and count(wlan.ra = client && type_subtype = 29)
+# 		"""
+#
+# 		if (episode[WindowMetrics.beacons__count.value] == 0 or
+# 			episode[WindowMetrics.max_consecutive_beacon_loss__count.value] >= 8 or
+# 			(
+# 				episode[WindowMetrics.ack__count.value] == 0 and episode[
+# 				WindowMetrics.null_frames__count.value] > 0)):
+# 			return True
+# 		return False
+#
+# 	def __unsuccessful_assoc_auth_reassoc_deauth(episode):
+# 		if episode[WindowMetrics.ap_deauth_frames__count.value] > 0 and \
+# 			episode[WindowMetrics.failure_assoc__count.value] == 0:
+# 			return True
+# 		return False
+#
+# 	def __successful_assoc_auth_reassoc_deauth(episode):
+# 		if episode[WindowMetrics.ap_deauth_frames__count.value] == 0 and \
+# 			episode[WindowMetrics.success_assoc__count.value] > 0:
+# 			return True
+# 		return False
+#
+# 	def __class_3_frames(episode):
+# 		if episode[WindowMetrics.class_3_frames__count.value] > 0:
+# 			return True
+# 		return False
+#
+# 	for idx, _episode in episodes_df.iterrows():
+#
+# 		cause_str = ''
+# 		if __low_rssi(_episode):
+# 			cause_str += RBSCauses.low_rssi.value
+#
+# 		if __data_frame_loss(_episode):
+# 			cause_str += RBSCauses.data_frame_loss.value
+#
+# 		if __power_state_low_to_high_v1(_episode):
+# 			cause_str += RBSCauses.power_state.value
+#
+# 		if __power_state_low_to_high_v2(_episode):
+# 			cause_str += RBSCauses.power_state_v2.value
+#
+# 		if __ap_deauth(_episode):
+# 			cause_str += RBSCauses.ap_side_procedure.value
+#
+# 		if __client_deauth(_episode):
+# 			cause_str += RBSCauses.client_deauth.value
+#
+# 		if __beacon_loss(_episode):
+# 			cause_str += RBSCauses.beacon_loss.value
+#
+# 		if __unsuccessful_assoc_auth_reassoc_deauth(_episode):
+# 			cause_str += RBSCauses.unsuccessful_association.value
+#
+# 		if __successful_assoc_auth_reassoc_deauth(_episode):
+# 			cause_str += RBSCauses.successful_association.value
+#
+# 		if __class_3_frames(_episode):
+# 			cause_str += RBSCauses.class_3_frames.value
+#
+# 		episodes_df.loc[idx, 'rbs__cause_tags'] = cause_str
+# 	return episodes_df
+
+
+def convert_window_characteristics_to_dataframe(window_characteristics: list, features):
 	"""
 	Creates a dataframe from a list of 2-tuples containing ep_features and ep_properties
 	"""
 
 	# merge all dictionaries into one big dictionary
 	output_dictionary = dict()
-	for _feature in EpisodeFeatures:
+	for _feature in features:
 		output_dictionary[_feature.value] = list()
-	for _property in EpisodeProperties:
-		output_dictionary[_property.value] = list()
 
-	for _features_dict, _properties_dict in episode_characteristics:
-		for _feature in EpisodeFeatures:
+	for _features_dict in window_characteristics:
+		for _feature in features:
 			output_dictionary[_feature.value].append(_features_dict[_feature])
-		for _property in EpisodeProperties:
-			output_dictionary[_property.value].append(_properties_dict[_property])
 
 	# convert to dataframe
 	df = pd.DataFrame.from_dict(output_dictionary)
@@ -713,10 +1108,10 @@ def prepare_environment():
 	if not os.path.exists(directories.frames_csv_files) or not os.path.isdir(directories.frames_csv_files):
 		os.mkdir(directories.frames_csv_files)
 	if not os.path.exists(directories.semi_processed_frames_csv_files) or not os.path.isdir(
-			directories.semi_processed_frames_csv_files):
+		directories.semi_processed_frames_csv_files):
 		os.mkdir(directories.semi_processed_frames_csv_files)
 	if not os.path.exists(directories.processed_episode_csv_files) or not os.path.isdir(
-			directories.processed_episode_csv_files):
+		directories.processed_episode_csv_files):
 		os.mkdir(directories.processed_episode_csv_files)
 	if not os.path.exists(directories.temporary) or not os.path.isdir(directories.temporary):
 		os.mkdir(directories.temporary)
@@ -765,6 +1160,8 @@ def read_frames_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines
 	:return: dataframe object
 	"""
 
+	print('• Starting reading file ...')
+
 	csv_dataframe = pd.read_csv(
 		filepath_or_buffer = filepath,
 		sep = ',',  # comma separated values (default)
@@ -783,22 +1180,46 @@ def read_frames_csv_file(filepath, error_bad_lines: bool = False, warn_bad_lines
 	csv_dataframe.drop(columns = ['radiotap.dbm_antsignal_2', 'radiotap.dbm_antsignal_3', 'radiotap.dbm_antsignal_4',
 	                              'radiotap.dbm_antsignal_5', ], inplace = True)
 
-	print('• Dataframe shape (on read):', csv_dataframe.shape)
+	print('\t', '•• Dataframe shape (on read):', csv_dataframe.shape)
 
 	# sanitize data
 	#   - drop not available values
-	csv_dataframe.dropna(axis = 0, subset = ['frame.time_epoch', 'radiotap.dbm_antsignal', ], inplace = True)
-	print('• Dataframe shape (after dropping null values):', csv_dataframe.shape)
+	csv_dataframe.dropna(axis = 0, subset = [
+		FrameFields.frame_time_epoch.value,
+		FrameFields.radiotap_dbm_antsignal.value,
+		FrameFields.radiotap_datarate.value,
+	], inplace = True)
+
+	print('\t', '•• Dataframe shape (after dropping null values):', csv_dataframe.shape)
+
+	#   - optimize memory usage
+	#   - convert to expected types
+	csv_dataframe[FrameFields.frame_time_epoch.value] = csv_dataframe[FrameFields.frame_time_epoch.value].astype(float)
+	csv_dataframe[FrameFields.wlan_bssid.value] = csv_dataframe[FrameFields.wlan_bssid.value].astype('category')
+	csv_dataframe[FrameFields.wlan_sa.value] = csv_dataframe[FrameFields.wlan_sa.value].astype('category')
+	csv_dataframe[FrameFields.wlan_da.value] = csv_dataframe[FrameFields.wlan_da.value].astype('category')
+	csv_dataframe[FrameFields.wlan_ta.value] = csv_dataframe[FrameFields.wlan_ta.value].astype('category')
+	csv_dataframe[FrameFields.wlan_ra.value] = csv_dataframe[FrameFields.wlan_ra.value].astype('category')
+	csv_dataframe[FrameFields.wlan_mgt_fixed_status_code.value] = \
+		csv_dataframe[FrameFields.wlan_mgt_fixed_status_code.value].astype('category')
+	csv_dataframe[FrameFields.wlan_mgt_ssid.value] = csv_dataframe[FrameFields.wlan_mgt_ssid.value].astype('category')
+	csv_dataframe[FrameFields.wlan_fc_subtype.value] = \
+		csv_dataframe[FrameFields.wlan_fc_subtype.value].astype('category')
+	csv_dataframe[FrameFields.wlan_fc_retry.value] = csv_dataframe[FrameFields.wlan_fc_retry.value].astype('category')
+	csv_dataframe[FrameFields.wlan_fc_pwrmgt.value] = csv_dataframe[FrameFields.wlan_fc_pwrmgt.value].astype('category')
+	csv_dataframe[FrameFields.radiotap_datarate.value] = \
+		csv_dataframe[FrameFields.radiotap_datarate.value].astype(float, errors = 'ignore')
+	csv_dataframe[FrameFields.radiotap_dbm_antsignal.value] = \
+		csv_dataframe[FrameFields.radiotap_dbm_antsignal.value].astype(float, errors = 'ignore')
 
 	# sort the dataframe by `frame.time_epoch`
 	csv_dataframe.sort_values(
-		by = 'frame.time_epoch',
+		by = FrameFields.frame_time_epoch.value,
 		axis = 0,
 		ascending = True,
 		inplace = True,
 		na_position = 'last'
 	)
-
 	return csv_dataframe
 
 
@@ -828,42 +1249,46 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 	print('• UUID generated for the file {:s}: {:s}'.format(frames_csv_name, frames_file__uuid))
 
 	if clients is None:
-		clients = find_all_client_mac_addresses(main_dataframe)
+		clients = extract_all_client_mac_addresses(main_dataframe)
 
 	# output column orders
-	semi_processed_output_column_order = main_dataframe.columns.values.tolist()
-	semi_processed_output_column_order.sort()
-	semi_processed_output_column_order.append(EpisodeProperties.episode__id.value)
-	semi_processed_output_column_order.append(EpisodeProperties.associated_client__mac.value)
-	semi_processed_output_column_order.append(EpisodeProperties.frames_file__uuid.value)
+	# semi_processed_output_column_order = main_dataframe.columns.values.tolist()
+	# semi_processed_output_column_order.sort()
+	# semi_processed_output_column_order.append(EpisodeProperties.episode__id.value)
+	# semi_processed_output_column_order.append(EpisodeProperties.associated_client__mac.value)
+	# semi_processed_output_column_order.append(EpisodeProperties.frames_file__uuid.value)
 
-	processed_output_column_order = get_output_column_order()
+	processed_output_column_order = get_output_column_order(constants.MLFeatures)
 	if assign_rbs_tags:
 		processed_output_column_order.append('rbs__cause_tags')
 
 	# update mapping file
-	mapping = {
-		MappingParameters.timestamp__date.value: [timestamp.strftime('%d-%m-%Y'), ],
-		MappingParameters.timestamp__time.value: [timestamp.strftime('%H-%M-%S'), ],
-		MappingParameters.frames_file__name.value: [frames_csv_name, ],
-		MappingParameters.frames_file__uuid.value: [frames_file__uuid, ],
-	}
-	mapping_df = pd.DataFrame.from_dict(mapping)
-	mapping_columns = mapping_df.columns.values.tolist()
-	mapping_columns.sort()
-	mapping_headers = not os.path.exists(mapping_file)
-	mapping_df.to_csv(mapping_file, mode = 'a', index = False, header = mapping_headers,
-	                  columns = mapping_columns)
+	# mapping = {
+	# 	MappingParameters.timestamp__date.value: [timestamp.strftime('%d-%m-%Y'), ],
+	# 	MappingParameters.timestamp__time.value: [timestamp.strftime('%H-%M-%S'), ],
+	# 	MappingParameters.frames_file__name.value: [frames_csv_name, ],
+	# 	MappingParameters.frames_file__uuid.value: [frames_file__uuid, ],
+	# }
+	# mapping_df = pd.DataFrame.from_dict(mapping)
+	# mapping_columns = mapping_df.columns.values.tolist()
+	# mapping_columns.sort()
+	# mapping_headers = not os.path.exists(mapping_file)
+	# mapping_df.to_csv(mapping_file, mode = 'a', index = False, header = mapping_headers,
+	#                   columns = mapping_columns)
 
 	# all episodes characteristics as list of 2-tuples
 	#   - 1. features
 	#   - 2. properties
-	ep_characteristics_list = list()
+	window_characteristics_list = list()
 
 	# ### Processing ###
 	# 1. keep only relevant frames in memory
 	main_dataframe = filter_out_irrelevant_frames(main_dataframe, clients, access_points)
 	print('• Dataframe shape (relevance filter):', main_dataframe.shape)
+
+	# 1.1 calculate linear trends for all access points in the main dataframe
+	found_access_points = extract_all_ap_bssid(main_dataframe)
+	ap_beacon_count_linear_trends = get_linear_beacon_count_trend_for_aps(main_dataframe, found_access_points)
 
 	# 2. for each client...
 	for the_client in clients:
@@ -873,44 +1298,46 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 		# 2.b. filter frames belonging to the client
 		dataframe = filter_client_frames(dataframe, the_client)
 		if dataframe is None:
-			print('• No relevant frames found for client {:s}'.format(the_client))
+			print('\t', '•• No relevant frames found for client {:s}'.format(the_client))
 			continue
 
 		# 2.c. define episodes on frames
-		result = define_episodes_from_frames(dataframe)
+		print('• Creating episodes and windows from the frames for client: {:s}'.format(the_client))
+		result = define_episodes_and_windows_from_frames(dataframe)
 		if result is not None:
-			dataframe, ep_count, ep_indexes = result
-			print('• Episodes generated for client {:s} -'.format(the_client), ep_count)
+			dataframe, count, indexes = result
+			print('\t', '•• Windows generated for client {:s} -'.format(the_client), count)
 
-			if ep_count == 0:
+			if count == 0:
 				continue
 		else:
-			print('• Episodes generated for client {:s} -'.format(the_client), 0)
+			print('\t', '•• Windows generated for client {:s} -'.format(the_client), 0)
 			continue
 
 		# 2.c.1 save semi_processed csv file for later (can be used to link predictions for episodes back to frames)
 		#   - add client to semi processed csv
 		#   - add frames file uid to semi processed csv
-		dataframe[EpisodeProperties.associated_client__mac.value] = the_client
-		dataframe[EpisodeProperties.frames_file__uuid.value] = frames_file__uuid
+		# dataframe[EpisodeProperties.associated_client__mac.value] = the_client
+		# dataframe[EpisodeProperties.frames_file__uuid.value] = frames_file__uuid
 		# write to file
-		output_csvname = frames_file__uuid + '.csv'
-		output_csvfile = os.path.join(directories.semi_processed_frames_csv_files, output_csvname)
-		dataframe.to_csv(output_csvfile, sep = ',', mode = 'a', index = False, header = True,
-		                 columns = semi_processed_output_column_order)
+		# output_csvname = frames_file__uuid + '.csv'
+		# output_csvfile = os.path.join(directories.semi_processed_frames_csv_files, output_csvname)
+		# dataframe.to_csv(output_csvfile, sep = ',', mode = 'a', index = False, header = True,
+		#                  columns = semi_processed_output_column_order)
 		# drop unnecessary columns
-		dataframe.drop(columns = [EpisodeProperties.associated_client__mac.value,
-		                          EpisodeProperties.frames_file__uuid.value], inplace = True)
+		# dataframe.drop(columns = [EpisodeProperties.associated_client__mac.value,
+		#                           EpisodeProperties.frames_file__uuid.value], inplace = True)
 
-		# 2.d. for each episode...
-		for episode_idx in ep_indexes:
-			# 2.d.1. get all frames belonging to the episode
-			_episode_df = dataframe[
-				(dataframe[EpisodeProperties.episode__id.value] == episode_idx)
-			]
+		# 2.d. for each index...
+		for idx in indexes:
+			# 2.d.1. get all frames belonging to the episode/window
+			_df = dataframe[
+				(dataframe[WindowProperties.window__id.value] == idx) |
+				(dataframe[EpisodeProperties.episode__id.value] == idx)
+				]
 			# 2.d.2. sort the dataframe by `frame.time_epoch`
-			_episode_df.sort_values(
-				by = 'frame.time_epoch',
+			_df.sort_values(
+				by = FrameFields.frame_time_epoch.value,
 				axis = 0,
 				ascending = True,
 				inplace = True,
@@ -918,38 +1345,46 @@ def process_frame_csv_file(frames_csv_name: str, access_points, clients, assign_
 			)
 
 			# 2.d.3. compute episode characteristics
-			ep_features, ep_properties = compute_episode_characteristics(_episode_df, the_client, episode_idx,
-			                                                             frames_file__uuid)
+			window_features = compute_features_and_properties(_df, the_client, idx,
+			                                                  ap_beacon_count_linear_trends,
+			                                                  constants.MLFeatures)
 
 			# 2.d.4. append to output
-			ep_characteristics_list.append((ep_features, ep_properties))
+			window_characteristics_list.append(window_features)
 
-	# 3. make a dataframe from episode characteristics
-	ep_characteristics_df = convert_ep_characteristics_to_dataframe(ep_characteristics_list)
-	print('• Total episodes generated: {:d}'.format(len(ep_characteristics_df)))
+	# 3. make a dataframe from window characteristics
+	window_characteristics_df = convert_window_characteristics_to_dataframe(window_characteristics_list,
+	                                                                        constants.MLFeatures)
+	print('• Total windows generated: {:d}'.format(len(window_characteristics_df)))
 	# 3.a. drop null values, since ML model can't make any sense of this
-	ep_characteristics_df.dropna(axis = 0, inplace = True)
-	print('• Total episodes generated (after dropping null values): {:d}'.format(len(ep_characteristics_df)))
+	from machine_learning.learning_flows.multi_layer_classification_1vAll import training_features, ASCause
+	ft = training_features()
+	window_characteristics_df.dropna(
+		axis = 0,
+		inplace = True,
+		# subset = ft[ASCause.dfl]
+	)
+	print('• Total windows generated (after dropping null values): {:d}'.format(len(window_characteristics_df)))
 
 	# 4. (optional) assign tags for causes according to old rule-based-system
-	if assign_rbs_tags:
-		ep_characteristics_df = assign_rule_based_system_tags_to_episodes(ep_characteristics_df)
+	# if assign_rbs_tags:
+	# 	window_characteristics_df = assign_rule_based_system_tags_to_episodes(window_characteristics_df)
 
 	# 5. generate a csv file as an output
-	if separate_client_files:
-		for the_client in clients:
-			_df = ep_characteristics_df[
-				(ep_characteristics_df[EpisodeProperties.associated_client__mac.value] == the_client)
-			]
-			name, extension = os.path.splitext(os.path.basename(frames_csv_file))
-			output_csvname = str.format('{:s}_{:s}{:s}', name, the_client, extension)
-			output_csvfile = os.path.join(directories.processed_episode_csv_files, output_csvname)
-			_df.to_csv(output_csvfile, sep = ',', index = False, header = True, columns = processed_output_column_order)
-	else:
-		output_csvname = os.path.basename(frames_csv_file)
-		output_csvfile = os.path.join(directories.processed_episode_csv_files, output_csvname)
-		ep_characteristics_df.to_csv(output_csvfile, sep = ',', index = False, header = True,
-		                             columns = processed_output_column_order)
+	# if separate_client_files:
+	# 	for the_client in clients:
+	# 		_df = window_characteristics_df[
+	# 			(window_characteristics_df[EpisodeProperties.associated_client__mac.value] == the_client)
+	# 		]
+	# 		name, extension = os.path.splitext(os.path.basename(frames_csv_file))
+	# 		output_csvname = str.format('{:s}_{:s}{:s}', name, the_client, extension)
+	# 		output_csvfile = os.path.join(directories.processed_episode_csv_files, output_csvname)
+	# 		_df.to_csv(output_csvfile, sep = ',', index = False, header = True, columns = processed_output_column_order)
+	# else:
+	output_csvname = os.path.basename(frames_csv_file)
+	output_csvfile = os.path.join(directories.processed_episode_csv_files, output_csvname)
+	window_characteristics_df.to_csv(output_csvfile, sep = ',', index = False, header = True,
+	                                 columns = processed_output_column_order)
 
 
 def process_frame_csv_files(frames_csv_file_names: list, access_points, clients, assign_rbs_tags,
@@ -990,12 +1425,25 @@ if __name__ == '__main__':
 
 	# client devices to process for
 	_clients = [
-
+		'88:79:7e:16:01:35',
+		'e0:98:61:47:66:76',
+		'10:68:3f:77:f9:b6',
+		'4c:49:e3:7d:8f:3b',
+		'ac:c3:3a:28:f1:2f',
+		'18:4f:32:fb:3e:e7',
+		'84:ef:18:2c:ea:cf',
+		'c0:ee:fb:d5:81:5b',
+		'f0:79:60:01:1d:20',
+		'5c:f7:e6:a2:5d:14',
+		'dc:a9:04:85:0d:7e',
+		'b4:9c:df:d1:ea:eb',
+		'c0:ee:fb:30:d7:17',
 	]
 
 	# access points
 	_access_points = [
-
+		'28:c6:8e:db:08:a5',
+		'60:e3:27:49:01:95',
 	]
 
 	#   - clients = None, to process all clients
