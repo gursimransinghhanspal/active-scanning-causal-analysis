@@ -215,7 +215,7 @@ def collect():
 	global __CLIENT_IFACE
 
 	print('-' * 40)
-	print('Starting capture {:d}'.format(__CAPTURE_COUNTER))
+	print('Starting capture {:d}, epoch: {:f}'.format(__CAPTURE_COUNTER, time()))
 
 	# make sure directory doesn't exist already
 	_dirname = os.path.join(__SAVE_DIR + str(__CAPTURE_COUNTER))
@@ -234,7 +234,7 @@ def collect():
 		file = os.path.join(_dirname, filename)
 		start_capture_command = start_capture_command_fmt.format(ifname, str(file))
 		run_shell(start_capture_command, output = DEVNULL)
-		print('capture started on channel {:d} using iface {:s}'.format(ch, ifname))
+		print('capture started on channel {:d} using iface {:s}, epoch: {:f}'.format(ch, ifname, time()))
 
 	# wait 30 seconds
 	sleep(30)
@@ -261,7 +261,7 @@ def collect():
 		output = run_shell(stop_capture_command)
 		# ideally should stop in first try
 		if output.returncode == 0:
-			print('capture stopped!')
+			print('capture completed!, epoch: {:f}'.format(time()))
 			break
 
 	# disconnect all the clients
