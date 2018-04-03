@@ -70,9 +70,9 @@ def __client_iface_exists():
 	for iface in __CLIENT_IFACE:
 		iface_command = iface_command_fmt.format(iface)
 		shell_output = run_shell(iface_command)
-		shell_output = str.strip(shell_output)
+		output_str = str.strip(shell_output.stdout)
 
-		if len(shell_output) == 0:
+		if len(output_str) == 0:
 			connected = False
 			print('`{:s}` not connected to the machine. Please check all devices are connected!'.format(iface))
 		else:
@@ -112,9 +112,10 @@ def __connect_client(ifname):
 
 	# wait till the client is connected OR 60 seconds have passed
 	#   - check if the `Access Point` field in `iwconfig` output has a mac-address
-	assert_connected_command_fmt = ('iwconfig {:s} | '
-	                                'grep "Access Point" | '
-	                                'awk \'{print match($0, "Access Point: ..:..:..:..:..:..")}\'')
+	def assert_connected_command_fmt(_ifname):
+		return ('iwconfig {:s} | '.format(_ifname) +
+		        'grep "Access Point" | '
+		        'awk \'{print match($0, "Access Point: ..:..:..:..:..:..")}\'')
 
 	__sleep_time = 1
 	__second_counter = 0
@@ -122,7 +123,7 @@ def __connect_client(ifname):
 		sleep(__sleep_time)
 		__second_counter += __sleep_time
 
-		assert_connected_command = assert_connected_command_fmt.format(ifname)
+		assert_connected_command = assert_connected_command_fmt(ifname)
 		output = run_shell(assert_connected_command)
 		output_str = str(output.stdout).strip()
 		output_int = int(output_str)
@@ -186,13 +187,19 @@ def prepare():
 	global __SNIFFER_IFACE
 	global __CLIENT_IFACE
 
+	print('-' * 40)
+	print('Preparing the environment')
+
 	# all client iface must exist
 	if not __client_iface_exists():
-		return
+		return False
+	print()
 
 	# save directory must exist
 	if not os.path.exists(__SAVE_DIR):
-		return
+		print('`{:s}` does not exist'.format(str(__SAVE_DIR)))
+		return False
+	print()
 
 	# initialize dirname counter
 	__init_directory_name_counter()
@@ -200,11 +207,13 @@ def prepare():
 	# switch sniffers
 	for ch, iface in __SNIFFER_IFACE:
 		switch_to_monitor_mode(iface, ch)
+	print()
 
 	# turn on all clients
 	for ifname in __CLIENT_IFACE:
 		turn_on_iface(ifname)
-
+	print()
+	print('-' * 40)
 	pass
 
 
