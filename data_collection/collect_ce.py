@@ -24,7 +24,7 @@ from subprocess import DEVNULL
 from time import sleep, time
 
 from data_collection.aux import run_shell
-from data_collection.monitor_mode import switch_to_monitor_mode
+from data_collection.monitor_mode import switch_to_monitor_mode, turn_on_iface
 
 # #############################################################################
 # ### Required info (arguments) ###
@@ -184,6 +184,7 @@ def prepare():
 	"""
 
 	global __SNIFFER_IFACE
+	global __CLIENT_IFACE
 
 	# all client iface must exist
 	if not __client_iface_exists():
@@ -199,6 +200,10 @@ def prepare():
 	# switch sniffers
 	for ch, iface in __SNIFFER_IFACE:
 		switch_to_monitor_mode(iface, ch)
+
+	# turn on all clients
+	for ifname in __CLIENT_IFACE:
+		turn_on_iface(ifname)
 
 	pass
 
