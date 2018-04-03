@@ -34,7 +34,7 @@ from data_collection.monitor_mode import switch_to_monitor_mode, turn_on_iface
 #   - should have the `ssid`, `passphrase` generated using wpa_passphrase command
 #   - also include the `bssid`
 # sample file:
-__WPA_CONF = os.path.abspath(__file__)
+__WPA_CONF = os.path.abspath('')
 
 # list of client device interfaces
 __CLIENT_IFACE = [
@@ -153,9 +153,10 @@ def __disconnect_clients():
 			print('wpa_supplicant killed!, epoch: {:f}'.format(time()))
 			break
 
-	assert_disconnect_command_fmt = ('iwconfig {:s} | '
-	                                 'grep "Access Point" | '
-	                                 'awk \'{print match($0, "Access Point: ..:..:..:..:..:..")}\'')
+	def assert_disconnect_command_fmt(_ifname):
+		return ('iwconfig {:s} | '.format(_ifname) +
+		        'grep "Access Point" | '
+		        'awk \'{print match($0, "Access Point: ..:..:..:..:..:..")}\'')
 
 	# wait till all the clients are disconnected
 	#   - check if the `Access Point` field in `iwconfig` output do not have a mac-address
@@ -166,7 +167,7 @@ def __disconnect_clients():
 			sleep(__sleep_time)
 			__second_counter += __sleep_time
 
-			assert_disconnected_command = assert_disconnect_command_fmt.format(ifname)
+			assert_disconnected_command = assert_disconnect_command_fmt(ifname)
 			output = run_shell(assert_disconnected_command)
 			output_str = str(output.stdout).strip()
 			output_int = int(output_str)
