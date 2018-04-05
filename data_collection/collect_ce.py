@@ -99,6 +99,23 @@ def __init_directory_name_counter():
 	pass
 
 
+def __start_capture(_ifname, _channel, _dirname):
+	"""
+
+	:return:
+	"""
+
+	start_capture_command_fmt = 'tshark -i {:s} -w {:s} &'
+	filename_fmt = 'control_ce_{:05d}_ch{:02d}.pcapng'
+
+	filename = filename_fmt.format(__CAPTURE_COUNTER, _channel)
+	file = os.path.join(_dirname, filename)
+	start_capture_command = start_capture_command_fmt.format(_ifname, str(file))
+	run_shell(start_capture_command, output = DEVNULL)
+	print('capture started on channel {:d} using iface {:s}, epoch: {:f}'.format(_channel, _ifname, time()))
+	return True
+
+
 def __connect_client(ifname):
 	"""
 
@@ -135,6 +152,22 @@ def __connect_client(ifname):
 
 	print('{:s} could not connect to the AP -- [~ {:02d}s], epoch: {:f}'.format(ifname, __second_counter, time()))
 	return False
+
+
+def __stop_capture():
+	"""
+
+	:return:
+	"""
+
+	stop_capture_command = 'killall tshark'
+	while True:
+		output = run_shell(stop_capture_command)
+		# ideally should stop in first try
+		if output.returncode == 0:
+			print('capture completed!, epoch: {:f}'.format(time()))
+			break
+	return True
 
 
 def __disconnect_clients():
@@ -177,6 +210,30 @@ def __disconnect_clients():
 				print('{:s} disconnected from the AP -- [~ {:02d}s], epoch: {:f}'.format(ifname, __second_counter,
 				                                                                         time()))
 				break
+
+
+def __delete_current_capture(_dirname):
+	"""
+
+	:return:
+	"""
+
+	rmtree(_dirname)
+	print('Current capture files has been deleted!')
+	pass
+
+
+def __reset(_dirname):
+	"""
+
+	:return:
+	"""
+
+	print('Resetting environment --- --- ---')
+	__stop_capture()
+	__disconnect_clients()
+	__delete_current_capture(_dirname)
+	pass
 
 
 def prepare():
@@ -233,7 +290,7 @@ def collect():
 	print('Starting capture {:d}, epoch: {:f}'.format(__CAPTURE_COUNTER, time()))
 
 	# make sure directory doesn't exist already
-	_dirname = os.path.join(__SAVE_DIR + str(__CAPTURE_COUNTER))
+	_dirname = os.path.join(__SAVE_DIR, str(__CAPTURE_COUNTER))
 	if os.path.exists(_dirname):
 		print('Something has gone wrong! directory `{:d}/` already exists'.format(__CAPTURE_COUNTER))
 		return False
@@ -242,14 +299,11 @@ def collect():
 	os.mkdir(_dirname)
 
 	# begin capture on all specified channels
-	start_capture_command_fmt = 'tshark -i {:s} -w {:s} &'
-	filename_fmt = 'control_ce_{:05d}_ch{:02d}.pcapng'
 	for ch, ifname in __SNIFFER_IFACE:
-		filename = filename_fmt.format(__CAPTURE_COUNTER, ch)
-		file = os.path.join(_dirname, filename)
-		start_capture_command = start_capture_command_fmt.format(ifname, str(file))
-		run_shell(start_capture_command, output = DEVNULL)
-		print('capture started on channel {:d} using iface {:s}, epoch: {:f}'.format(ch, ifname, time()))
+		_ok = __start_capture(ifname, ch, _dirname)
+		if not _ok:
+			__reset(_dirname)
+			return False
 
 	# wait 30 seconds
 	sleep(30)
@@ -262,22 +316,17 @@ def collect():
 	for ifname in __CLIENT_IFACE:
 		_ok = __connect_client(ifname)
 		if not _ok:
-			# potential infinite loop if client can not connect!
-			rmtree(_dirname)
-			return True
+			__reset(_dirname)
 		sleep(10)
 
 	# wait 30 seconds
 	sleep(30)
 
 	# stop capture
-	stop_capture_command = 'killall tshark'
-	while True:
-		output = run_shell(stop_capture_command)
-		# ideally should stop in first try
-		if output.returncode == 0:
-			print('capture completed!, epoch: {:f}'.format(time()))
-			break
+	__stop_capture()
+
+	# wait 10 seconds
+	sleep(10)
 
 	# disconnect all the clients
 	__disconnect_clients()
@@ -291,10 +340,11 @@ def collect():
 
 if __name__ == '__main__':
 	# prepare environment
-	prepare()
+	ok = prepare()
+	if not ok:
+		exit(1)
 
 	# start collection
-	ok = True
 	while ok:
 		ok = collect()
 
