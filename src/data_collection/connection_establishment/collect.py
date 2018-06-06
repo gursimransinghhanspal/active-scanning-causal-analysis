@@ -277,7 +277,7 @@ def prepare():
 
 def collect():
 	"""
-	Collects one episode for connection establishment cause
+	Collects one episode for connection establishment cause per client
 	:return:
 	"""
 
