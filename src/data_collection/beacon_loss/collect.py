@@ -135,6 +135,8 @@ def _collect():
 	global _DIR_NAME_COUNTER
 	_DIR_NAME_COUNTER += 1
 
+	print('-' * 40)
+
 
 def main():
 	ok = _prepare_environment(
