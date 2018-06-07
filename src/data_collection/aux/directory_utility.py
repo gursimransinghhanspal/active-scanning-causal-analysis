@@ -27,3 +27,7 @@ def initialize_directory_counter(root_save_dir) -> int:
 
 def delete_directory(dir_path):
 	rmtree(dir_path)
+
+
+if __name__ == "__main__":
+	pass

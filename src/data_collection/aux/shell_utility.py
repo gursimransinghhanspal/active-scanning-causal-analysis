@@ -27,3 +27,7 @@ def execute_in_shell(command: Union[str, list], stdout = subprocess.PIPE, stderr
 		universal_newlines = True
 	)
 	pass
+
+
+if __name__ == "__main__":
+	pass
