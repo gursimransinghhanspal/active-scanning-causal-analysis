@@ -1,51 +1,25 @@
-import os
-from random import shuffle
-from time import time, sleep
+from time import sleep, time
 from typing import List
 
-from data_collection.aux.directory_utility import initialize_directory_counter, delete_directory
-from data_collection.aux.hostapd_utility import start_ap, kill_ap_abruptly, stop_all_ap_processes
+from data_collection.aux.directory_utility import delete_directory, initialize_directory_counter
+from data_collection.aux.hostapd_utility import kill_ap_abruptly, start_ap, stop_all_ap_processes
 from data_collection.aux.iface_utility import does_iface_exist, iface_dn
-
 # a list of all sniffers with the channel they sniff on
 # type: List[(int, str),]
 from data_collection.aux.tshark_utility import start_capture, stop_all_captures
 from data_collection.aux.wpa_utility import associate_sta, disassociate_all_sta
-
-_SNIFFER_INTERFACES = [
-	(1, ""),
-	(6, ""),
-	(11, ""),
-]
-
-# access point interface
-_AP_INTERFACE = ""
-
-# a list of all clients
-_CLIENT_INTERFACES = [
-	"",
-	"",
-]
+from data_collection.beacon_loss.config import *
 
 # the directory name counter
+# no need to change, gets initialized automatically
 _DIR_NAME_COUNTER = 1
-
-# path to root directory where to save capture files
-_ROOT_SAVE_DIR_PATH = os.path.abspath('')
-
-# path to wpa_supplicant conf file
-_WPA_SUPPLICANT_CONF_PATH = os.path.abspath('')
-# path to hostapd executable
-_HOSTAPD_EXEC_PATH = os.path.abspath('')
-# path to hostapd conf file
-_HOSTAPD_CONF_PATH = os.path.abspath('')
 
 
 #
 # ***** begin ***** #
 #
 
-def _prepare_environment(sniffer_ifaces: list, ap_iface: str, client_ifaces: list, root_save_dir) -> int:
+def _prepare_environment() -> int:
 	"""
 	Does initial checks and some mundane setup to begin
 	:return: the initial dir name counter value
@@ -54,9 +28,9 @@ def _prepare_environment(sniffer_ifaces: list, ap_iface: str, client_ifaces: lis
 	ok = True
 
 	# *** do all interfaces exist ***
-	all_ifaces = [iface for _, iface in sniffer_ifaces]
-	all_ifaces.append(ap_iface)
-	all_ifaces.extend(client_ifaces)
+	all_ifaces = [iface for _, iface in SNIFFER_INTERFACES]
+	all_ifaces.append(AP_INTERFACE)
+	all_ifaces.extend(CLIENT_INTERFACES)
 
 	print('Checking all interfaces:')
 	for ifname in all_ifaces:
@@ -69,7 +43,7 @@ def _prepare_environment(sniffer_ifaces: list, ap_iface: str, client_ifaces: lis
 	del all_ifaces
 
 	# *** create root_save_dir if does not exist ***
-	os.makedirs(root_save_dir, exist_ok = True)
+	os.makedirs(ROOT_SAVE_DIR_PATH, exist_ok = True)
 
 	# *** status ***
 	return ok
@@ -78,7 +52,7 @@ def _prepare_environment(sniffer_ifaces: list, ap_iface: str, client_ifaces: lis
 def _reset(save_dir_path):
 	delete_directory(save_dir_path)
 	stop_all_ap_processes()
-	disassociate_all_sta(_CLIENT_INTERFACES)
+	disassociate_all_sta(CLIENT_INTERFACES)
 
 
 def _collect():
@@ -87,11 +61,11 @@ def _collect():
 	"""
 
 	print('-' * 40)
-	print('Starting collection {:d}, epoch: {:f}'.format(_DIR_NAME_COUNTER, time()))
+	print('_collect(): Starting collection {:d}. [{:f}]'.format(_DIR_NAME_COUNTER, time()))
 
-	_save_dir_path = os.path.join(_ROOT_SAVE_DIR_PATH, str(_DIR_NAME_COUNTER))
+	_save_dir_path = os.path.join(ROOT_SAVE_DIR_PATH, str(_DIR_NAME_COUNTER))
 	if os.path.exists(_save_dir_path):
-		print('Something has gone wrong! directory `{:s}` already exists'.format(str(_save_dir_path)))
+		print('_collect(): Something has gone wrong! directory `{:s}` already exists'.format(str(_save_dir_path)))
 		return False
 	else:
 		os.mkdir(_save_dir_path)
@@ -99,7 +73,7 @@ def _collect():
 	# *** actual work starts here ***
 
 	# start ap
-	start_ap(_HOSTAPD_EXEC_PATH, _HOSTAPD_CONF_PATH, _AP_INTERFACE)
+	start_ap(HOSTAPD_EXEC_PATH, HOSTAPD_CONF_PATH, AP_INTERFACE)
 	# give some time to start
 	sleep(30)
 
@@ -107,21 +81,21 @@ def _collect():
 	# - associate each client to the ap with a sleep time of 5s in between
 	#   - gives ample time to complete the handshake
 	#   - reduces frame collision between multiple clients
-	for ifname in _CLIENT_INTERFACES:
-		_ok = associate_sta(ifname, _WPA_SUPPLICANT_CONF_PATH)
+	for ifname in CLIENT_INTERFACES:
+		_ok = associate_sta(ifname, WPA_SUPPLICANT_CONF_PATH, assert_association = True)
 		sleep(5)
 		if not _ok:
 			_reset(_save_dir_path)
 			return
 
 	# start sniffing
-	for channel, ifname in _SNIFFER_INTERFACES:
+	for channel, ifname in SNIFFER_INTERFACES:
 		start_capture(ifname, channel, _DIR_NAME_COUNTER, _save_dir_path)
 
 	# buffer time to populate pcapng file
 	sleep(30)
 	# turn down ap iface
-	kill_ap_abruptly(_AP_INTERFACE)
+	kill_ap_abruptly(AP_INTERFACE)
 	# buffer time to populate pcapng file
 	sleep(30)
 
@@ -129,23 +103,33 @@ def _collect():
 	stop_all_captures()
 	# kill ap process
 	stop_all_ap_processes()
-	# disconnect / reset
-	disassociate_all_sta(_CLIENT_INTERFACES)
+	# disconnect
+	disassociate_all_sta(CLIENT_INTERFACES)
+
+	# turn off all interfaces
+	# sniffers
+	for _, ifname in SNIFFER_INTERFACES:
+		iface_dn(ifname = ifname)
+	# clients
+	for ifname in CLIENT_INTERFACES:
+		iface_dn(ifname = ifname)
+	# access point
+	iface_dn(AP_INTERFACE)
+
 	# update counter
 	global _DIR_NAME_COUNTER
 	_DIR_NAME_COUNTER += 1
 
+	print("_collect(): Completed collection of one episode per client. [{:f}]".format(time()))
 	print('-' * 40)
 
 
 def main():
-	ok = _prepare_environment(
-		_SNIFFER_INTERFACES, _AP_INTERFACE, _CLIENT_INTERFACES, _ROOT_SAVE_DIR_PATH
-	)
+	ok = _prepare_environment()
 
 	# initialize the dir name counter
 	global _DIR_NAME_COUNTER
-	_DIR_NAME_COUNTER = initialize_directory_counter(_ROOT_SAVE_DIR_PATH)
+	_DIR_NAME_COUNTER = initialize_directory_counter(ROOT_SAVE_DIR_PATH)
 
 	while ok:
 		ok = _collect()

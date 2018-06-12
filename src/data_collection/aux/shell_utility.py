@@ -11,7 +11,7 @@ from typing import Union
 
 
 def whatis_default_shell():
-	pass
+	return NotImplementedError()
 
 
 def execute_in_shell(command: Union[str, list], stdout = subprocess.PIPE, stderr = subprocess.STDOUT):

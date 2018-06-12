@@ -2,6 +2,7 @@
 
 """
 import subprocess
+from time import time
 
 from data_collection.aux.shell_utility import execute_in_shell
 
@@ -21,7 +22,9 @@ def does_iface_exist(ifname: str) -> bool:
 
 	# run the command,
 	# look only at `stderr` stream
+	print("does_iface_exist(): checking interface - `{:s}`. [{:f}]".format(command, time()))
 	output = execute_in_shell(command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
+	print("does_iface_exist(): rc = {:d}. [{:f}]".format(output.returncode, time()))
 	err_string = str(output.stderr).strip()
 	# print(err_string)
 	return len(err_string) == 0
@@ -43,10 +46,10 @@ def iface_dn(ifname: str) -> int:
 
 	# run the command,
 	# look only at `stderr` stream
+	print("iface_dn(): turning off interface - `{:s}`. [{:f}]".format(ifdn_command, time()))
 	output = execute_in_shell(ifdn_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
-	err_string = str(output.stderr).strip()
-	# print(err_string)
-	return int(len(err_string) != 0)
+	print("iface_dn(): rc = {:d}. [{:f}]".format(output.returncode, time()))
+	return int(output.returncode == 0)
 
 
 def iface_up(ifname: str) -> int:
@@ -65,10 +68,10 @@ def iface_up(ifname: str) -> int:
 
 	# run the command,
 	# look only at `stderr` stream
+	print("iface_up(): turning on interface - `{:s}`. [{:f}]".format(ifup_command, time()))
 	output = execute_in_shell(ifup_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
-	err_string = str(output.stderr).strip()
-	# print(err_string)
-	return int(len(err_string) != 0)
+	print("iface_up(): rc = {:d}. [{:f}]".format(output.returncode, time()))
+	return int(output.returncode == 0)
 
 
 def iface_sniff(ifname: str, channel: int = None) -> int:
@@ -95,10 +98,11 @@ def iface_sniff(ifname: str, channel: int = None) -> int:
 	mon_command = mon_command_fmt.format(ifname)
 	# run the command,
 	# look only at `stderr` stream
+	print("iface_sniff(): turning to monitor mode - `{:s}`. [{:f}]".format(mon_command, time()))
 	output = execute_in_shell(mon_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
-	err_string = str(output.stderr).strip()
+	print("iface_sniff(): rc = {:d}. [{:f}]".format(output.returncode, time()))
 	# print(err_string)
-	rc = int(len(err_string) != 0)
+	rc = output.returncode
 	if rc != 0:
 		return 2
 
@@ -112,14 +116,14 @@ def iface_sniff(ifname: str, channel: int = None) -> int:
 
 	# switch to specified channel
 	# prepare the command to run
-	mon_command_fmt = "sudo iwconfig {:s} channel {:d}"
-	mon_command = mon_command_fmt.format(ifname, channel)
+	ch_command_fmt = "sudo iwconfig {:s} channel {:d}"
+	ch_command = ch_command_fmt.format(ifname, channel)
 	# run the command,
 	# look only at `stderr` stream
-	output = execute_in_shell(mon_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
-	err_string = str(output.stderr).strip()
-	# print(err_string)
-	rc = int(len(err_string) != 0)
+	print("iface_sniff(): changing channel - `{:s}`. [{:f}]".format(ch_command, time()))
+	output = execute_in_shell(ch_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
+	print("iface_sniff(): rc = {:d}. [{:f}]".format(output.returncode, time()))
+	rc = output.returncode
 	if rc != 0:
 		return 4
 

@@ -4,6 +4,7 @@
 
 import os
 from shutil import rmtree
+from time import time
 
 
 def initialize_directory_counter(root_save_dir) -> int:
@@ -19,13 +20,17 @@ def initialize_directory_counter(root_save_dir) -> int:
 	try:
 		ls = [int(i) for i in ls]
 	except:
+		print("initialize_directory_counter(): initializing the `dir-counter` to default value. [{:f}]".format(time()))
 		return 1
 
 	ls.sort()
-	return ls[-1] + 1
+	value = ls[-1] + 1
+	print("initialize_directory_counter(): initializing the `dir-counter` to {:d}. [{:f}]".format(value, time()))
+	return value
 
 
 def delete_directory(dir_path):
+	print("delete_directory(): deleting... {:s}. [{:f}]".format(str(dir_path), time()))
 	rmtree(dir_path)
 
 

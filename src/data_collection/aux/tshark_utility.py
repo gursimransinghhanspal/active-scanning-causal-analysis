@@ -21,10 +21,12 @@ def start_capture(ifname, channel, dir_name_counter, save_dir_name):
 	start_capture_command = start_capture_command_fmt.format(ifname, str(file))
 
 	# put interface in monitor mode, and sniff on the channel
+	# this also turns the iface on (obviously)
 	iface_sniff(ifname, channel)
 	# start the capture
-	execute_in_shell(start_capture_command, stdout = subprocess.DEVNULL)
-	print('capture started on channel `{:d}` using iface `{:s}`, epoch: {:f}'.format(channel, ifname, time()))
+	print("start_capture(): starting capture - `{:s}`. [{:f}]".format(start_capture_command, time()))
+	out = execute_in_shell(start_capture_command, stdout = subprocess.DEVNULL)
+	print("start_capture(): rc = {:d}. [{:f}]".format(out.returncode, time()))
 
 
 def stop_all_captures():
@@ -35,10 +37,12 @@ def stop_all_captures():
 
 	stop_capture_command = 'sudo killall tshark'
 	while True:
+		print("stop_all_captures(): killing all tshark processes - `{:s}`. [{:f}]".format(stop_capture_command,
+		                                                                                  time()))
 		output = execute_in_shell(stop_capture_command)
 		# ideally should stop in first try
 		if output.returncode == 0:
-			print('capture completed!, epoch: {:f}'.format(time()))
+			print('stop_all_captures(): capture completed! [{:f}]'.format(time()))
 			break
 
 
