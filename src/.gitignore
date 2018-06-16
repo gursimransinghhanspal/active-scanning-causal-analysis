@@ -1,1 +1,2 @@
+# ignore all the environment configuration files in data_collection directory
 data_collection/**/env.py

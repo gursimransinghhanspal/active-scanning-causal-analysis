@@ -201,6 +201,7 @@ def main():
 		sleep(10)
 
 		# always collect
+		# comment the following statement to stop the script when a collection attempt fails
 		ok = True
 
 
