@@ -52,24 +52,23 @@ def associate_sta(ifname: str, wpa_conf_path, assert_association: bool = True) -
 	return True
 
 
-def disassociate_all_sta(sta_ifaces: list = None, assert_disassociation: bool = True):
+def disassociate_all_sta(sta_ifaces: list = None, assert_disassociation: bool = True) -> int:
 	"""
 	Kill all the wpa_supplicant processes
 	"""
 
 	disconnect_command = 'sudo killall wpa_supplicant'
-	while True:
-		print("disassociate_all_sta(): killing all wpa_supplicant processes - `{:s}`. [{:f}]"
+	print("disassociate_all_sta(): killing all wpa_supplicant processes - `{:s}`. [{:f}]"
 		      .format(disconnect_command, time()))
-		output = execute_in_shell(disconnect_command)
-		# ideally should stop in first try
-		if output.returncode == 0:
-			print('disassociate_all_sta(): wpa_supplicant killed! [{:f}]'.format(time()))
-			break
+	output = execute_in_shell(disconnect_command)
+	if output.returncode == 0:
+		print('disassociate_all_sta(): wpa_supplicant killed! [{:f}]'.format(time()))
+	else:
+		return output.returncode
 
 	# if nothing to do further, return
 	if sta_ifaces is None:
-		return
+		return 0
 
 	def assert_disassociated_command_fmt(_ifname):
 		return ('iwconfig {:s} | '.format(_ifname) +
@@ -97,6 +96,8 @@ def disassociate_all_sta(sta_ifaces: list = None, assert_disassociation: bool = 
 					                                                                                 __second_counter,
 					                                                                                 time()))
 					break
+
+	return 0
 
 
 if __name__ == "__main__":

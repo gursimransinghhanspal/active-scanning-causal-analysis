@@ -49,7 +49,7 @@ def iface_dn(ifname: str) -> int:
 	print("iface_dn(): turning off interface - `{:s}`. [{:f}]".format(ifdn_command, time()))
 	output = execute_in_shell(ifdn_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
 	print("iface_dn(): rc = {:d}. [{:f}]".format(output.returncode, time()))
-	return int(output.returncode == 0)
+	return output.returncode
 
 
 def iface_up(ifname: str) -> int:
@@ -71,7 +71,7 @@ def iface_up(ifname: str) -> int:
 	print("iface_up(): turning on interface - `{:s}`. [{:f}]".format(ifup_command, time()))
 	output = execute_in_shell(ifup_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
 	print("iface_up(): rc = {:d}. [{:f}]".format(output.returncode, time()))
-	return int(output.returncode == 0)
+	return output.returncode
 
 
 def iface_sniff(ifname: str, channel: int = None) -> int:
@@ -127,6 +127,28 @@ def iface_sniff(ifname: str, channel: int = None) -> int:
 	if rc != 0:
 		return 4
 
+	return 0
+
+
+def iface_assign_ip(ifname: str, ip_addr: str, netmask: str):
+	"""
+
+	:param ifname:
+	:param ip_addr:
+	:param netmask:
+	:return:
+	"""
+
+	# prepare the command to run
+	ip_command_fmt = "sudo ifconfig {:s} {:s}/{:s}"
+	ip_command = ip_command_fmt.format(ifname, ip_addr, netmask)
+	# run the command,
+	print("iface_assign_ip(): assigning ip - `{:s}`. [{:f}]".format(ip_command, time()))
+	output = execute_in_shell(ip_command, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE)
+	print("iface_assign_ip(): rc = {:d}. [{:f}]".format(output.returncode, time()))
+	rc = output.returncode
+	if rc != 0:
+		return 1
 	return 0
 
 

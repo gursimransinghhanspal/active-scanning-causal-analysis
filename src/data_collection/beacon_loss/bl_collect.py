@@ -40,19 +40,54 @@ def _prepare_environment() -> int:
 		else:
 			print('• `{:s}` exists!'.format(ifname))
 	print()
-	del all_ifaces
+
+	# *** reset ***
+	_reset(None)
 
 	# *** create root_save_dir if does not exist ***
 	os.makedirs(ROOT_SAVE_DIR_PATH, exist_ok = True)
+	print()
+	print()
 
 	# *** status ***
 	return ok
 
 
 def _reset(save_dir_path):
-	delete_directory(save_dir_path)
+	"""
+	Resets the environment
+
+	:param save_dir_path: if provided, deletes the directory... should be used when some error occurs
+	:return:
+	"""
+
+	print("+" * 40)
+	print("Resetting environment")
+	print()
+
+	if save_dir_path is not None:
+		delete_directory(save_dir_path)
+
+	# stop current ongoing capture
+	stop_all_captures()
+	# stop the ap process
 	stop_all_ap_processes()
+	# disassociate all clients
 	disassociate_all_sta(CLIENT_INTERFACES)
+
+	# turn off all interfaces
+	# sniffers
+	for _, ifname in SNIFFER_INTERFACES:
+		iface_dn(ifname = ifname)
+	# clients
+	for ifname in CLIENT_INTERFACES:
+		iface_dn(ifname = ifname)
+	# access point
+	iface_dn(AP_INTERFACE)
+
+	print()
+	print("+" * 40)
+	print()
 
 
 def _collect():
@@ -60,6 +95,9 @@ def _collect():
 	Collects one episode per client
 	"""
 
+	global _DIR_NAME_COUNTER
+
+	print('-' * 40)
 	print('-' * 40)
 	print('_collect(): Starting collection {:d}. [{:f}]'.format(_DIR_NAME_COUNTER, time()))
 
@@ -73,9 +111,15 @@ def _collect():
 	# *** actual work starts here ***
 
 	# start ap
-	start_ap(HOSTAPD_EXEC_PATH, HOSTAPD_CONF_PATH, AP_INTERFACE)
+	rc = start_ap(HOSTAPD_EXEC_PATH, HOSTAPD_CONF_PATH, AP_INTERFACE, AP_IP_ADDRESS, AP_NETMASK)
+	if rc != 0:
+		_reset(_save_dir_path)
+		return
+	print("." * 40)
+	print()
+
 	# give some time to start
-	sleep(30)
+	sleep(10)
 
 	# associate clients
 	# - associate each client to the ap with a sleep time of 5s in between
@@ -87,23 +131,40 @@ def _collect():
 		if not _ok:
 			_reset(_save_dir_path)
 			return
+	print("." * 40)
+	print()
+
+	# buffer before sniffing (to let all the connection establishment episodes occur)
+	sleep(10)
 
 	# start sniffing
 	for channel, ifname in SNIFFER_INTERFACES:
-		start_capture(ifname, channel, _DIR_NAME_COUNTER, _save_dir_path)
+		rc = start_capture(ifname, channel, _DIR_NAME_COUNTER, _save_dir_path)
+		if rc != 0:
+			_reset(_save_dir_path)
+			return
+	print("." * 40)
+	print()
 
 	# buffer time to populate pcapng file
 	sleep(30)
+
 	# turn down ap iface
-	kill_ap_abruptly(AP_INTERFACE)
+	rc = kill_ap_abruptly(AP_INTERFACE)
+	if rc != 0:
+		_reset(_save_dir_path)
+		return
+	print("." * 40)
+	print()
+
 	# buffer time to populate pcapng file
 	sleep(30)
 
-	# stop sniffing
+	# stop current ongoing capture
 	stop_all_captures()
-	# kill ap process
+	# stop the ap process
 	stop_all_ap_processes()
-	# disconnect
+	# disassociate all clients
 	disassociate_all_sta(CLIENT_INTERFACES)
 
 	# turn off all interfaces
@@ -117,11 +178,14 @@ def _collect():
 	iface_dn(AP_INTERFACE)
 
 	# update counter
-	global _DIR_NAME_COUNTER
 	_DIR_NAME_COUNTER += 1
 
+	print()
 	print("_collect(): Completed collection of one episode per client. [{:f}]".format(time()))
 	print('-' * 40)
+	print('-' * 40)
+	print()
+	return True
 
 
 def main():
@@ -133,6 +197,11 @@ def main():
 
 	while ok:
 		ok = _collect()
+		# buffer time between collections
+		sleep(10)
+
+		# always collect
+		ok = True
 
 
 if __name__ == "__main__":
