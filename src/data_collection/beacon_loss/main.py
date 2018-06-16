@@ -1,13 +1,13 @@
 from time import sleep, time
 from typing import List
 
-from data_collection.aux.directory_utility import delete_directory, initialize_directory_counter
-from data_collection.aux.hostapd_utility import kill_ap_abruptly, start_ap, stop_all_ap_processes
-from data_collection.aux.iface_utility import does_iface_exist, iface_dn
+from data_collection.util.directory_utility import delete_directory, initialize_directory_counter
+from data_collection.util.hostapd_utility import kill_ap_abruptly, start_ap, stop_all_ap_processes
+from data_collection.util.iface_utility import does_iface_exist, iface_dn
 # a list of all sniffers with the channel they sniff on
 # type: List[(int, str),]
-from data_collection.aux.tshark_utility import start_capture, stop_all_captures
-from data_collection.aux.wpa_utility import associate_sta, disassociate_all_sta
+from data_collection.util.tshark_utility import start_capture, stop_all_captures
+from data_collection.util.wpa_utility import associate_sta, disassociate_all_sta
 from data_collection.beacon_loss.env import *
 
 # the directory name counter

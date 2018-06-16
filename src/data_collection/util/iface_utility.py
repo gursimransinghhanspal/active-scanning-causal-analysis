@@ -4,7 +4,7 @@
 import subprocess
 from time import time
 
-from data_collection.aux.shell_utility import execute_in_shell
+from data_collection.util.shell_utility import execute_in_shell
 
 
 def does_iface_exist(ifname: str) -> bool:

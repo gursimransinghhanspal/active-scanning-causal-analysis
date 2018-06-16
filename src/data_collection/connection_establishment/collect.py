@@ -23,7 +23,7 @@ from shutil import rmtree
 from subprocess import DEVNULL
 from time import sleep, time
 
-from data_collection.aux import run_shell
+from data_collection.util import run_shell
 from data_collection.monitor_mode import switch_to_monitor_mode, turn_on_iface
 
 # #############################################################################

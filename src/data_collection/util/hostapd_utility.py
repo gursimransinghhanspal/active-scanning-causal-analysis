@@ -1,8 +1,8 @@
 import subprocess
 from time import time, sleep
 
-from data_collection.aux.iface_utility import iface_dn, iface_up, iface_assign_ip
-from data_collection.aux.shell_utility import execute_in_shell
+from data_collection.util.iface_utility import iface_dn, iface_up, iface_assign_ip
+from data_collection.util.shell_utility import execute_in_shell
 
 
 def start_ap(hostapd_exec_path, hostapd_conf_path, hostapd_ifname: str, ap_ip_addr: str, ap_netmask: str):

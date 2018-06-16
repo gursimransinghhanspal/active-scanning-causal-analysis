@@ -2,8 +2,8 @@ import os
 import subprocess
 from time import time
 
-from data_collection.aux.iface_utility import iface_sniff
-from data_collection.aux.shell_utility import execute_in_shell
+from data_collection.util.iface_utility import iface_sniff
+from data_collection.util.shell_utility import execute_in_shell
 
 
 def start_capture(ifname, channel, dir_name_counter, save_dir_name):

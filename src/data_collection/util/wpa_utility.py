@@ -1,8 +1,8 @@
 import subprocess
 from time import sleep, time
 
-from data_collection.aux.iface_utility import iface_dn, iface_up
-from data_collection.aux.shell_utility import execute_in_shell
+from data_collection.util.iface_utility import iface_dn, iface_up
+from data_collection.util.shell_utility import execute_in_shell
 
 
 def associate_sta(ifname: str, wpa_conf_path, assert_association: bool = True) -> bool:
