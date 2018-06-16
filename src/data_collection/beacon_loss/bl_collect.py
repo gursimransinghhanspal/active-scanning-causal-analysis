@@ -8,7 +8,7 @@ from data_collection.aux.iface_utility import does_iface_exist, iface_dn
 # type: List[(int, str),]
 from data_collection.aux.tshark_utility import start_capture, stop_all_captures
 from data_collection.aux.wpa_utility import associate_sta, disassociate_all_sta
-from data_collection.beacon_loss.config import *
+from data_collection.beacon_loss.env import *
 
 # the directory name counter
 # no need to change, gets initialized automatically
