@@ -2,13 +2,14 @@ from time import sleep, time
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 
 from data_collection.ap_side_procedures.env import *
 from data_collection.util.directory_utility import delete_directory, initialize_directory_counter
-from data_collection.util.iface_utility import does_iface_exist, iface_dn
+from data_collection.util.iface_utility import does_iface_exist, iface_dn, iface_assign_ip
 from data_collection.util.tshark_utility import start_capture, stop_all_captures
 from data_collection.util.wpa_utility import associate_sta, disassociate_all_sta
 
@@ -109,6 +110,9 @@ def _change_router_password(password: str) -> int:
 	Change the wireless password for the router using Selenium
 	"""
 
+	# Give ethernet interface an ip address in local subnet of the router
+	iface_assign_ip(ROUTER_IFACE, ROUTER_IFACE_IP_ADDRESS, ROUTER_IFACE_PREFIXLEN)
+
 	# Get the web driver
 	driver = webdriver.Chrome()
 	# Request the URL and wait for it to load
@@ -147,6 +151,7 @@ def _change_router_password(password: str) -> int:
 	else:
 		# click the wireless menu
 		list_item__wireless.click()
+		print("_change_router_password(): wireless menu opened. [{:f}]".format(time()))
 
 	# Switch to the child <iframe>
 	iframe__wireless = driver.find_element_by_id("frame")
@@ -163,6 +168,7 @@ def _change_router_password(password: str) -> int:
 		return 3
 	else:
 		# fill in the new password
+		print("_change_router_password(): changing router wireless password to `{:s}`. [{:f}]".format(password, time()))
 		input__password_2g = driver.find_element_by_name(_ELEMENT_ID__INPUT__PASSWORD_2G)
 		input__password_2g.clear()
 		input__password_2g.send_keys(password)
@@ -170,6 +176,7 @@ def _change_router_password(password: str) -> int:
 		# click the save button
 		button__save = driver.find_element_by_id(_ELEMENT_ID__BUTTON__SAVE)
 		button__save.click()
+		print("_change_router_password(): saved. [{:f}]".format(time()))
 
 	# Switch to the parent <iframe>
 	driver.switch_to.parent_frame()
@@ -186,6 +193,7 @@ def _change_router_password(password: str) -> int:
 	else:
 		anchor__logout = driver.find_element_by_id(_ELEMENT_ID__CONTROL__LOGOUT)
 		anchor__logout.click()
+		print("_change_router_password(): logged out. [{:f}]".format(time()))
 
 	driver.close()
 	driver.quit()
@@ -220,6 +228,7 @@ def _collect():
 	print()
 
 	# give some time to settle in
+	print("_collect(): sleeping for {:d} sec. [{:f}]".format(30, time()))
 	sleep(30)
 
 	# associate clients
@@ -228,12 +237,17 @@ def _collect():
 	#   - reduces frame collision between multiple clients
 	for ifname in CLIENT_INTERFACES:
 		_ok = associate_sta(ifname, WPA_SUPPLICANT_CONF_PATH, assert_association = True)
+		print("_collect(): sleeping for {:d} sec. [{:f}]".format(10, time()))
 		sleep(10)
 		if not _ok:
 			_reset(_save_dir_path)
 			return
 	print("." * 40)
 	print()
+
+	# time for connection_establishment to pass
+	print("_collect(): sleeping for {:d} sec. [{:f}]".format(20, time()))
+	sleep(20)
 
 	# start sniffing
 	for channel, ifname in SNIFFER_INTERFACES:
@@ -245,10 +259,13 @@ def _collect():
 	print()
 
 	# buffer time to populate pcapng file
-	sleep(60)
+	print("_collect(): sleeping for {:d} sec. [{:f}]".format(30, time()))
+	sleep(30)
 
 	# change the router password to the alternate password
+	print("_collect(): changing password to {:s}. [{:f}]".format(ROUTER_WIRELESS_ALT_PASSWORD, time()))
 	rc = _change_router_password(password = ROUTER_WIRELESS_ALT_PASSWORD)
+	print("_collect(): rc = {:d}. [{:f}]".format(rc, time()))
 	if rc != 0:
 		_reset(_save_dir_path)
 		return
@@ -256,6 +273,8 @@ def _collect():
 	print()
 
 	# buffer time to populate pcapng file
+	# each device takes its own time to realize that its no longer established so give good amount of time here
+	print("_collect(): sleeping for {:d} sec. [{:f}]".format(60, time()))
 	sleep(60)
 
 	# stop current ongoing capture
