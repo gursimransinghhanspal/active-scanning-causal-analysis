@@ -17,6 +17,7 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 	private static final String TAG = ControlActivity.class.getSimpleName();
 
 	private static Long wakeLockCount = 0L;
+	private static Boolean keepThreadRunning = null;
 	private Thread controlThread;
 	private DBHelper dbHelper;
 
@@ -28,9 +29,16 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 		findViewById(R.id.activityLayout_control_startBtn).setOnClickListener(this);
 		findViewById(R.id.activityLayout_control_stopBtn).setOnClickListener(this);
 		findViewById(R.id.activityLayout_control_dbBtn).setOnClickListener(this);
-		stopSimulation();
 
 		dbHelper = new DBHelper(this);
+
+		// Enable Views
+		findViewById(R.id.activityLayout_control_screenTimeoutInput).setEnabled(true);
+		findViewById(R.id.activityLayout_control_intervalInput).setEnabled(true);
+		findViewById(R.id.activityLayout_control_startBtn).setEnabled(true);
+		findViewById(R.id.activityLayout_control_dbBtn).setEnabled(true);
+		// Disable stop button
+		findViewById(R.id.activityLayout_control_stopBtn).setEnabled(false);
 	}
 
 	@Override
@@ -84,6 +92,7 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 		final Integer ScreenTimeout_inMsec = screenTimeout_inMsec;
 		final Integer HalfCycleInterval_inMsec = interval_inMsec;
 
+		keepThreadRunning = true;
 		controlThread = new Thread() {
 
 			private final int HALF_CYCLE_INTERVAL_MSEC = HalfCycleInterval_inMsec;
@@ -95,7 +104,7 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 
 			@Override
 			public void run() {
-				while (true) {
+				while (keepThreadRunning) {
 					PowerManager.WakeLock wakeLock = acquireWakeLock(HALF_CYCLE_INTERVAL_MSEC, DEVICE_SCREEN_TIMEOUT_MSEC);
 
 					// Time that screen stays on = HALF_CYCLE_INTERVAL_MSEC
@@ -133,22 +142,36 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 	}
 
 	private void stopSimulation() {
-		if (controlThread != null) {
-			controlThread.stop();
-			controlThread = null;
+		if (controlThread != null && controlThread.isAlive()) {
+			keepThreadRunning = false;
+			try {
+				controlThread.join(1000L);
+				controlThread = null;
+
+				// Enable Views
+				findViewById(R.id.activityLayout_control_screenTimeoutInput).setEnabled(true);
+				findViewById(R.id.activityLayout_control_intervalInput).setEnabled(true);
+				findViewById(R.id.activityLayout_control_startBtn).setEnabled(true);
+				findViewById(R.id.activityLayout_control_dbBtn).setEnabled(true);
+				// Disable stop button
+				findViewById(R.id.activityLayout_control_stopBtn).setEnabled(false);
+
+				Event simulationEnded = new Event();
+				simulationEnded.setType(Event.EventType.SIMULATION_ENDED);
+				dbHelper.insertEvent(simulationEnded);
+
+			} catch (InterruptedException ignore) {
+
+			}
+		} else {
+			// Enable Views
+			findViewById(R.id.activityLayout_control_screenTimeoutInput).setEnabled(true);
+			findViewById(R.id.activityLayout_control_intervalInput).setEnabled(true);
+			findViewById(R.id.activityLayout_control_startBtn).setEnabled(true);
+			findViewById(R.id.activityLayout_control_dbBtn).setEnabled(true);
+			// Disable stop button
+			findViewById(R.id.activityLayout_control_stopBtn).setEnabled(false);
 		}
-
-		// Enable Views
-		findViewById(R.id.activityLayout_control_screenTimeoutInput).setEnabled(true);
-		findViewById(R.id.activityLayout_control_intervalInput).setEnabled(true);
-		findViewById(R.id.activityLayout_control_startBtn).setEnabled(true);
-		findViewById(R.id.activityLayout_control_dbBtn).setEnabled(true);
-		// Disable stop button
-		findViewById(R.id.activityLayout_control_stopBtn).setEnabled(false);
-
-		Event simulationEnded = new Event();
-		simulationEnded.setType(Event.EventType.SIMULATION_ENDED);
-		dbHelper.insertEvent(simulationEnded);
 	}
 
 	private PowerManager.WakeLock acquireWakeLock(int halfCycleInterval, int screenTimeout) {

@@ -6,8 +6,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.opencsv.CSVWriter;
 
@@ -15,12 +17,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Locale;
 
-public class DbActivity extends AppCompatActivity {
+public class DbActivity extends AppCompatActivity implements View.OnClickListener {
 
 	private static final String TAG = DbActivity.class.getSimpleName();
 
 	TextView recentEventEpochTV, recentEventTypeTV, recordCountTV;
-	Button refreshBtn, clearBtn, exportBtn;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +31,26 @@ public class DbActivity extends AppCompatActivity {
 		recentEventEpochTV = findViewById(R.id.activityLayout_db_eventEpochTV);
 		recentEventTypeTV = findViewById(R.id.activityLayout_db_eventTypeTV);
 		recordCountTV = findViewById(R.id.activityLayout_db_recordCountTV);
+
+		findViewById(R.id.activityLayout_db_refreshBtn).setOnClickListener(this);
+		findViewById(R.id.activityLayout_db_clearBtn).setOnClickListener(this);
+		findViewById(R.id.activityLayout_db_exportBtn).setOnClickListener(this);
+	}
+
+	@Override
+	public void onClick(View view) {
+		switch (view.getId()) {
+			case R.id.activityLayout_db_refreshBtn:
+				refresh();
+				break;
+			case R.id.activityLayout_db_clearBtn:
+				clear();
+				break;
+			case R.id.activityLayout_db_exportBtn:
+				Toast.makeText(this, "Not Implemented!", Toast.LENGTH_LONG).show();
+//				export();
+				break;
+		}
 	}
 
 	private void refresh() {
@@ -50,6 +71,8 @@ public class DbActivity extends AppCompatActivity {
 	private void clear() {
 		DBHelper dbHelper = new DBHelper(this);
 		dbHelper.clearEvents();
+
+		Toast.makeText(this, "Cleared!", Toast.LENGTH_LONG).show();
 	}
 
 	private void export() {
