@@ -1,20 +1,20 @@
 package com.gursimransinghhanspal.powerstateassimulator;
 
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.opencsv.CSVWriter;
-
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Locale;
 
 public class DbActivity extends AppCompatActivity implements View.OnClickListener {
@@ -47,8 +47,7 @@ public class DbActivity extends AppCompatActivity implements View.OnClickListene
 				clear();
 				break;
 			case R.id.activityLayout_db_exportBtn:
-				Toast.makeText(this, "Not Implemented!", Toast.LENGTH_LONG).show();
-//				export();
+				export();
 				break;
 		}
 	}
@@ -76,25 +75,72 @@ public class DbActivity extends AppCompatActivity implements View.OnClickListene
 	}
 
 	private void export() {
+		new ExportDatabaseCSVTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+	}
 
-		File exportDir = new File(Environment.getExternalStorageDirectory(), Environment.DIRECTORY_DOWNLOADS);
-		DBHelper dbHelper = new DBHelper(this);
+	public static class ExportDatabaseCSVTask extends AsyncTask<String, Void, Boolean> {
 
-		File file = new File(exportDir, "power_state_db.csv");
-		try {
-			file.createNewFile();
-			CSVWriter csvWrite = new CSVWriter(new FileWriter(file));
-			SQLiteDatabase db = dbHelper.getReadableDatabase();
-			Cursor curCSV = dbHelper.getAllRecords();
-			csvWrite.writeNext(curCSV.getColumnNames());
-			while (curCSV.moveToNext()) {
-				String arrStr[] = {curCSV.getString(0), curCSV.getString(1), curCSV.getString(2)};
-				csvWrite.writeNext(arrStr);
+		private WeakReference<Context> activityReference;
+		private final ProgressDialog dialog;
+		DBHelper dbhelper;
+
+		public ExportDatabaseCSVTask(Context context) {
+			activityReference = new WeakReference<>(context);
+			dialog = new ProgressDialog(context);
+			dbhelper = new DBHelper(context);
+		}
+
+		@Override
+		protected void onPreExecute() {
+			this.dialog.setMessage("Exporting database...");
+			this.dialog.show();
+		}
+
+		protected Boolean doInBackground(final String... args) {
+
+			File exportDir = new File(Environment.getExternalStorageDirectory(), "/power_state_output/");
+			if (!exportDir.exists()) {
+				Boolean res = exportDir.mkdirs();
 			}
-			csvWrite.close();
-			curCSV.close();
-		} catch (Exception sqlEx) {
-			Log.e(TAG, sqlEx.getMessage(), sqlEx);
+
+			File file = new File(exportDir, "person.csv");
+			try {
+				Boolean res = file.createNewFile();
+				CSVWriter csvWrite = new CSVWriter(new FileWriter(file));
+
+				Cursor curCSV = dbhelper.getAllRecords();
+				csvWrite.writeNext(curCSV.getColumnNames());
+
+				while (curCSV.moveToNext()) {
+					String[] mySecondStringArray = new String[curCSV.getColumnNames().length];
+					mySecondStringArray[0] = Integer.toString(curCSV.getInt(0));
+					mySecondStringArray[1] = Long.toString(curCSV.getLong(1));
+					mySecondStringArray[2] = curCSV.getString(2);
+					csvWrite.writeNext(mySecondStringArray);
+				}
+
+				csvWrite.close();
+				curCSV.close();
+				return true;
+
+			} catch (IOException e) {
+				return false;
+			}
+		}
+
+		protected void onPostExecute(final Boolean success) {
+			if (this.dialog.isShowing()) {
+				this.dialog.dismiss();
+			}
+
+			Context context = activityReference.get();
+			if (context != null) {
+				if (success) {
+					Toast.makeText(context, "Export successful!", Toast.LENGTH_SHORT).show();
+				} else {
+					Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show();
+				}
+			}
 		}
 	}
 }
