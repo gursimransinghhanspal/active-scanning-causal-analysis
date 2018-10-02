@@ -188,5 +188,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-
 # End of https://www.gitignore.io/api/macos,python,pycharm+all
+
+# do not put data on github
+data/
+# do not put trained models on github
+model/

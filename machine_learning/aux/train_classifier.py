@@ -21,7 +21,7 @@ def train_classifier_using_grid_search(classifier_name: str, classifier_object, 
 	:param training_data_infile: Csv file containing training data (labeled)
 								 • The last column should be training labels
 								 • Csv file can contain header (line 1 is skipped)
-								 • Use: machine_learning.aux.preprocessor.create_training_dataset
+								 • Use: machine_learning.aux.data_processing.create_training_dataset
 
 	:param trained_model_outfile: where to save the model
 	:param display_metrics: whether to print model metrics or not

@@ -106,7 +106,7 @@ def training_features():
 
 def label_training_data(datadir):
 	"""
-	Creates different datasets with labelled training data for each of the labels
+	Creates different datasets with labeled training data for each of the labels
 		- <label_name>_merged
 		- <label_name>_training -- this is the training data
 

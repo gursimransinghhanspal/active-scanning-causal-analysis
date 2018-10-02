@@ -13,7 +13,7 @@ def learn(training_data_infile, trained_model_outfile = None, display_metrics: b
 	:param training_data_infile: Csv file containing training data (labeled)
 								 • The last column should be training labels
 								 • Csv file can contain header (line 1 is skipped)
-								 • Use: machine_learning.aux.preprocessor.create_training_dataset
+								 • Use: machine_learning.aux.data_processing.create_training_dataset
 
 	:param trained_model_outfile: where to save the model
 	:param display_metrics: whether to print model metrics or not

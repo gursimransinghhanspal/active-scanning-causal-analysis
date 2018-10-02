@@ -48,7 +48,7 @@ def get_training_data_directories():
 def get_processed_data_file_header_structure(for_training = False):
 	"""
 	Returns header names for columns in input processed data files
-	TODO: make this common across preprocessor
+	TODO: make this common across data_processing
 	"""
 
 	from preprocessor.convert_frames_to_episodes import get_output_column_order
