@@ -17,19 +17,14 @@ import os
 # Path to directory containing the "globals.py" file. All other paths are defined relative to this file
 _current_dirpath = os.path.dirname(os.path.abspath(__file__))
 
-
-class DefaultDirectory(enum.Enum):
-    src = _current_dirpath
-    #
-    data = os.path.join(os.path.dirname(_current_dirpath), 'data')
-    data_cap = os.path.join(data.value, 'cap')
-    data_csv = os.path.join(data.value, 'csv')
-    data_records = os.path.join(data.value, 'records')
-    data_labeled = os.path.join(data.value, 'labeled')
-    data_unlabeled = os.path.join(data.value, 'unlabeled')
-    #
-
-    pass
+DefaultDirectory = dict()
+DefaultDirectory["src"] = _current_dirpath
+DefaultDirectory["data"] = os.path.join(os.path.dirname(_current_dirpath), 'data')
+DefaultDirectory["data_cap"] = os.path.join(DefaultDirectory["data"], 'cap')
+DefaultDirectory["data_csv"] = os.path.join(DefaultDirectory["data"], 'csv')
+DefaultDirectory["data_records"] = os.path.join(DefaultDirectory["data"], 'records')
+DefaultDirectory["data_labeled"] = os.path.join(DefaultDirectory["data"], 'data_labeled')
+DefaultDirectory["data_unlabeled"] = os.path.join(DefaultDirectory["data"], 'data_unlabeled')
 
 
 # *****************************************************************************
@@ -92,8 +87,8 @@ class FrameFields(enum.Enum):
     wlan_da = 'wlan.da'
     wlan_ta = 'wlan.ta'
     wlan_ra = 'wlan.ra'
-    wlanMgt_fixed_statusCode = 'wlan_mgt.fixed.status_code'  # required only for assigning rbs tags
-    wlanMgt_ssid = 'wlan_mgt.ssid'
+    wlan_fixed_statusCode = 'wlan.fixed.status_code'  # required only for assigning rbs tags
+    wlan_ssid = 'wlan.ssid'
     wlan_fc_typeSubtype = 'wlan.fc.type_subtype'
     wlan_fc_retry = 'wlan.fc.retry'
     wlan_fc_pwrmgt = 'wlan.fc.pwrmgt'

@@ -66,7 +66,7 @@ def createCsvHeader(ant_count = 2):
     # the csv file which would not be used.
     # assuming MIMO 4x4 is the max (appending 4 extra headers [one for assurance])
     for i in range(ant_count - 1):
-        header_items.append(FrameFields.radiotap_dbm_antsignal.value + '_' + str(i + 2))
+        header_items.append(FrameFields.radiotap_dbmAntsignal.value + '_' + str(i + 2))
 
     # join the list to form a comma separated string. also add `newline` char
     csv_header_string = str.join(',', header_items)
@@ -138,12 +138,12 @@ def cap2csv(
 
 
 if __name__ == '__main__':
-    __source_dir = DefaultDirectory.data_cap.value
-    __destination_dir = DefaultDirectory.data_csv.value
+    __source_dir = DefaultDirectory["data_cap"]
+    __destination_dir = DefaultDirectory["data_csv"]
 
     envSetup(__source_dir, __destination_dir)
     cap2csv(
         __source_dir, __destination_dir,
         selectCapFiles(__source_dir), createShellCommandFormatString(), createCsvHeader(),
-        True
+        False
     )
