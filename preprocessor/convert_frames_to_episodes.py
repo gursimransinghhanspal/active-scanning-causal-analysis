@@ -22,8 +22,8 @@ def define_episodes_and_windows_from_frames(dataframe: pd.DataFrame):
 
     Definition of a window:
       We derive metrics and simple rules to infer the cause of a given episode of AS. The metrics are calculated
-      using a window of frames that precedes the AS episode. This window extends to the end of the episode of AS,
-      of the same client, that preceded the current episode.
+      using a window of frames that precedes the AS episode. This window extends from the start of current episode
+      till the end of the previous episode of AS by the same client.
 
     Bundle frames into episodes and windows by assigning a `window_index` field to each frame.
     Returns:

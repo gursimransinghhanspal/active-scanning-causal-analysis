@@ -13,7 +13,7 @@
 
 
 from datetime import datetime
-from os import listdir, path, waitpid
+from os import path, waitpid
 from subprocess import Popen
 
 from src import aux
@@ -21,8 +21,8 @@ from src.globals import DefaultDirectory, FrameFields, cap_extensions
 
 
 def envSetup(source_dir, destination_dir):
-    aux.assertDirectoryExists(source_dir)
-    aux.assertDirectoryExists(destination_dir)
+    aux.createDirectoryIfRequired(source_dir)
+    aux.createDirectoryIfRequired(destination_dir)
 
     if aux.isDirectoryEmpty(source_dir):
         raise FileNotFoundError("No [cap] files to process")
@@ -72,22 +72,6 @@ def createCsvHeader(ant_count = 2):
     csv_header_string = str.join(',', header_items)
     csv_header_string += '\n'
     return csv_header_string
-
-
-def selectCapFiles(source_dir):
-    """
-    Read all the cap file names present in the `source_dir`
-    """
-
-    capture_file_names = list()
-    for file in listdir(source_dir):
-        if path.splitext(file)[1] in cap_extensions:
-            capture_file_names.append(file)
-
-    # sort so that we always read in a predefined order
-    # key: smallest file first
-    capture_file_names.sort(key = lambda f: path.getsize(path.join(source_dir, f)))
-    return capture_file_names
 
 
 def cap2csv(
@@ -144,6 +128,6 @@ if __name__ == '__main__':
     envSetup(__source_dir, __destination_dir)
     cap2csv(
         __source_dir, __destination_dir,
-        selectCapFiles(__source_dir), createShellCommandFormatString(), createCsvHeader(),
+        aux.selectFiles(__source_dir, cap_extensions), createShellCommandFormatString(), createCsvHeader(),
         False
     )

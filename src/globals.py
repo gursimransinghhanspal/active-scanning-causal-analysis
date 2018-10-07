@@ -119,22 +119,33 @@ class RBSCauses(enum.Enum):
 # All window metrics -- for ML and RBS flow merged!
 class WindowMetrics(enum.Enum):
     class_3_frames__count = 'class_3_frames__count'
-    # class_3_frames__bool = 'class_3_frames__bool'
-    client_associated__bool = 'client_associated__bool'
+    class_3_frames__binary = 'class_3_frames__binary'
+
+    client_associated__binary = 'client_associated__binary'
+
     frames__arrival_rate = 'frames__arrival_rate'
+
     pspoll__count = 'pspoll__count'
-    # pspoll__bool = 'pspoll__bool'
+    pspoll__binary = 'pspoll__binary'
+
     pwrmgt_cycle__count = 'pwrmgt_cycle__count'
-    # pwrmgt_cycle__bool = 'pwrmgt_cycle__bool'
+    pwrmgt_cycle__binary = 'pwrmgt_cycle__binary'
+
     rssi__slope = 'rssi__slope'
+
     ap_deauth_frames__count = 'ap_deauth_frames__count'
-    # ap_deauth_frames__bool = 'ap_deauth_frames__bool'
+    ap_deauth_frames__binary = 'ap_deauth_frames__binary'
+
     max_consecutive_beacon_loss__count = 'max_consecutive_beacon_loss__count'
-    # max_consecutive_beacon_loss__bool = 'max_consecutive_beacon_loss__bool'
+    max_consecutive_beacon_loss__binary = 'max_consecutive_beacon_loss__binary'
+
     beacons_linear_slope__difference = 'beacons_linear_slope__difference'
+
     null_frames__ratio = 'null_frames__ratio'
+
     connection_frames__count = 'connection_frames__count'
-    # connection_frames__bool = 'connection_frames__bool'
+    connection_frames__binary = 'connection_frames__binary'
+
     frames__loss_ratio = 'frames__loss_ratio'
     ack_to_data__ratio = 'ack_to_data__ratio'
     datarate__slope = 'datarate__slope'
@@ -194,10 +205,10 @@ RBSFeatures = {
 }
 
 # These are all the features considered for ML flow
-# These shall be further narrowed down using feature selection algorithms and visualization
+# These are selected using feature selection algorithms
 MLFeatures = [
     WindowMetrics.class_3_frames__count,
-    WindowMetrics.client_associated__bool,
+    WindowMetrics.client_associated__binary,
     WindowMetrics.frames__arrival_rate,
     WindowMetrics.pspoll__count,
     WindowMetrics.pwrmgt_cycle__count,
@@ -238,6 +249,7 @@ class_3_frames_subtypes = [
 ]
 
 cap_extensions = ['.cap', '.pcap', '.pcapng', ]
+csv_extensions = ['.csv', ]
 
 if __name__ == '__main__':
     pass
