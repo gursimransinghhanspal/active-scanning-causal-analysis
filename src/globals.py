@@ -158,6 +158,14 @@ class WindowMetrics(enum.Enum):
     null_frames__count = 'null_frames__count'
     failure_assoc__count = 'failure_assoc__count'
     success_assoc__count = 'success_assoc__count'
+
+    @classmethod
+    def asList(cls):
+        wm = list()
+        for metric in WindowMetrics:
+            wm.append(metric)
+        return wm
+
     pass
 
 

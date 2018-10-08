@@ -249,7 +249,9 @@ def defineLinearTrendForBeacons(dataframe, ap_bssid_list):
 # *****************************************************************************
 
 
-def defineEpisodeBoundaries(dataframe: pd.DataFrame):
+def defineEpisodeAndWindowBoundaries(
+        dataframe: pd.DataFrame, true_episode_epochs: np.array = None, true_epoch_delta_threshold = 10
+):
     """
     Definition of an episode:
       for each client whose frames have been captured by the sniffer, we partition captured AS frames corresponding to
@@ -272,11 +274,12 @@ def defineEpisodeBoundaries(dataframe: pd.DataFrame):
 
     # filter: packet type = `probe request`
     _df_preqs = dataframe[dataframe[FrameFields.wlan_fc_typeSubtype.value] == FrameSubtypes.probe_request.value]
+    print('\t', '• Number of probe requests:', len(_df_preqs))
     # if no probe requests found return
     if len(_df_preqs) == 0:
         return None
 
-    # sort the dataframe by `frame.time_epoch`
+    # sort the dataframe by `frame.timeEpoch`
     _df_preqs.sort_values(
         by = FrameFields.frame_timeEpoch.value,
         axis = 0,
@@ -285,21 +288,33 @@ def defineEpisodeBoundaries(dataframe: pd.DataFrame):
         na_position = 'last'
     )
 
-    # define episode start and end boundaries
-    episode_bounds = list()
-    current_episode_bounds = [0, ]
+    # filter out true epochs before creating episodes
+    if true_episode_epochs is not None:
+        true_epoch_filter = np.zeros(_df_preqs.shape[0])
+        for _idx, series in _df_preqs.iterrows():
+            true_epoch_filter[_idx] = np.any(
+                np.absolute(true_episode_epochs - float(series[FrameFields.frame_timeEpoch.value]))
+                <= true_epoch_delta_threshold
+            )
+        _df_preqs = _df_preqs[true_epoch_filter]
+        print('\t', '• Number of probe requests (after true epoch filter):', len(_df_preqs))
+
+    # define event start and end boundaries
+    # NOTE: event = window + episode
+    event_bounds = list()
+    current_event_bounds = [0, ]
     previous_epoch = 0
-    for idx, series in _df_preqs.iterrows():
+    for _idx, series in _df_preqs.iterrows():
         current_epoch = float(series[FrameFields.frame_timeEpoch.value])
         if abs(current_epoch - previous_epoch) > 1:
-            current_episode_bounds.append(previous_epoch)
-            episode_bounds.append(tuple(current_episode_bounds))
-            current_episode_bounds = [current_epoch, ]
+            current_event_bounds.append(previous_epoch)
+            event_bounds.append(tuple(current_event_bounds))
+            current_event_bounds = [current_epoch, ]
         previous_epoch = current_epoch
     del _df_preqs
 
     # some metrics regarding episodes
-    _ep_durations = [abs(a - b) for a, b in episode_bounds]
+    _ep_durations = [abs(a - b) for a, b in event_bounds]
     _ep_durations = np.array(_ep_durations)
     print('\t', '•• Number of episodes:', str(_ep_durations.shape[0]))
     print('\t', '•• Max episode duration:', str(_ep_durations.max()))
@@ -311,9 +326,9 @@ def defineEpisodeBoundaries(dataframe: pd.DataFrame):
     dataframe.loc[:, EpisodeProperties.episode__id.value] = -1
     # give sensible `window__id` and `episode__id` to respective frames
     # NOTE: `window__id` and `episode__id` start from 1 not 0.
-    for _idx in range(1, len(episode_bounds)):
-        _previous_bound = episode_bounds[_idx - 1]
-        _current_bound = episode_bounds[_idx]
+    for _idx in range(1, len(event_bounds)):
+        _previous_bound = event_bounds[_idx - 1]
+        _current_bound = event_bounds[_idx]
 
         dataframe.loc[
             ((dataframe[FrameFields.frame_timeEpoch.value] > _previous_bound[1]) &
@@ -1223,7 +1238,7 @@ def csv2records(
 
         # 2.c. define episodes on frames
         print('• Creating episodes and window boundaries from the frames for client: {:s}'.format(the_client))
-        result = defineEpisodeBoundaries(dataframe)
+        result = defineEpisodeAndWindowBoundaries(dataframe)
         if result is not None:
             dataframe, count, indexes = result
             print('\t', '•• Windows generated for client {:s} -'.format(the_client), count)
@@ -1267,7 +1282,8 @@ def csv2records(
             window_features = computeFeaturesAndProperties(
                 _df, the_client, idx,
                 ap_beacon_count_linear_trends,
-                MLFeatures
+                # MLFeatures
+                WindowMetrics.asList()
             )
 
             # 2.d.4. append to output
