@@ -11,6 +11,7 @@
 #
 #
 import datetime
+import math
 from os import path
 from uuid import uuid4
 
@@ -272,6 +273,10 @@ def defineEpisodeAndWindowBoundaries(
         3. indexes
     """
 
+    # add `window__id` and `episode__id` field to all the frames
+    dataframe.loc[:, WindowProperties.window__id.value] = -1
+    dataframe.loc[:, EpisodeProperties.episode__id.value] = -1
+
     # filter: packet type = `probe request`
     _df_preqs = dataframe[dataframe[FrameFields.wlan_fc_typeSubtype.value] == FrameSubtypes.probe_request.value]
     print('\t', '• Number of probe requests:', len(_df_preqs))
@@ -284,8 +289,6 @@ def defineEpisodeAndWindowBoundaries(
         by = FrameFields.frame_timeEpoch.value,
         axis = 0,
         ascending = True,
-        inplace = True,
-        na_position = 'last'
     )
 
     # filter out true epochs before creating episodes
@@ -299,48 +302,46 @@ def defineEpisodeAndWindowBoundaries(
         _df_preqs = _df_preqs[true_epoch_filter]
         print('\t', '• Number of probe requests (after true epoch filter):', len(_df_preqs))
 
-    # define event start and end boundaries
-    # NOTE: event = window + episode
-    event_bounds = list()
-    current_event_bounds = [0, ]
-    previous_epoch = 0
+    # assign episode ids to probe-requests
+    current_episode_id = 1
+    previous_epoch = float(_df_preqs[FrameFields.frame_timeEpoch.value].values[0])
     for _idx, series in _df_preqs.iterrows():
+        print(_idx)
         current_epoch = float(series[FrameFields.frame_timeEpoch.value])
-        if abs(current_epoch - previous_epoch) > 1:
-            current_event_bounds.append(previous_epoch)
-            event_bounds.append(tuple(current_event_bounds))
-            current_event_bounds = [current_epoch, ]
-        previous_epoch = current_epoch
-    del _df_preqs
+        if math.fabs(previous_epoch - current_epoch) > 1:
+            current_episode_id += 1
+        # NOTE: assigning directly in the dataframe not the preq view
+        dataframe.loc[_idx, EpisodeProperties.episode__id.value] = current_episode_id
 
     # some metrics regarding episodes
-    _ep_durations = [abs(a - b) for a, b in event_bounds]
-    _ep_durations = np.array(_ep_durations)
-    print('\t', '•• Number of episodes:', str(_ep_durations.shape[0]))
-    print('\t', '•• Max episode duration:', str(_ep_durations.max()))
-    print('\t', '•• Mean episode duration:', str(_ep_durations.mean()))
-    print('\t', '•• Std. dev for episode duration:', str(_ep_durations.std()))
+    episode_bounds = list()
+    episode_durations = list()
+    for _id in range(1, current_episode_id + 1):
+        _v = dataframe[dataframe[EpisodeProperties.episode__id.value] == _id][FrameFields.frame_timeEpoch.value].values
+        start = _v[0]
+        end = _v[len(_v) - 1]
+        episode_bounds.append((start, end))
+        episode_durations.append(math.fabs(end - start))
 
-    # add `window__id` and `episode__id` field to all the frames
-    dataframe.loc[:, WindowProperties.window__id.value] = -1
-    dataframe.loc[:, EpisodeProperties.episode__id.value] = -1
+    print('\t', '•• Number of episodes:', current_episode_id)
+    print('\t', '•• Max episode duration:', np.max(episode_durations))
+    print('\t', '•• Mean episode duration:', np.mean(episode_durations))
+    print('\t', '•• Std. dev for episode duration:', np.std(episode_durations))
+
     # give sensible `window__id` and `episode__id` to respective frames
     # NOTE: `window__id` and `episode__id` start from 1 not 0.
-    for _idx in range(1, len(event_bounds)):
-        _previous_bound = event_bounds[_idx - 1]
-        _current_bound = event_bounds[_idx]
+
+    # for first episode
+    episode_bounds.insert(0, (0.0, 0.0))
+
+    for _idx in range(1, len(episode_bounds)):
+        _previous_bound = episode_bounds[_idx - 1]
+        _current_bound = episode_bounds[_idx]
 
         dataframe.loc[
             ((dataframe[FrameFields.frame_timeEpoch.value] > _previous_bound[1]) &
              (dataframe[FrameFields.frame_timeEpoch.value] < _current_bound[0])),
             WindowProperties.window__id.value
-        ] = _idx
-
-        dataframe.loc[
-            ((dataframe[FrameFields.wlan_fc_typeSubtype.value] == FrameSubtypes.probe_request.value) &
-             (dataframe[FrameFields.frame_timeEpoch.value] >= _current_bound[0]) &
-             (dataframe[FrameFields.frame_timeEpoch.value] <= _current_bound[1])),
-            EpisodeProperties.episode__id.value
         ] = _idx
 
     # this removes frames that could not be assigned to any window or episode
@@ -1334,11 +1335,18 @@ if __name__ == '__main__':
     __destination_dir = DefaultDirectory["data_records"]
 
     __access_points = [
-
+        '60:e3:27:49:01:95'
     ]
 
     __clients = [
-
+        '54:b8:0a:5e:f1:df',
+        'c4:12:f5:16:90:64',
+        'c4:12:f5:16:90:52',
+        '54:b8:0a:5e:ed:47',
+        '54:b8:0a:75:e9:e7',
+        'c4:12:f5:16:90:4f',
+        '74:da:38:35:e9:df',
+        '6c:19:8f:b4:bc:6e',
     ]
 
     envSetup(__source_dir, __destination_dir)
