@@ -71,7 +71,7 @@ def relevanceFilter(dataframe: pd.DataFrame, clients: list, access_points: list 
 
     if len(_df) == 0:
         return None
-    return _df
+    return _df.copy()
 
 
 def filterByMacAddress(dataframe: pd.DataFrame, client_mac: str):
@@ -99,7 +99,7 @@ def filterByMacAddress(dataframe: pd.DataFrame, client_mac: str):
 
     if len(_df) == 0:
         return None
-    return _df
+    return _df.copy()
 
 
 def apAssociatedToClient(dataframe, the_client):
@@ -152,7 +152,6 @@ def allAccessPointsIn(dataframe):
     access_points_bssid.update(
         set(_beacon_df[FrameFields.wlan_bssid.value][_beacon_df[FrameFields.wlan_bssid.value].notna()].unique())
     )
-    del _beacon_df
 
     # remove `broadcast`
     access_points_bssid = access_points_bssid.difference({'ff:ff:ff:ff:ff:ff', })
@@ -179,7 +178,6 @@ def allClientsIn(dataframe):
     client_mac_addresses.update(set(
         _preq_df[FrameFields.wlan_ta.value][_preq_df[FrameFields.wlan_ta.value].notna()].unique()
     ))
-    del _preq_df
 
     # remove `broadcast`
     client_mac_addresses = client_mac_addresses.difference({'ff:ff:ff:ff:ff:ff', })
@@ -308,10 +306,11 @@ def defineEpisodeAndWindowBoundaries(
     for _idx, series in _df_preqs.iterrows():
         print(_idx)
         current_epoch = float(series[FrameFields.frame_timeEpoch.value])
-        if math.fabs(previous_epoch - current_epoch) > 1:
+        if math.fabs(previous_epoch - current_epoch) >= 1:
             current_episode_id += 1
         # NOTE: assigning directly in the dataframe not the preq view
         dataframe.loc[_idx, EpisodeProperties.episode__id.value] = current_episode_id
+        previous_epoch = current_epoch
 
     # some metrics regarding episodes
     episode_bounds = list()
@@ -355,7 +354,7 @@ def defineEpisodeAndWindowBoundaries(
     # indexes
     indexes = list(dataframe[WindowProperties.window__id.value].unique())
     indexes.sort()
-    return dataframe, len(indexes), indexes
+    return dataframe.copy(), len(indexes), indexes
 
 
 def computeFeaturesAndProperties(
