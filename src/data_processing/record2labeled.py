@@ -16,7 +16,7 @@ from os import path
 import numpy as np
 import pandas as pd
 
-from globals import ASCause, ProjectDirectory, FeaturesForCause
+from globals import ASCause, FeaturesForCause, ProjectDirectory
 from src.aux import createDirectoryIfRequired, isDirectoryEmpty
 
 __label_self = 0
@@ -96,8 +96,8 @@ def labelOneVsAll(record_for_cause: dict, destination_dir, features_for_cause):
         rest_X = rest_df.to_records(index = False)
         del rest_df
         #
-        self_y = np.zeros((self_X.shape[0],))
-        rest_y = np.ones((rest_X.shape[0],))
+        self_y = np.ones((self_X.shape[0],))
+        rest_y = np.zeros((rest_X.shape[0],))
         #
         feature_matrix = np.vstack([self_X, rest_X])
         target_vector = np.stack([self_y, rest_y])
