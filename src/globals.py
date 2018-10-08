@@ -17,14 +17,23 @@ import os
 # Path to directory containing the "globals.py" file. All other paths are defined relative to this file
 _current_dirpath = os.path.dirname(os.path.abspath(__file__))
 
-DefaultDirectory = dict()
-DefaultDirectory["src"] = _current_dirpath
-DefaultDirectory["data"] = os.path.join(os.path.dirname(_current_dirpath), 'data')
-DefaultDirectory["data_cap"] = os.path.join(DefaultDirectory["data"], 'cap')
-DefaultDirectory["data_csv"] = os.path.join(DefaultDirectory["data"], 'csv')
-DefaultDirectory["data_records"] = os.path.join(DefaultDirectory["data"], 'records')
-DefaultDirectory["data_labeled"] = os.path.join(DefaultDirectory["data"], 'data_labeled')
-DefaultDirectory["data_unlabeled"] = os.path.join(DefaultDirectory["data"], 'data_unlabeled')
+ProjectDirectory = dict()
+#
+ProjectDirectory["src"] = _current_dirpath
+##
+ProjectDirectory["data"] = os.path.join(os.path.dirname(_current_dirpath), 'data')
+###
+ProjectDirectory["data.cap"] = os.path.join(ProjectDirectory["data"], 'cap')
+###
+ProjectDirectory["data.csv"] = os.path.join(ProjectDirectory["data"], 'csv')
+###
+ProjectDirectory["data.records"] = os.path.join(ProjectDirectory["data"], 'records')
+###
+ProjectDirectory["data.records_merged"] = os.path.join(ProjectDirectory["data"], 'records_merged')
+###
+ProjectDirectory["data.ml_labeled"] = os.path.join(ProjectDirectory["data"], 'ml_labeled')
+###
+ProjectDirectory["data.ml_unlabeled"] = os.path.join(ProjectDirectory["data"], 'ml_unlabeled')
 
 
 # *****************************************************************************
@@ -115,6 +124,28 @@ class RBSCauses(enum.Enum):
 
 
 # *****************************************************************************
+# the identified active scanning causes
+class ASCause(enum.Enum):
+    apsp = 'ap_side_procedures'
+    bl = 'beacon_loss'
+    ce = 'connection_establishment'
+    # dfl = 'data_frame_loss'
+    lrssi = 'low_rssi'
+    pscanA = 'periodic_scan_associated'
+    pscanU = 'periodic_scan_unassociated'
+    pwr = 'power_state_low_to_high'
+
+    @classmethod
+    def asList(cls):
+        wm = list()
+        for metric in WindowMetrics:
+            wm.append(metric)
+        return wm
+
+    @classmethod
+    def asSet(cls):
+        return set(ASCause.asList())
+
 
 # All window metrics -- for ML and RBS flow merged!
 class WindowMetrics(enum.Enum):
@@ -214,6 +245,17 @@ RBSFeatures = {
 
 # These are all the features considered for ML flow
 # These are selected using feature selection algorithms
+FeaturesForCause = {
+    ASCause.apsp: [],
+    ASCause.bl: [],
+    ASCause.ce: [],
+    ASCause.lrssi: [],
+    ASCause.pscanA: [],
+    ASCause.pscanU: [],
+    ASCause.pwr: [],
+}
+
+#
 MLFeatures = [
     WindowMetrics.class_3_frames__count,
     WindowMetrics.client_associated__binary,

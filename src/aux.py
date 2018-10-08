@@ -35,3 +35,17 @@ def selectFiles(source_dir, accepted_extensions):
     # key: smallest file first
     filenames.sort(key = lambda f: path.getsize(path.join(source_dir, f)))
     return filenames
+
+
+def envSetup(source_dir, destination_dir):
+    createDirectoryIfRequired(source_dir)
+    createDirectoryIfRequired(destination_dir)
+
+    if isDirectoryEmpty(source_dir):
+        raise FileNotFoundError("No files to process in {:s}".format(
+            path.basename(source_dir)
+        ))
+    if not isDirectoryEmpty(destination_dir):
+        raise FileExistsError("Please clear the contents of `{:s}` to prevent any overwrites".format(
+            path.basename(destination_dir)
+        ))

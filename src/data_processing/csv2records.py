@@ -19,9 +19,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import linregress
 
-from globals import (DefaultDirectory, EpisodeProperties, FrameFields, FrameSubtypes, MLFeatures,
+from globals import (ProjectDirectory, EpisodeProperties, FrameFields, FrameSubtypes, MLFeatures,
                      WindowMetrics, WindowProperties, class_3_frames_subtypes, csv_extensions, )
-from src import aux
+from src.aux import envSetup, selectFiles
 
 
 # *****************************************************************************
@@ -188,10 +188,6 @@ def allClientsIn(dataframe):
     print('\t', '•• Found {:d} unique mac addresses'.format(len(client_mac_addresses)))
     return client_mac_addresses
 
-
-def csvColumnNames(features):
-    order = [item.value for item in features]
-    return order
 
 
 def windowCharacteristicsAsDataframe(window_characteristics: list, features):
@@ -1085,18 +1081,6 @@ def computeFeaturesAndProperties(
 # *****************************************************************************
 
 
-def envSetup(source_dir, destination_dir):
-    aux.createDirectoryIfRequired(source_dir)
-    aux.createDirectoryIfRequired(destination_dir)
-
-    if aux.isDirectoryEmpty(source_dir):
-        raise FileNotFoundError("No [csv] files to process")
-    if not aux.isDirectoryEmpty(destination_dir):
-        raise FileExistsError("Please clear the contents of `{:s}` to prevent any overwrites".format(
-            path.basename(destination_dir)
-        ))
-
-
 def readCsvFile(filepath, error_bad_lines: bool = False, warn_bad_lines: bool = True):
     """
     Read csv file using `pandas` and convert it to a `dataframe`.
@@ -1193,7 +1177,7 @@ def csv2records(
     # semi_processed_output_column_order.append(EpisodeProperties.associated_client__mac.value)
     # semi_processed_output_column_order.append(EpisodeProperties.csv_file__uuid.value)
 
-    processed_output_column_order = csvColumnNames(MLFeatures)
+    processed_output_column_order = [item.value for item in MLFeatures]
     # if assign_rbs_tags:
     #     processed_output_column_order.append('rbs__cause_tags')
 
@@ -1330,8 +1314,8 @@ def csv2records(
 # *****************************************************************************
 
 if __name__ == '__main__':
-    __source_dir = DefaultDirectory["data_csv"]
-    __destination_dir = DefaultDirectory["data_records"]
+    __source_dir = ProjectDirectory["data_csv"]
+    __destination_dir = ProjectDirectory["data_records"]
 
     __access_points = [
         '60:e3:27:49:01:95'
@@ -1349,7 +1333,7 @@ if __name__ == '__main__':
     ]
 
     envSetup(__source_dir, __destination_dir)
-    csv_filenames = aux.selectFiles(__source_dir, csv_extensions)
+    csv_filenames = selectFiles(__source_dir, csv_extensions)
     for idx, filename in enumerate(csv_filenames):
         print('Started processing file: {:s}'.format(filename))
         csv2records(

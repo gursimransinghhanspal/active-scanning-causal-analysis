@@ -16,20 +16,8 @@ from datetime import datetime
 from os import path, waitpid
 from subprocess import Popen
 
-from src import aux
-from src.globals import DefaultDirectory, FrameFields, cap_extensions
-
-
-def envSetup(source_dir, destination_dir):
-    aux.createDirectoryIfRequired(source_dir)
-    aux.createDirectoryIfRequired(destination_dir)
-
-    if aux.isDirectoryEmpty(source_dir):
-        raise FileNotFoundError("No [cap] files to process")
-    if not aux.isDirectoryEmpty(destination_dir):
-        raise FileExistsError("Please clear the contents of `{:s}` to prevent any overwrites".format(
-            path.basename(destination_dir)
-        ))
+from src.aux import envSetup, selectFiles
+from src.globals import ProjectDirectory, FrameFields, cap_extensions
 
 
 def createShellCommandFormatString():
@@ -122,12 +110,12 @@ def cap2csv(
 
 
 if __name__ == '__main__':
-    __source_dir = DefaultDirectory["data_cap"]
-    __destination_dir = DefaultDirectory["data_csv"]
+    __source_dir = ProjectDirectory["data_cap"]
+    __destination_dir = ProjectDirectory["data_csv"]
 
     envSetup(__source_dir, __destination_dir)
     cap2csv(
         __source_dir, __destination_dir,
-        aux.selectFiles(__source_dir, cap_extensions), createShellCommandFormatString(), createCsvHeader(),
+        selectFiles(__source_dir, cap_extensions), createShellCommandFormatString(), createCsvHeader(),
         False
     )
