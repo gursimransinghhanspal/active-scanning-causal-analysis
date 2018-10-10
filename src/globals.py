@@ -31,9 +31,13 @@ ProjectDirectory["data.records"] = os.path.join(ProjectDirectory["data"], 'recor
 ###
 ProjectDirectory["data.records_merged"] = os.path.join(ProjectDirectory["data"], 'records_merged')
 ###
+ProjectDirectory["data.ml"] = os.path.join(ProjectDirectory["data"], 'ml')
+###
 ProjectDirectory["data.ml_labeled"] = os.path.join(ProjectDirectory["data"], 'ml_labeled')
 ###
 ProjectDirectory["data.ml_unlabeled"] = os.path.join(ProjectDirectory["data"], 'ml_unlabeled')
+##
+ProjectDirectory["models"] = os.path.join(os.path.dirname(_current_dirpath), 'models')
 
 
 # *****************************************************************************
@@ -133,14 +137,14 @@ class ASCause(enum.Enum):
     lrssi = 'low_rssi'
     pscanA = 'periodic_scan_associated'
     pscanU = 'periodic_scan_unassociated'
-    pwr = 'power_state_low_to_high'
+    # pwr = 'power_state_low_to_high'
 
     @classmethod
     def asList(cls):
-        wm = list()
-        for metric in WindowMetrics:
-            wm.append(metric)
-        return wm
+        as_causes = list()
+        for cause in ASCause:
+            as_causes.append(cause)
+        return as_causes
 
     @classmethod
     def asSet(cls):
@@ -246,32 +250,37 @@ RBSFeatures = {
 # These are all the features considered for ML flow
 # These are selected using feature selection algorithms
 FeaturesForCause = {
-    ASCause.apsp: [],
-    ASCause.bl: [],
-    ASCause.ce: [],
-    ASCause.lrssi: [],
-    ASCause.pscanA: [],
-    ASCause.pscanU: [],
-    ASCause.pwr: [],
+    ASCause.apsp: [WindowMetrics.ap_deauth_frames__count, ],
+    ASCause.bl: [WindowMetrics.beacons_linear_slope__difference,
+                 WindowMetrics.max_consecutive_beacon_loss__count, ],
+    ASCause.ce: [WindowMetrics.connection_frames__count, ],
+    ASCause.lrssi: [WindowMetrics.rssi__mean,
+                    WindowMetrics.rssi__slope, ],
+    ASCause.pscanA: [WindowMetrics.frames__arrival_rate,
+                     WindowMetrics.pspoll__count,
+                     WindowMetrics.pwrmgt_cycle__count, ],
+    ASCause.pscanU: [WindowMetrics.class_3_frames__count,
+                     WindowMetrics.client_associated__binary],
+    # ASCause.pwr: [WindowMetrics.frames__arrival_rate,
+    #               WindowMetrics.null_frames__ratio,
+    #               WindowMetrics.pspoll__count, ],
 }
 
 #
 MLFeatures = [
-    WindowMetrics.class_3_frames__count,
-    WindowMetrics.client_associated__binary,
+    WindowMetrics.ap_deauth_frames__count,
+    WindowMetrics.beacons_linear_slope__difference,
+    WindowMetrics.max_consecutive_beacon_loss__count,
+    WindowMetrics.connection_frames__count,
+    WindowMetrics.rssi__mean,
+    WindowMetrics.rssi__slope,
     WindowMetrics.frames__arrival_rate,
     WindowMetrics.pspoll__count,
     WindowMetrics.pwrmgt_cycle__count,
-    WindowMetrics.rssi__slope,
-    WindowMetrics.rssi__mean,
-    WindowMetrics.ap_deauth_frames__count,
-    WindowMetrics.max_consecutive_beacon_loss__count,
-    WindowMetrics.beacons_linear_slope__difference,
+    WindowMetrics.class_3_frames__count,
+    WindowMetrics.client_associated__binary,
+    WindowMetrics.frames__arrival_rate,
     WindowMetrics.null_frames__ratio,
-    WindowMetrics.connection_frames__count,
-    WindowMetrics.frames__loss_ratio,
-    WindowMetrics.ack_to_data__ratio,
-    WindowMetrics.datarate__slope,
 ]
 
 # ### Other ###

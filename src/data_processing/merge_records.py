@@ -39,15 +39,15 @@ def readRecordsFile(filepath, fields):
     return records_dataframe[fields]
 
 
-def mergeRecords(source_dir, destination_filepath):
+def mergeRecords(source_dir, destination_filepath, fields):
     """ """
 
     record_filenames = selectFiles(source_dir, csv_extensions)
-    record_fields = [item.value for item in MLFeatures]
+    file_df = pd.DataFrame(columns = fields)
+    file_df.to_csv(destination_filepath, mode = 'w', sep = ',', index = False, header = True, columns = fields)
     for filename in record_filenames:
-        file_df = readRecordsFile(path.join(source_dir, filename), record_fields)
-        file_df.to_csv(destination_filepath, mode = 'a', sep = ',', index = False, header = True,
-                       columns = record_fields)
+        file_df = readRecordsFile(path.join(source_dir, filename), fields)
+        file_df.to_csv(destination_filepath, mode = 'a', sep = ',', index = False, header = False, columns = fields)
 
 
 if __name__ == '__main__':
@@ -56,5 +56,5 @@ if __name__ == '__main__':
 
     mergeRecords(
         source_dir = __source_dir,
-        destination_filepath = path.join(__destination_dir, "" + "_mergedRecord.csv")
+        destination_filepath = path.join(__destination_dir, "pscanU" + "_mergedRecord.csv")
     )

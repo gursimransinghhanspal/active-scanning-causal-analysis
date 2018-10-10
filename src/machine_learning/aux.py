@@ -13,7 +13,7 @@
 from datetime import datetime
 from os.path import basename
 
-from numpy import load
+from numpy import load, asarray, reshape
 from sklearn.externals import joblib
 from sklearn.metrics import (accuracy_score, f1_score, make_scorer, precision_score, recall_score,
                              roc_auc_score, )
@@ -30,6 +30,7 @@ def loadNpy(filepath):
     deltatime = nowtime - starttime
     print("loadNpy: Loaded! shape:", npy.shape, "[", nowtime, "][", deltatime.total_seconds(), "]")
     print()
+    return npy
 
 
 def printClassifierMetrics(clf_name, y_true, y_pred, plot_cnfsn = True):
@@ -115,7 +116,17 @@ def selectClassifierUsingGridSearch(
 
     # Keep a held out set (20%, Never to be used for training)
     # NOTE: Use stratified split to get all the classes in testing set
-    X_learn, y_learn, X_held, y_held = train_test_split(X, y, train_size = 0.20, stratify = y, shuffle = True)
+    X_learn, X_held, y_learn, y_held = train_test_split(X, y, train_size = 0.80, stratify = y, shuffle = True)
+    print("train/test", X_learn.shape, X_held.shape, y_learn.shape, y_held.shape)
+    # X_learn = X[asarray(X_learn, dtype = int)]
+    # y_learn = y[asarray(y_learn, dtype = int)]
+    # X_held = X[asarray(X_held, dtype = int)]
+    # y_held = y[asarray(y_held, dtype = int)]
+    # print("train/test", X_learn.shape, X_held.shape, y_learn.shape, y_held.shape)
+
+    # X_learn = reshape(X_learn, (X_learn.shape[0], X_learn.shape[1]))
+    # X_held = reshape(X_held, (X_held.shape[0], X_held.shape[1]))
+    print("train/test", X_learn.shape, X_held.shape, y_learn.shape, y_held.shape)
 
     # Use Repeated Stratified-KFold Cross-Validation for minimal training bias
     rskf = RepeatedStratifiedKFold(5, 2)
@@ -133,7 +144,7 @@ def selectClassifierUsingGridSearch(
             'accuracy': make_scorer(accuracy_score),
             'precision': make_scorer(precision_score),
             'recall': make_scorer(recall_score),
-            'roc_auc': make_scorer(roc_auc_score),
+            # 'roc_auc': make_scorer(roc_auc_score),
         },
         refit = 'f1',
         verbose = 5,
