@@ -44,7 +44,7 @@ ProjectDirectory["models"] = os.path.join(os.path.dirname(_current_dirpath), 'mo
 
 
 class FrameSubtypes(enum.Enum):
-    # type 0 (management)
+    # ** type 0 (management) **
     association_request = 0x00
     association_response = 0x01
     reassociation_request = 0x02
@@ -58,7 +58,7 @@ class FrameSubtypes(enum.Enum):
     deauthentication = 0x0c
     action = 0x0d
 
-    # type 1 (control)
+    # ** type 1 (control) **
     block_ack_request = 0x18
     block_ack = 0x19
     ps_poll = 0x1a
@@ -68,7 +68,7 @@ class FrameSubtypes(enum.Enum):
     cf_end = 0x1e
     cf_end_cf_ack = 0x1f
 
-    # type 2 (data)
+    # ** type 2 (data) **
     data = 0x20
     data_cf_ack = 0x21
     data_cf_poll = 0x22
@@ -92,21 +92,24 @@ class FrameSubtypes(enum.Enum):
 # NOTE: only use with Python >= 3.4, since maintaining enum ordering is very important here
 # IMP: Do not change the ordering if you do not know what you are doing!
 class FrameFields(enum.Enum):
-    """ The fields to select from the cap file for the csv file """
+    """ The fields to select from the cap file for the csv file. """
 
     frame_timeEpoch = 'frame.time_epoch'
-    wlan_bssid = 'wlan.bssid'
-    wlan_sa = 'wlan.sa'
-    wlan_da = 'wlan.da'
-    wlan_ta = 'wlan.ta'
-    wlan_ra = 'wlan.ra'
-    wlan_fixed_statusCode = 'wlan.fixed.status_code'  # required only for assigning rbs tags
-    wlan_ssid = 'wlan.ssid'
-    wlan_fc_typeSubtype = 'wlan.fc.type_subtype'
-    wlan_fc_retry = 'wlan.fc.retry'
-    wlan_fc_pwrmgt = 'wlan.fc.pwrmgt'
     radiotap_datarate = 'radiotap.datarate'
     radiotap_dbmAntsignal = 'radiotap.dbm_antsignal'
+    data_len = 'data.len'
+    wlan_addr = 'wlan.addr'
+    wlan_da = 'wlan.da'
+    wlan_ra = 'wlan.ra'
+    wlan_sa = 'wlan.sa'
+    wlan_ta = 'wlan.ta'
+    wlan_ssid = 'wlan.ssid'
+    wlan_bssid = 'wlan.bssid'
+    wlan_fc_pwrmgt = 'wlan.fc.pwrmgt'
+    wlan_fc_retry = 'wlan.fc.retry'
+    wlan_fc_type = 'wlan.fc.type'
+    wlan_fc_typeSubtype = 'wlan.fc.type_subtype'
+    wlan_fixed_statusCode = 'wlan.fixed.status_code'  # required only for assigning rbs tags
     pass
 
 
@@ -133,11 +136,10 @@ class ASCause(enum.Enum):
     apsp = 'ap_side_procedures'
     bl = 'beacon_loss'
     ce = 'connection_establishment'
-    # dfl = 'data_frame_loss'
     lrssi = 'low_rssi'
-    pscanA = 'periodic_scan_associated'
-    pscanU = 'periodic_scan_unassociated'
-    # pwr = 'power_state_low_to_high'
+    pscanA = 'associated_periodic_scan'
+    pscanU = 'unassociated_periodic_scan'
+    pwr = 'power_state_low_to_high'
 
     @classmethod
     def asList(cls):
@@ -149,6 +151,8 @@ class ASCause(enum.Enum):
     @classmethod
     def asSet(cls):
         return set(ASCause.asList())
+
+    pass
 
 
 # All window metrics -- for ML and RBS flow merged!
@@ -256,9 +260,11 @@ FeaturesForCause = {
     ASCause.ce: [WindowMetrics.connection_frames__count, ],
     ASCause.lrssi: [WindowMetrics.rssi__mean,
                     WindowMetrics.rssi__slope, ],
-    ASCause.pscanA: [WindowMetrics.frames__arrival_rate,
-                     WindowMetrics.pspoll__count,
-                     WindowMetrics.pwrmgt_cycle__count, ],
+    ASCause.pscanA: [
+        WindowMetrics.frames__arrival_rate,
+        WindowMetrics.pspoll__count,
+        WindowMetrics.pwrmgt_cycle__count,
+    ],
     ASCause.pscanU: [WindowMetrics.class_3_frames__count,
                      WindowMetrics.client_associated__binary],
     # ASCause.pwr: [WindowMetrics.frames__arrival_rate,
@@ -305,6 +311,12 @@ class_3_frames_subtypes = [
     FrameSubtypes.block_ack.value,
     FrameSubtypes.action.value,
     14,  # type 0 (management), reserved
+]
+class_3_frames_subtypes = [
+    # all type2
+    # mgt frames not in mgt frames of class1 and 2
+    # pspoll, blk
+    # pg 1012, 1013
 ]
 
 cap_extensions = ['.cap', '.pcap', '.pcapng', ]

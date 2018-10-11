@@ -7,23 +7,22 @@
 # Active Scanning Causal Analysis
 # Preprocessor
 # |- cap2csv.py
-#       := Converts Wireshark/Tshark capture files (.cap/.pcap/.pcapng) to a comma separated format for easy
+#       := Converts Wireshark/Tshark capture files (.cap/.pcap/.pcapng) to a pipe separated format for easy
 #          processing
 #
 
 
 from datetime import datetime
-from os import path, waitpid
+from os import path, waitpid, walk
 from subprocess import Popen
 
-from src.aux import envSetup, selectFiles
-from src.globals import ProjectDirectory, FrameFields, cap_extensions
+from src.aux import createDirectoryIfRequired, envSetup, selectFilesByExtension
+from src.globals import FrameFields, ProjectDirectory, cap_extensions
 
 
 def createShellCommandFormatString():
     """
-    Use Tshark to convert capture files to csv format.
-    NOTE: use tshark version 2.2.13 for consistency
+    Use Tshark to convert capture files to csv format with '|' (pipe) as delimiter.
 
     `wlan_mgt.fixed.status_code` is not required for machine learning flow, but it is required only when assigning
     rbs tags for all the causes. Including it here since storage capacity is not a big concern.
@@ -33,38 +32,28 @@ def createShellCommandFormatString():
     for item in FrameFields:
         header_items.append(item.value)
 
-    command = 'tshark -E separator=, -T fields '
+    command = "tshark -E separator='|' -T fields "
     for item in header_items:
         command += '-e ' + item + ' '
-    command += '-r \'{:s}\' >> \'{:s}\''
+    command += '-r \'{:s}\' > \'{:s}\''
     return command
 
 
-def createCsvHeader(ant_count = 2):
-    """
-    Create a csv header string for the csv files
-    """
+def createCsvHeader():
+    """ Create a csv header string for the csv files """
 
     header_items = []
     for item in FrameFields:
         header_items.append(item.value)
 
-    # for MIMO devices, radiotap.dbm_antsignal is itself a comma separated field
-    # since handling this elegantly requires much more processing, we handle this by appending extra columns to
-    # the csv file which would not be used.
-    # assuming MIMO 4x4 is the max (appending 4 extra headers [one for assurance])
-    for i in range(ant_count - 1):
-        header_items.append(FrameFields.radiotap_dbmAntsignal.value + '_' + str(i + 2))
-
-    # join the list to form a comma separated string. also add `newline` char
-    csv_header_string = str.join(',', header_items)
+    # join the list to form a pipe separated string. also add `newline` char
+    csv_header_string = str.join('|', header_items)
     csv_header_string += '\n'
     return csv_header_string
 
 
 def cap2csv(
-        source_dir, destination_dir,
-        capture_file_names: list, command_format_string: str, csv_file_header: str,
+        source_dir, destination_dir, command_format_string: str, csv_header: str,
         use_subprocesses: bool = False
 ):
     """
@@ -72,37 +61,44 @@ def cap2csv(
     """
 
     subprocesses = list()
-    for idx, capture_name in enumerate(capture_file_names):
-        # base_name = capture_name without extension
-        base_name = path.splitext(capture_name)[0]
-        # csv_name = base_name + '.csv'
-        csv_name = base_name + '.csv'
+    for src_dir, _, all_files in walk(source_dir):
+        print("Processing directory", path.basename(src_dir))
+        print()
 
-        # capture file
-        capture_file = path.join(source_dir, capture_name)
-        # csv file
-        csv_file = path.join(destination_dir, csv_name)
+        # destination directory
+        dst_dir = src_dir.replace(source_dir, destination_dir)
+        print(dst_dir)
+        createDirectoryIfRequired(dst_dir)
 
-        # print progress
-        print('cap2csv: Starting process for file: {:s}'.format(capture_name), end = '\t\t')
-        print('[', datetime.now(), ']')
+        for cap_filename in selectFilesByExtension(src_dir, all_files, cap_extensions):
+            # base_name = capture filename without extension
+            base_name = path.splitext(cap_filename)[0]
+            csv_filename = base_name + '.csv'
 
-        # create csv file and add header as the first line
-        with open(csv_file, 'w') as file:
-            file.write(csv_file_header)
-            file.close()
+            # path to files
+            cap_filepath = path.join(src_dir, cap_filename)
+            csv_filepath = path.join(dst_dir, csv_filename)
 
-        # run command to append data to the csv file
-        #   - this can be run in parallel
-        command = command_format_string.format(str(capture_file), str(csv_file))
-        p = Popen(command, shell = True)
-
-        if use_subprocesses:
-            subprocesses.append(p)
-        else:
-            pid, exit_code = waitpid(p.pid, 0)
-            print('cap2csv: Process pid {:d}, exit-code: {:d}:'.format(pid, exit_code), end = '\t\t')
+            # print progress
+            print('cap2csv: Starting process for file: {:s}'.format(cap_filename), end = '\t\t')
             print('[', datetime.now(), ']')
+
+            # create csv file and add header as the first line
+            with open(csv_filepath, 'w') as file:
+                file.write(csv_header)
+                file.close()
+
+            # run command to append data to the csv file
+            # NOTE: this can be run in parallel
+            command = command_format_string.format(str(cap_filepath), str(csv_filepath))
+            p = Popen(command, shell = True)
+
+            if use_subprocesses:
+                subprocesses.append(p)
+            else:
+                pid, exit_code = waitpid(p.pid, 0)
+                print('cap2csv: Process pid {:d}, exit-code: {:d}:'.format(pid, exit_code), end = '\t\t')
+                print('[', datetime.now(), ']')
 
     if use_subprocesses:
         exit_codes = [q.wait() for q in subprocesses]
@@ -110,12 +106,11 @@ def cap2csv(
 
 
 if __name__ == '__main__':
-    __source_dir = ProjectDirectory["data_cap"]
-    __destination_dir = ProjectDirectory["data_csv"]
+    __source_dir = ProjectDirectory["data.cap"]
+    __destination_dir = ProjectDirectory["data.csv"]
 
     envSetup(__source_dir, __destination_dir)
     cap2csv(
-        __source_dir, __destination_dir,
-        selectFiles(__source_dir, cap_extensions), createShellCommandFormatString(), createCsvHeader(),
+        __source_dir, __destination_dir, createShellCommandFormatString(), createCsvHeader(),
         False
     )

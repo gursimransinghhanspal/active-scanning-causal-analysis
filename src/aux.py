@@ -10,6 +10,7 @@
 
 
 from os import listdir, mkdir, path
+import fnmatch
 
 
 def createDirectoryIfRequired(dirpath):
@@ -23,18 +24,18 @@ def isDirectoryEmpty(dirpath):
     return False
 
 
-def selectFiles(source_dir, accepted_extensions):
-    """ Read all the file names present in the `source_dir` with extension in `accepted_extensions` """
+def selectFilesByExtension(source_dir, filenames, accepted_extensions):
+    filtered_filenames = set()
+    for extension in accepted_extensions:
+        fn_filter = fnmatch.filter(filenames, "*" + extension)
+        for item in fn_filter:
+            filtered_filenames.add(item)
 
-    filenames = list()
-    for file in listdir(source_dir):
-        if path.splitext(file)[1] in accepted_extensions:
-            filenames.append(file)
-
+    filtered_filenames = list(filtered_filenames)
     # sort so that we always read in a predefined order
     # key: smallest file first
-    filenames.sort(key = lambda f: path.getsize(path.join(source_dir, f)))
-    return filenames
+    filtered_filenames.sort(key = lambda f: path.getsize(path.join(source_dir, f)))
+    return filtered_filenames
 
 
 def envSetup(source_dir, destination_dir):
