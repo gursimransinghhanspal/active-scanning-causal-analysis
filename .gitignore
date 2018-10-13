@@ -193,7 +193,7 @@ venv.bak/
 # do not put data on github
 data/
 # do not put trained models on github
-model/
+models/
 # do not put logs on github
 logs/
 

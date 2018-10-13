@@ -29,7 +29,7 @@ RecordForCause = {
     ASCause.lrssi: path.join(ProjectDirectory["data.records_merged"], "lrssi_mergedRecord.csv"),
     ASCause.pscanA: path.join(ProjectDirectory["data.records_merged"], "pscanA_mergedRecord.csv"),
     ASCause.pscanU: path.join(ProjectDirectory["data.records_merged"], "pscanU_mergedRecord.csv"),
-    ASCause.pwr: path.join(ProjectDirectory["data.records_merged"], "pwr_mergedRecord.csv"),
+    # ASCause.pwr: path.join(ProjectDirectory["data.records_merged"], "pwr_mergedRecord.csv"),
 }
 
 
@@ -91,16 +91,14 @@ def labelOneVsAll(record_for_cause: dict, destination_dir, features_for_cause):
             rest_df = pd.concat([rest_df, _cause_df], axis = 0, ignore_index = True)
             pass
         #
-        self_X = self_df.to_records(index = False)
-        del self_df
-        rest_X = rest_df.to_records(index = False)
-        del rest_df
+        self_X = np.asarray(self_df)
+        rest_X = np.asarray(rest_df)
         #
         self_y = np.ones((self_X.shape[0],))
         rest_y = np.zeros((rest_X.shape[0],))
         #
         feature_matrix = np.vstack([self_X, rest_X])
-        target_vector = np.stack([self_y, rest_y])
+        target_vector = np.hstack([self_y, rest_y])
         # print(feature_matrix)
         # print(target_vector)
         #
@@ -109,7 +107,7 @@ def labelOneVsAll(record_for_cause: dict, destination_dir, features_for_cause):
 
 
 if __name__ == '__main__':
-    __destination_dir = ProjectDirectory["data_ml_labeled"]
+    __destination_dir = ProjectDirectory["data.ml_labeled"]
 
     envSetup(__destination_dir)
     labelOneVsAll(

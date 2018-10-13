@@ -15,7 +15,7 @@ from os import path
 import pandas as pd
 
 from globals import MLFeatures, csv_extensions, ProjectDirectory
-from src.aux import selectFiles
+from src.aux import selectFilesByExtension
 
 
 def readRecordsFile(filepath, fields):
@@ -42,7 +42,7 @@ def readRecordsFile(filepath, fields):
 def mergeRecords(source_dir, destination_filepath, fields):
     """ """
 
-    record_filenames = selectFiles(source_dir, csv_extensions)
+    record_filenames = selectFilesByExtension(source_dir, csv_extensions)
     file_df = pd.DataFrame(columns = fields)
     file_df.to_csv(destination_filepath, mode = 'w', sep = ',', index = False, header = True, columns = fields)
     for filename in record_filenames:

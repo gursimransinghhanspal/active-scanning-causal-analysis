@@ -13,6 +13,7 @@ import enum
 import os
 
 # *****************************************************************************
+# *****************************************************************************
 
 # Path to directory containing the "globals.py" file. All other paths are defined relative to this file
 _current_dirpath = os.path.dirname(os.path.abspath(__file__))
@@ -41,57 +42,11 @@ ProjectDirectory["models"] = os.path.join(os.path.dirname(_current_dirpath), 'mo
 
 
 # *****************************************************************************
-
-
-class FrameSubtypes(enum.Enum):
-    # ** type 0 (management) **
-    association_request = 0x00
-    association_response = 0x01
-    reassociation_request = 0x02
-    reassociation_response = 0x03
-    probe_request = 0x04
-    probe_response = 0x05
-    beacon = 0x08
-    atim = 0x09
-    disassociation = 0x0a
-    authentication = 0x0b
-    deauthentication = 0x0c
-    action = 0x0d
-
-    # ** type 1 (control) **
-    block_ack_request = 0x18
-    block_ack = 0x19
-    ps_poll = 0x1a
-    rts = 0x1b
-    cts = 0x1c
-    ack = 0x1d
-    cf_end = 0x1e
-    cf_end_cf_ack = 0x1f
-
-    # ** type 2 (data) **
-    data = 0x20
-    data_cf_ack = 0x21
-    data_cf_poll = 0x22
-    data_cf_ack_cf_poll = 0x23
-    null = 0x24
-    cf_ack = 0x25
-    cf_poll = 0x26
-    cf_ack_cf_poll = 0x27
-    qos_data = 0x28
-    qos_data_cf_ack = 0x29
-    qos_data_cf_poll = 0x2a
-    qos_data_cf_ack_cf_poll = 0x2b
-    qos_null = 0x2c
-    qos_cf_poll = 0x2e
-    qos_cf_ack = 0x2f
-    pass
-
-
 # *****************************************************************************
 
 # NOTE: only use with Python >= 3.4, since maintaining enum ordering is very important here
 # IMP: Do not change the ordering if you do not know what you are doing!
-class FrameFields(enum.Enum):
+class FrameFields(enum.Enum) :
     """ The fields to select from the cap file for the csv file. """
 
     frame_timeEpoch = 'frame.time_epoch'
@@ -114,213 +69,171 @@ class FrameFields(enum.Enum):
 
 
 # *****************************************************************************
+# *****************************************************************************
+
 
 # Tags for Rule Based System Active Scanning Causes
-class RBSCauses(enum.Enum):
-    low_rssi = 'd'
-    data_frame_loss = 'i'
-    power_state = 'e'
-    power_state_v2 = 'f'
-    ap_side_procedure = 'g'
-    client_deauth = 'm'
-    beacon_loss = 'h'
-    unsuccessful_association = 'a'
-    successful_association = 'c'
-    class_3_frames = 'b'
-    pass
+# class RBSCauses(enum.Enum):
+#     ap_side_procedure = 'g'
+#     beacon_loss = 'h'
+#     class_3_frames = 'b'
+#     client_deauth = 'm'
+#     data_frame_loss = 'i'
+#     low_rssi = 'd'
+#     power_state = 'e'
+#     power_state_v2 = 'f'
+#     successful_association = 'c'
+#     unsuccessful_association = 'a'
+#     pass
 
 
 # *****************************************************************************
-# the identified active scanning causes
-class ASCause(enum.Enum):
-    apsp = 'ap_side_procedures'
-    bl = 'beacon_loss'
-    ce = 'connection_establishment'
-    lrssi = 'low_rssi'
-    pscanA = 'associated_periodic_scan'
-    pscanU = 'unassociated_periodic_scan'
-    pwr = 'power_state_low_to_high'
+# *****************************************************************************
+
+
+# ***** Active Scanning Causes *****
+# Labels for ML flow
+class ASCause(enum.Enum) :
+    apsp = 'apSideProcedures'
+    bl = 'beaconLoss'
+    ce = 'connectionEstablishment'
+    lrssi = 'lowRSSI'
+    pscanA = 'associatedPeriodicScan'
+    pscanU = 'unassociatedPeriodicScan'
+    pwr = 'powerState_lowToHigh'
 
     @classmethod
-    def asList(cls):
+    def asList(cls) :
         as_causes = list()
-        for cause in ASCause:
+        for cause in ASCause :
             as_causes.append(cause)
         return as_causes
 
     @classmethod
-    def asSet(cls):
+    def asSet(cls) :
         return set(ASCause.asList())
 
     pass
 
 
-# All window metrics -- for ML and RBS flow merged!
-class WindowMetrics(enum.Enum):
-    class_3_frames__count = 'class_3_frames__count'
-    class_3_frames__binary = 'class_3_frames__binary'
-
-    client_associated__binary = 'client_associated__binary'
-
-    frames__arrival_rate = 'frames__arrival_rate'
-
-    pspoll__count = 'pspoll__count'
-    pspoll__binary = 'pspoll__binary'
-
-    pwrmgt_cycle__count = 'pwrmgt_cycle__count'
-    pwrmgt_cycle__binary = 'pwrmgt_cycle__binary'
-
-    rssi__slope = 'rssi__slope'
-
-    ap_deauth_frames__count = 'ap_deauth_frames__count'
-    ap_deauth_frames__binary = 'ap_deauth_frames__binary'
-
-    max_consecutive_beacon_loss__count = 'max_consecutive_beacon_loss__count'
-    max_consecutive_beacon_loss__binary = 'max_consecutive_beacon_loss__binary'
-
-    beacons_linear_slope__difference = 'beacons_linear_slope__difference'
-
-    null_frames__ratio = 'null_frames__ratio'
-
-    connection_frames__count = 'connection_frames__count'
-    connection_frames__binary = 'connection_frames__binary'
-
-    frames__loss_ratio = 'frames__loss_ratio'
-    ack_to_data__ratio = 'ack_to_data__ratio'
-    datarate__slope = 'datarate__slope'
-
-    rssi__mean = 'rssi__mean'
-    rssi__sd = 'rssi__sd'
-    client_deauth_frames__count = 'client_deauth_frames__count'
-    beacons__count = 'beacons__count'
-    ack__count = 'ack__count'
-    null_frames__count = 'null_frames__count'
-    failure_assoc__count = 'failure_assoc__count'
-    success_assoc__count = 'success_assoc__count'
+# ***** Feature Transformation *****
+# The metrics computed using the window and episode frames
+# Superset of Features for ML flow
+class WindowMetrics(enum.Enum) :
+    # ML features
+    rssi__mean = 'rssi.mean'
+    rssi__stddev = 'rssi.stddev'
+    rssi__linslope = 'rssi.linslope'
+    non_empty_data_frames__rate = 'nonEmptyDataFrame.rate'
+    sleep_frames__binary = 'sleepFrames.binary'
+    empty_null_frames__rate = 'emptyNullFrames.rate'
+    associated_probe_requests__binary = 'associatedProbeRequests.binary'
+    max_consecutive_beacon_loss__count = 'maxConsecutiveBeaconLoss.count'
+    awake_null_frames__rate = 'awakeNullFrames.rate'
+    ap_disconnection_frames__binary = 'apDisconnectionFrames.binary'
+    client_connection_frame__binary = 'clientConnectionFrames.binary'
+    client_associated__binary = 'clientAssociated.binary'
 
     @classmethod
-    def asList(cls):
+    def asList(cls) :
         wm = list()
-        for metric in WindowMetrics:
+        for metric in WindowMetrics :
             wm.append(metric)
         return wm
 
     pass
 
 
+# ***** Extra fields to facilitate mapping back to the csv file *****
+class RecordProperties(enum.Enum):
+    csv_file__uuid = 'csvFile.uuid'
+    window__id = 'window.id'
+    window_start__epoch = 'windowStart.timeEpoch'
+    window_end__epoch = 'windowEnd.timeEpoch'
+    window_duration__seconds = 'windowDuration.seconds'
+    relevant_client__mac = 'relevantClient.mac'
+    episode__id = 'episode.id'
+    episode_start__epoch = 'episodeStart.timeEpoch'
+    episode_end__epoch = 'episodeEnd.timeEpoch'
+    episode_duration__seconds = 'episodeDuration.seconds'
+    pass
+
+
+# ***** Mapping file fields *****
+# class RecordToCsvMappingFields(enum.Enum):
+#     timestamp__date = 'timestamp.date'
+#     timestamp__time = 'timestamp.time'
+#     csv_file__name = 'csvFile.name'
+#     csv_file__uuid = 'csvFile.uuid'
+
+
+# *****************************************************************************
 # *****************************************************************************
 
-class WindowProperties(enum.Enum):
-    frames_file__uuid = 'frames_file__uuid'
-    window__id = 'window__id'
-    window_start__time_epoch = 'window_start__time_epoch'
-    window_end__time_epoch = 'window_end__time_epoch'
-    window_duration__seconds = 'window_duration__seconds'
-    associated_client__mac = 'associated_client__mac'
-    pass
 
+# ***** Rule Based System Metrics *****
+# RBSMetrics = {
+#     WindowMetrics.rssi__mean,
+#     WindowMetrics.rssi__sd,
+#     WindowMetrics.frames__loss_ratio,
+#     WindowMetrics.frames__arrival_rate,
+#     WindowMetrics.ap_deauth_frames__count,
+#     WindowMetrics.client_deauth_frames__count,
+#     WindowMetrics.beacons__count,
+#     WindowMetrics.max_consecutive_beacon_loss__count,
+#     WindowMetrics.ack__count,
+#     WindowMetrics.null_frames__count,
+#     WindowMetrics.failure_assoc__count,
+#     WindowMetrics.success_assoc__count,
+#     WindowMetrics.class_3_frames__count,
+# }
 
-class EpisodeProperties(enum.Enum):
-    episode__id = 'episode__id'
-    episode_start__time_epoch = 'episode_start__time_epoch'
-    episode_end__time_epoch = 'episode_end__time_epoch'
-    episode_duration__seconds = 'episode_duration__seconds'
-    pass
-
-
-class WindowToFrameMappingParameters(enum.Enum):
-    timestamp__date = 'timestamp__date'
-    timestamp__time = 'timestamp__time'
-    frames_file__name = 'frames_file__name'
-    frames_file__uuid = 'frames_file__uuid'
-
-
-RBSFeatures = {
-    WindowMetrics.rssi__mean,
-    WindowMetrics.rssi__sd,
-    WindowMetrics.frames__loss_ratio,
-    WindowMetrics.frames__arrival_rate,
-    WindowMetrics.ap_deauth_frames__count,
-    WindowMetrics.client_deauth_frames__count,
-    WindowMetrics.beacons__count,
-    WindowMetrics.max_consecutive_beacon_loss__count,
-    WindowMetrics.ack__count,
-    WindowMetrics.null_frames__count,
-    WindowMetrics.failure_assoc__count,
-    WindowMetrics.success_assoc__count,
-    WindowMetrics.class_3_frames__count,
-}
-
-# These are all the features considered for ML flow
-# These are selected using feature selection algorithms
-FeaturesForCause = {
-    ASCause.apsp: [WindowMetrics.ap_deauth_frames__count, ],
-    ASCause.bl: [WindowMetrics.beacons_linear_slope__difference,
-                 WindowMetrics.max_consecutive_beacon_loss__count, ],
-    ASCause.ce: [WindowMetrics.connection_frames__count, ],
-    ASCause.lrssi: [WindowMetrics.rssi__mean,
-                    WindowMetrics.rssi__slope, ],
-    ASCause.pscanA: [
-        WindowMetrics.frames__arrival_rate,
-        WindowMetrics.pspoll__count,
-        WindowMetrics.pwrmgt_cycle__count,
+# ***** Feature Selection *****
+# These are all the features considered for ML flow with 7 binary models
+MLFeaturesForCause = {
+    ASCause.apsp   : [
+        WindowMetrics.ap_disconnection_frames__binary,
     ],
-    ASCause.pscanU: [WindowMetrics.class_3_frames__count,
-                     WindowMetrics.client_associated__binary],
-    # ASCause.pwr: [WindowMetrics.frames__arrival_rate,
-    #               WindowMetrics.null_frames__ratio,
-    #               WindowMetrics.pspoll__count, ],
+    ASCause.bl     : [
+        WindowMetrics.associated_probe_requests__binary,
+        WindowMetrics.max_consecutive_beacon_loss__count,
+        WindowMetrics.awake_null_frames__rate,
+    ],
+    ASCause.ce     : [
+        WindowMetrics.client_connection_frame__binary,
+    ],
+    ASCause.lrssi  : [
+        WindowMetrics.rssi__mean,
+    ],
+    ASCause.pscanA : [
+        WindowMetrics.non_empty_data_frames__rate,
+        WindowMetrics.sleep_frames__binary,
+    ],
+    ASCause.pscanU : [
+        WindowMetrics.client_associated__binary,
+    ],
+    ASCause.pwr    : [
+        WindowMetrics.empty_null_frames__rate,
+    ]
 }
 
-#
-MLFeatures = [
-    WindowMetrics.ap_deauth_frames__count,
-    WindowMetrics.beacons_linear_slope__difference,
-    WindowMetrics.max_consecutive_beacon_loss__count,
-    WindowMetrics.connection_frames__count,
-    WindowMetrics.rssi__mean,
-    WindowMetrics.rssi__slope,
-    WindowMetrics.frames__arrival_rate,
-    WindowMetrics.pspoll__count,
-    WindowMetrics.pwrmgt_cycle__count,
-    WindowMetrics.class_3_frames__count,
-    WindowMetrics.client_associated__binary,
-    WindowMetrics.frames__arrival_rate,
-    WindowMetrics.null_frames__ratio,
-]
 
-# ### Other ###
-class_3_frames_subtypes = [
-    FrameSubtypes.data.value,
-    FrameSubtypes.data_cf_ack.value,
-    FrameSubtypes.data_cf_poll.value,
-    FrameSubtypes.data_cf_ack_cf_poll.value,
-    FrameSubtypes.null.value,
-    FrameSubtypes.cf_ack.value,
-    FrameSubtypes.cf_poll.value,
-    FrameSubtypes.cf_ack_cf_poll.value,
-    FrameSubtypes.qos_data.value,
-    FrameSubtypes.qos_data_cf_ack.value,
-    FrameSubtypes.qos_data_cf_poll.value,
-    FrameSubtypes.qos_data_cf_ack_cf_poll.value,
-    FrameSubtypes.qos_null.value,
-    FrameSubtypes.qos_cf_poll.value,
-    FrameSubtypes.qos_cf_ack.value,
-    FrameSubtypes.ps_poll.value,
-    FrameSubtypes.block_ack_request.value,
-    FrameSubtypes.block_ack.value,
-    FrameSubtypes.action.value,
-    14,  # type 0 (management), reserved
-]
-class_3_frames_subtypes = [
-    # all type2
-    # mgt frames not in mgt frames of class1 and 2
-    # pspoll, blk
-    # pg 1012, 1013
-]
+# A list of all ML Features
+def mlFeaturesAsList() :
+    features = list()
+    for key in MLFeaturesForCause.keys() :
+        features.extend(MLFeaturesForCause[key])
+    return features
+
+
+# *****************************************************************************
+# *****************************************************************************
 
 cap_extensions = ['.cap', '.pcap', '.pcapng', ]
 csv_extensions = ['.csv', ]
 
-if __name__ == '__main__':
+# *****************************************************************************
+# *****************************************************************************
+
+if __name__ == '__main__' :
     pass

@@ -53,8 +53,8 @@ def createCsvHeader():
 
 
 def cap2csv(
-        source_dir, destination_dir, command_format_string: str, csv_header: str,
-        use_subprocesses: bool = False
+    source_dir, destination_dir, command_format_string: str, csv_header: str,
+    use_subprocesses: bool = False
 ):
     """
     Run the command for each file name present in `capture_file_names` list
@@ -67,7 +67,6 @@ def cap2csv(
 
         # destination directory
         dst_dir = src_dir.replace(source_dir, destination_dir)
-        print(dst_dir)
         createDirectoryIfRequired(dst_dir)
 
         for cap_filename in selectFilesByExtension(src_dir, all_files, cap_extensions):
@@ -110,7 +109,4 @@ if __name__ == '__main__':
     __destination_dir = ProjectDirectory["data.csv"]
 
     envSetup(__source_dir, __destination_dir)
-    cap2csv(
-        __source_dir, __destination_dir, createShellCommandFormatString(), createCsvHeader(),
-        False
-    )
+    cap2csv(__source_dir, __destination_dir, createShellCommandFormatString(), createCsvHeader(), False)

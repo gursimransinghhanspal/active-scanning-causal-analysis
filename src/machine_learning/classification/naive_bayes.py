@@ -14,7 +14,7 @@
 
 from os import path
 
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
 
 from globals import ProjectDirectory
 from machine_learning.aux import loadNpy, selectClassifierUsingGridSearch
@@ -25,14 +25,12 @@ def trainUsingGridSearch_RF(X, y, clf_savefile):
 
     # parameters to tune
     param_grid = {
-        'n_estimators': [5, 10, 20, 30, 40, 50],
-        'max_depth': [None, 5, 10, 20, 30],
-        'min_samples_split': [2, 5, 10]
+
     }
 
     clf = selectClassifierUsingGridSearch(
-        clf_name = 'Random Forest',
-        clf_type = RandomForestClassifier,
+        clf_name = 'Naive Bayes',
+        clf_type = GaussianNB,
         param_grid = param_grid,
         X = X, y = y,
         clf_savefile = clf_savefile,
@@ -46,8 +44,8 @@ def test(clf_savefile, X):
 
 
 if __name__ == '__main__':
-    feature_matrix = loadNpy(path.join(ProjectDirectory["data.ml"], "lrssi_OneVsAll_featureMatrix.npy"))
-    target_vector = loadNpy(path.join(ProjectDirectory["data.ml"], "lrssi_OneVsAll_targetVector.npy"))
-    savefile = path.join(ProjectDirectory["models"], "lrssi_RF.joblib")
+    feature_matrix = loadNpy(path.join(ProjectDirectory["data.ml"], "ce_OneVsAll_featureMatrix.npy"))
+    target_vector = loadNpy(path.join(ProjectDirectory["data.ml"], "ce_OneVsAll_targetVector.npy"))
+    savefile = path.join(ProjectDirectory["models"], "ce_NB.joblib")
     #
     trainUsingGridSearch_RF(feature_matrix, target_vector, savefile)
