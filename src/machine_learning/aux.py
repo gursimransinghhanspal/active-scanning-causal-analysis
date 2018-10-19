@@ -13,10 +13,10 @@
 from datetime import datetime
 from os.path import basename
 
-from numpy import load, asarray, reshape
+from numpy import load
 from sklearn.externals import joblib
-from sklearn.metrics import (accuracy_score, f1_score, make_scorer, precision_score, recall_score,
-                             roc_auc_score, )
+from sklearn.metrics import (accuracy_score, f1_score, precision_score, recall_score,
+                             )
 from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold, train_test_split
 
 
@@ -39,17 +39,17 @@ def printClassifierMetrics(clf_name, y_true, y_pred, plot_cnfsn = True):
     # Accuracy
     print("Accuracy Score:\t\t", accuracy_score(y_true, y_pred))
     # Precision
-    print("Precision Score:\t\t", precision_score(y_true, y_pred, average = None))
-    print("Micro Precision Score:\t\t", precision_score(y_true, y_pred, average = 'micro'))
-    print("Macro Precision Score:\t\t", precision_score(y_true, y_pred, average = 'macro'))
+    print("Precision Score:\t\t", precision_score(y_true, y_pred, average = None, pos_label = 1))
+    print("Micro Precision Score:\t\t", precision_score(y_true, y_pred, average = 'micro', pos_label = 1))
+    print("Macro Precision Score:\t\t", precision_score(y_true, y_pred, average = 'macro', pos_label = 1))
     # Recall
-    print("Recall Score:\t\t", recall_score(y_true, y_pred, average = None))
-    print("Micro Recall Score:\t\t", recall_score(y_true, y_pred, average = 'micro'))
-    print("Macro Recall Score:\t\t", recall_score(y_true, y_pred, average = 'macro'))
+    print("Recall Score:\t\t", recall_score(y_true, y_pred, average = None, pos_label = 1))
+    print("Micro Recall Score:\t\t", recall_score(y_true, y_pred, average = 'micro', pos_label = 1))
+    print("Macro Recall Score:\t\t", recall_score(y_true, y_pred, average = 'macro', pos_label = 1))
     # F1
-    print("F1 Score:\t\t", f1_score(y_true, y_pred, average = None))
-    print("Micro F1 Score:\t\t", f1_score(y_true, y_pred, average = 'micro'))
-    print("Macro F1 Score:\t\t", f1_score(y_true, y_pred, average = 'macro'))
+    print("F1 Score:\t\t", f1_score(y_true, y_pred, average = None, pos_label = 1))
+    print("Micro F1 Score:\t\t", f1_score(y_true, y_pred, average = 'micro', pos_label = 1))
+    print("Macro F1 Score:\t\t", f1_score(y_true, y_pred, average = 'macro', pos_label = 1))
     #
     #
     # compute_roc_score(y_true, y_pred)
@@ -93,12 +93,12 @@ def printClassifierMetrics(clf_name, y_true, y_pred, plot_cnfsn = True):
 
 
 def selectClassifierUsingGridSearch(
-        clf_name,
-        clf_type,
-        param_grid,
-        X, y,
-        clf_savefile,
-        scaler_object = None,
+    clf_name,
+    clf_type,
+    param_grid,
+    X, y,
+    clf_savefile,
+    scaler_object = None,
 ):
     """  """
 
@@ -129,24 +129,39 @@ def selectClassifierUsingGridSearch(
     print("train/test", X_learn.shape, X_held.shape, y_learn.shape, y_held.shape)
 
     # Use Repeated Stratified-KFold Cross-Validation for minimal training bias
-    rskf = RepeatedStratifiedKFold(5, 2)
+    rskf = RepeatedStratifiedKFold(2, 2)
     #
     # ***** GridSearchCrossValidation *****
     nowtime = datetime.now()
     deltatime = nowtime - starttime
     print("Starting GridSearchCV", "[", nowtime, "][", deltatime.total_seconds(), "]")
+    # gscv = GridSearchCV(
+    #     estimator = clf_type(),
+    #     param_grid = param_grid,
+    #     cv = rskf,
+    #     scoring = {
+    #         'f1'       : make_scorer(f1_score),
+    #         'accuracy' : make_scorer(accuracy_score),
+    #         'precision': make_scorer(precision_score),
+    #         'recall'   : make_scorer(recall_score),
+    #         # 'roc_auc': make_scorer(roc_auc_score),
+    #     },
+    #     refit = 'f1',
+    #     verbose = 5,
+    #     n_jobs = -1
+    # )
     gscv = GridSearchCV(
         estimator = clf_type(),
         param_grid = param_grid,
         cv = rskf,
-        scoring = {
-            'f1': make_scorer(f1_score),
-            'accuracy': make_scorer(accuracy_score),
-            'precision': make_scorer(precision_score),
-            'recall': make_scorer(recall_score),
+        scoring = [
+            'f1_micro',
+            'accuracy',
+            'precision_micro',
+            'recall_micro',
             # 'roc_auc': make_scorer(roc_auc_score),
-        },
-        refit = 'f1',
+        ],
+        refit = 'f1_micro',
         verbose = 5,
         n_jobs = -1
     )

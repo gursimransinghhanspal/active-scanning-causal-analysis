@@ -141,6 +141,13 @@ class WindowMetrics(enum.Enum) :
             wm.append(metric)
         return wm
 
+    @classmethod
+    def valuesAsList(cls):
+        wm = list()
+        for metric in WindowMetrics:
+            wm.append(metric.value)
+        return wm
+
     pass
 
 
@@ -204,6 +211,8 @@ MLFeaturesForCause = {
     ],
     ASCause.lrssi  : [
         WindowMetrics.rssi__mean,
+        WindowMetrics.rssi__stddev,
+        WindowMetrics.rssi__linslope,
     ],
     ASCause.pscanA : [
         WindowMetrics.non_empty_data_frames__rate,

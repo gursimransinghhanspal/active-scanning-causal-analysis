@@ -44,8 +44,8 @@ def test(clf_savefile, X):
 
 
 if __name__ == '__main__':
-    feature_matrix = loadNpy(path.join(ProjectDirectory["data.ml"], "ce_OneVsAll_featureMatrix.npy"))
-    target_vector = loadNpy(path.join(ProjectDirectory["data.ml"], "ce_OneVsAll_targetVector.npy"))
-    savefile = path.join(ProjectDirectory["models"], "ce_NB.joblib")
+    feature_matrix = loadNpy(path.join(ProjectDirectory["data.ml"], "pwr_OneVsAll_featureMatrix.npy"))
+    target_vector = loadNpy(path.join(ProjectDirectory["data.ml"], "pwr_OneVsAll_targetVector.npy"))
+    savefile = path.join(ProjectDirectory["models"], "pwr_NB.joblib")
     #
     trainUsingGridSearch_RF(feature_matrix, target_vector, savefile)

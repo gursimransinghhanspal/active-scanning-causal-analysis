@@ -10,11 +10,11 @@
 #       := Merge all the records in one file
 #
 #
-from os import path
+from os import path, walk
 
 import pandas as pd
 
-from globals import MLFeatures, csv_extensions, ProjectDirectory
+from globals import MLFeaturesForCause, csv_extensions, ProjectDirectory, ASCause, WindowMetrics
 from src.aux import selectFilesByExtension
 
 
@@ -23,7 +23,7 @@ def readRecordsFile(filepath, fields):
 
     records_dataframe = pd.read_csv(
         filepath_or_buffer = filepath,
-        sep = ',',  # comma separated values (default)
+        sep = '|',  # comma separated values (default)
         header = 0,  # use first row as column_names
         index_col = None,  # do not use any column to index
         skipinitialspace = True,  # skip any space after delimiter
@@ -36,25 +36,32 @@ def readRecordsFile(filepath, fields):
         warn_bad_lines = True
     )
     # re-order the columns
+    records_dataframe.dropna(inplace = True)
     return records_dataframe[fields]
 
 
 def mergeRecords(source_dir, destination_filepath, fields):
     """ """
 
-    record_filenames = selectFilesByExtension(source_dir, csv_extensions)
     file_df = pd.DataFrame(columns = fields)
     file_df.to_csv(destination_filepath, mode = 'w', sep = ',', index = False, header = True, columns = fields)
-    for filename in record_filenames:
-        file_df = readRecordsFile(path.join(source_dir, filename), fields)
-        file_df.to_csv(destination_filepath, mode = 'a', sep = ',', index = False, header = False, columns = fields)
+
+    for src_dir, _, all_files in walk(source_dir):
+        print("Processing directory", path.basename(src_dir))
+        print()
+
+        for csv_filename in selectFilesByExtension(src_dir, all_files, csv_extensions):
+            file_df = readRecordsFile(path.join(src_dir, csv_filename), fields)
+            file_df.to_csv(destination_filepath, mode = 'a', sep = ',', index = False, header = False, columns = fields)
 
 
 if __name__ == '__main__':
-    __source_dir = path.join(ProjectDirectory["data.records"])
+    __source_dir = path.join(ProjectDirectory["data.records"], "pscan-u")
     __destination_dir = path.join(ProjectDirectory["data.records_merged"])
 
     mergeRecords(
         source_dir = __source_dir,
-        destination_filepath = path.join(__destination_dir, "pscanU" + "_mergedRecord.csv")
+        # destination_filepath = path.join(__destination_dir, "pwr" + "_mergedRecord.csv"),
+        destination_filepath = path.join(__destination_dir, "pscan_u" + "_mergedRecord_nonnull.csv"),
+        fields = WindowMetrics.valuesAsList()
     )
