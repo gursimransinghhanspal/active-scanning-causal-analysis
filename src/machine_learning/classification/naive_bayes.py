@@ -7,8 +7,7 @@
 # Active Scanning Causal Analysis
 # Machine Learning
 # |- Classification
-#   |- random_forest.py
-#           := Auxiliary Methods
+#   |- naive_bayes.py
 #
 #
 
@@ -20,7 +19,7 @@ from globals import ProjectDirectory
 from machine_learning.aux import loadNpy, selectClassifierUsingGridSearch
 
 
-def trainUsingGridSearch_RF(X, y, clf_savefile):
+def trainUsingGridSearch_GNB(X, y, clf_savefile):
     """ """
 
     # parameters to tune
@@ -48,4 +47,4 @@ if __name__ == '__main__':
     target_vector = loadNpy(path.join(ProjectDirectory["data.ml"], "pwr_OneVsAll_targetVector.npy"))
     savefile = path.join(ProjectDirectory["models"], "pwr_NB.joblib")
     #
-    trainUsingGridSearch_RF(feature_matrix, target_vector, savefile)
+    trainUsingGridSearch_GNB(feature_matrix, target_vector, savefile)

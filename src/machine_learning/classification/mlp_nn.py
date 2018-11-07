@@ -20,15 +20,21 @@ from globals import ProjectDirectory
 from machine_learning.aux import loadNpy, selectClassifierUsingGridSearch
 
 
-def trainUsingGridSearch_RF(X, y, clf_savefile):
+def trainUsingGridSearch_MLPNN(X, y, clf_savefile):
     """ """
 
     # parameters to tune
     param_grid = {
-        'hidden_layer_sizes': [(10, 10,), (100, 50, 100)],
-        'activation': ['identity', 'logistic', 'relu'],
-        'solver': ['lbfgs', 'sgd', 'adam'],
-        'learning_rate': ['constant', 'invscaling', 'adaptive'],
+        'hidden_layer_sizes': [
+            (16, 16, 16), (100, 100),
+            (64, 128, 64)
+        ],
+        'activation'        : ['tanh', 'logistic', 'relu'],
+        'solver'            : ['adam', 'sgd'],
+        'learning_rate'     : ['constant', 'adaptive'],
+        'learning_rate_init': [0.01, 0.001, 0.0001],
+        'max_iter'          : [1000],
+        'early_stopping'    : [True]
     }
 
     clf = selectClassifierUsingGridSearch(
@@ -42,13 +48,9 @@ def trainUsingGridSearch_RF(X, y, clf_savefile):
     return clf
 
 
-def test(clf_savefile, X):
-    pass
-
-
 if __name__ == '__main__':
     feature_matrix = loadNpy(path.join(ProjectDirectory["data.ml"], "All_featureMatrix.npy"))
     target_vector = loadNpy(path.join(ProjectDirectory["data.ml"], "All_targetVector.npy"))
-    savefile = path.join(ProjectDirectory["models"], "ALL_MLPNN.joblib")
+    savefile = path.join(ProjectDirectory["models"], "MLP-NN.joblib")
     #
-    trainUsingGridSearch_RF(feature_matrix, target_vector, savefile)
+    trainUsingGridSearch_MLPNN(feature_matrix, target_vector, savefile)

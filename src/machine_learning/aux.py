@@ -129,7 +129,7 @@ def selectClassifierUsingGridSearch(
     print("train/test", X_learn.shape, X_held.shape, y_learn.shape, y_held.shape)
 
     # Use Repeated Stratified-KFold Cross-Validation for minimal training bias
-    rskf = RepeatedStratifiedKFold(2, 2)
+    rskf = RepeatedStratifiedKFold(5, 2)
     #
     # ***** GridSearchCrossValidation *****
     nowtime = datetime.now()
@@ -156,10 +156,12 @@ def selectClassifierUsingGridSearch(
         cv = rskf,
         scoring = [
             'f1_micro',
+            'f1_macro',
             'accuracy',
             'precision_micro',
+            'precision_macro',
             'recall_micro',
-            # 'roc_auc': make_scorer(roc_auc_score),
+            'recall_macro',
         ],
         refit = 'f1_micro',
         verbose = 5,

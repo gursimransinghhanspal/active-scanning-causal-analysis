@@ -8,7 +8,7 @@
 # Machine Learning
 # |- Classification
 #   |- random_forest.py
-#           := Auxiliary Methods
+#           := Random Forest Classifier
 #
 #
 

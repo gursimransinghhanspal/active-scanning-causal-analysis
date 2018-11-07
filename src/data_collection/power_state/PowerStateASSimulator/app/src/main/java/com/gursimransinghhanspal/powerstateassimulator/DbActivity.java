@@ -53,7 +53,7 @@ public class DbActivity extends AppCompatActivity implements View.OnClickListene
 	}
 
 	private void refresh() {
-		DBHelper dbHelper = new DBHelper(this);
+		DbHelper dbHelper = new DbHelper(this);
 		Event event = dbHelper.getMostRecentEvent();
 
 		if (event != null) {
@@ -68,7 +68,7 @@ public class DbActivity extends AppCompatActivity implements View.OnClickListene
 	}
 
 	private void clear() {
-		DBHelper dbHelper = new DBHelper(this);
+		DbHelper dbHelper = new DbHelper(this);
 		dbHelper.clearEvents();
 
 		Toast.makeText(this, "Cleared!", Toast.LENGTH_LONG).show();
@@ -82,12 +82,12 @@ public class DbActivity extends AppCompatActivity implements View.OnClickListene
 
 		private WeakReference<Context> activityReference;
 		private final ProgressDialog dialog;
-		DBHelper dbhelper;
+		DbHelper dbhelper;
 
 		public ExportDatabaseCSVTask(Context context) {
 			activityReference = new WeakReference<>(context);
 			dialog = new ProgressDialog(context);
-			dbhelper = new DBHelper(context);
+			dbhelper = new DbHelper(context);
 		}
 
 		@Override
@@ -103,7 +103,7 @@ public class DbActivity extends AppCompatActivity implements View.OnClickListene
 				Boolean res = exportDir.mkdirs();
 			}
 
-			File file = new File(exportDir, "person.csv");
+			File file = new File(exportDir, "power_state.csv");
 			try {
 				Boolean res = file.createNewFile();
 				CSVWriter csvWrite = new CSVWriter(new FileWriter(file));

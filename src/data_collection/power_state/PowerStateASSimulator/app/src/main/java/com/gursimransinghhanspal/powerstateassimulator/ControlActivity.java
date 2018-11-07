@@ -1,5 +1,6 @@
 package com.gursimransinghhanspal.powerstateassimulator;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,7 +20,7 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 	private static Long wakeLockCount = 0L;
 	private static Boolean keepThreadRunning = null;
 	private Thread controlThread;
-	private DBHelper dbHelper;
+	private DbHelper dbHelper;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +31,7 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 		findViewById(R.id.activityLayout_control_stopBtn).setOnClickListener(this);
 		findViewById(R.id.activityLayout_control_dbBtn).setOnClickListener(this);
 
-		dbHelper = new DBHelper(this);
+		dbHelper = new DbHelper(this);
 
 		// Enable Views
 		findViewById(R.id.activityLayout_control_screenTimeoutInput).setEnabled(true);
@@ -196,6 +197,14 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 				int maxTimeout = (halfCycleInterval * 3) + screenTimeout;
 				wakeLock.acquire(maxTimeout);
 				Log.i(TAG, "acquireWakeLock(): WakeLock acquired!");
+				ControlActivity.this.runOnUiThread(
+						new Runnable() {
+							@Override
+							public void run() {
+								Toast.makeText(ControlActivity.this, "WakeLock Acquired!", Toast.LENGTH_LONG).show();
+							}
+						}
+				);
 
 				Event wakelockAcquired = new Event();
 				wakelockAcquired.setType(Event.EventType.WAKELOCK_ACQUIRED);
@@ -204,10 +213,26 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 
 			} else {
 				Log.e(TAG, "acquireWakeLock(): WakeLock couldn't be created!");
+				ControlActivity.this.runOnUiThread(
+						new Runnable() {
+							@Override
+							public void run() {
+								Toast.makeText(ControlActivity.this, "WakeLock Acquiring Failed!", Toast.LENGTH_LONG).show();
+							}
+						}
+				);
 			}
 
 		} else {
 			Log.e(TAG, "acquireWakeLock(): Power Service couldn't be fetched!");
+			ControlActivity.this.runOnUiThread(
+					new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(ControlActivity.this, "WakeLock Acquiring Failed 2!", Toast.LENGTH_LONG).show();
+						}
+					}
+			);
 		}
 
 		return null;
@@ -219,6 +244,14 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 		if (wakeLock != null) {
 			wakeLock.release();
 			Log.i(TAG, "releaseWakeLock(): WakeLock released!");
+			ControlActivity.this.runOnUiThread(
+					new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(ControlActivity.this, "WakeLock Released!", Toast.LENGTH_LONG).show();
+						}
+					}
+			);
 
 			Event wakelockReleased = new Event();
 			wakelockReleased.setType(Event.EventType.WAKELOCK_RELEASED);
@@ -226,6 +259,14 @@ public class ControlActivity extends AppCompatActivity implements View.OnClickLi
 
 		} else {
 			Log.e(TAG, "releaseWakeLock(): WakeLock was null!");
+			ControlActivity.this.runOnUiThread(
+					new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(ControlActivity.this, "WakeLock Releasing Failed!", Toast.LENGTH_LONG).show();
+						}
+					}
+			);
 		}
 	}
 }

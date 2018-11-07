@@ -6,7 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class DBHelper extends SQLiteOpenHelper {
+public class DbHelper extends SQLiteOpenHelper {
 
 	private static final int DB_VER = 1;
 	private static final String DB_NAME = "com_gursimransinghhanspal_powerstateassimulator.db";
@@ -16,7 +16,7 @@ public class DBHelper extends SQLiteOpenHelper {
 	private static final String COL_3 = "type";
 
 
-	public DBHelper(Context context) {
+	public DbHelper(Context context) {
 		super(context, DB_NAME, null, DB_VER);
 	}
 

@@ -11,6 +11,11 @@
 #          processing
 #
 
+# NOTE:
+# To check for radiotap protocol vs prism protocol use:
+# tshark -c 1 -r $file -T fields -e frame.protocols|grep "radiotap"|wc -l
+# tshark -c 1 -r $file -T fields -e frame.protocols|grep "prism"|wc -l
+
 
 from datetime import datetime
 from os import path, waitpid, walk
@@ -35,7 +40,7 @@ def createShellCommandFormatString():
     command = "tshark -E separator='|' -T fields "
     for item in header_items:
         command += '-e ' + item + ' '
-    command += '-r \'{:s}\' > \'{:s}\''
+    command += '-r \'{:s}\' >> \'{:s}\''
     return command
 
 
@@ -54,7 +59,7 @@ def createCsvHeader():
 
 def cap2csv(
     source_dir, destination_dir, command_format_string: str, csv_header: str,
-    use_subprocesses: bool = False
+    multiprocessing: bool = False
 ):
     """
     Run the command for each file name present in `capture_file_names` list
@@ -63,7 +68,6 @@ def cap2csv(
     subprocesses = list()
     for src_dir, _, all_files in walk(source_dir):
         print("Processing directory", path.basename(src_dir))
-        print()
 
         # destination directory
         dst_dir = src_dir.replace(source_dir, destination_dir)
@@ -92,21 +96,23 @@ def cap2csv(
             command = command_format_string.format(str(cap_filepath), str(csv_filepath))
             p = Popen(command, shell = True)
 
-            if use_subprocesses:
+            if multiprocessing:
                 subprocesses.append(p)
             else:
                 pid, exit_code = waitpid(p.pid, 0)
                 print('cap2csv: Process pid {:d}, exit-code: {:d}:'.format(pid, exit_code), end = '\t\t')
                 print('[', datetime.now(), ']')
+        print()
 
-    if use_subprocesses:
+    if multiprocessing:
         exit_codes = [q.wait() for q in subprocesses]
-        print('cap2csv: Exit codes for sub-processes: ', exit_codes)
+        print('cap2csv: Exit codes for sub-processes:')
+        print(exit_codes)
 
 
 if __name__ == '__main__':
-    __source_dir = ProjectDirectory["data.cap"]
-    __destination_dir = ProjectDirectory["data.csv"]
+    __source_dir = path.join(ProjectDirectory["data.cap"], "ce")
+    __destination_dir = path.join(ProjectDirectory["data.csv"], "ce")
 
     envSetup(__source_dir, __destination_dir)
-    cap2csv(__source_dir, __destination_dir, createShellCommandFormatString(), createCsvHeader(), False)
+    cap2csv(__source_dir, __destination_dir, createShellCommandFormatString(), createCsvHeader(), True)
