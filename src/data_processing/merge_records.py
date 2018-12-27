@@ -59,6 +59,11 @@ def mergeRecords(source_dir, destination_filepath, fields):
 
         for csv_filename in selectFilesByExtension(src_dir, all_files, csv_extensions):
             file_df = readRecordsFile(path.join(src_dir, csv_filename), fields)
+            #
+            # for `apsp` only, choose only episodes with Features.ap_disconnection_frames__binary as 1
+            # TODO: comment out for all other causes
+            # file_df = file_df[file_df[Features.ap_disconnection_frames__binary.v] == 1]
+            #
             file_df.to_csv(destination_filepath, mode = 'a', sep = '|', index = False, header = False, columns = fields)
             print(file_df.shape[0])
         print()

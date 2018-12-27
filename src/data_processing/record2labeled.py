@@ -17,37 +17,45 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
 
-from globals import ASCause, Features, ProjectDirectory, RecordProperties, MLFeaturesForCause
+from globals import ASCause, Features, ProjectDirectory, RecordProperties
 from src.aux import createDirectoryIfRequired, isDirectoryEmpty
 
 __label_self = 1
 __label_rest = 0
 
 required_features = [
-    Features.rssi__mean,
-    Features.rssi__stddev,
-    Features.rssi__linslope,
-    Features.non_empty_data_frames__rate,
-    Features.sleep_frames__binary,
-    Features.empty_null_frames__rate,
-    Features.directed_probe_requests__binary,
-    Features.broadcasted_probe_requests__binary,
+    Features.rssi__mean,  # 1
+    Features.rssi__stddev,  # 2
+    Features.rssi__linslope,  # 3
+    Features.non_empty_data_frames__rate,  # 4
+    Features.sleep_frames__binary,  # 5
+    Features.empty_null_frames__rate,  # 6
+    Features.directed_probe_requests__binary,  # 7
+    Features.broadcasted_probe_requests__binary,  # 8
     # Features.beacon_loss__count,
-    Features.awake_null_frames__rate,
-    Features.sleep_null_frames__rate,
-    Features.ap_disconnection_frames__binary,
-    Features.client_disconnection_frames__binary,
-    Features.client_associated__binary,
-    Features.client_connection_request_frames__binary_3,
-    Features.client_connection_response_frames__binary_3,
-    Features.client_connection_success_response_frames__binary_3,
+    Features.awake_null_frames__rate,  # 9
+    Features.sleep_null_frames__rate,  # 10
+    Features.ap_disconnection_frames__binary,  # 11
+    Features.client_disconnection_frames__binary,  # 12
+    Features.client_associated__binary,  # 13
+    Features.client_connection_request_frames__binary_3,  # 14
+    Features.client_connection_response_frames__binary_3,  # 15
+    Features.client_connection_success_response_frames__binary_3,  # 16
 ]
+
+# rssi - 1, 2, 3
+# data - 4(NE), 5(Sleep), 6(E null), 9(Awake null), 10(Sleep null)
+# probereq - 7 (dir), 8 (broad)
+# disconnection - 11(ap), 12(client)
+# connection - 14, 15
+# assoc - 13, 16
+
 required_feature_values = [
     i.v for i in required_features
 ]
 
 RecordForCause = {
-    ASCause.apsp  : path.join(ProjectDirectory["data.records_merged"], "apsp_mergedRecord.csv"),
+    ASCause.apsp  : path.join(ProjectDirectory["data.records_merged"], "apsp_withDisconnectionFrames_mergedRecord.csv"),
     ASCause.bl    : path.join(ProjectDirectory["data.records_merged"], "bl_mergedRecord.csv"),
     ASCause.ce    : path.join(ProjectDirectory["data.records_merged"], "ce_mergedRecord.csv"),
     ASCause.lrssi : path.join(ProjectDirectory["data.records_merged"], "lrssi_mergedRecord.csv"),
@@ -118,36 +126,40 @@ def labelAll(record_for_cause: dict, destination_dir):
     df_pscanU[tl] = 5
     df_pwr[tl] = 6
     #
-    # sample_sz = min(
-    #     df_apsp.shape[0],
-    #     df_bl.shape[0],
-    #     df_ce.shape[0],
-    #     df_lrssi.shape[0],
-    #     df_pscanA.shape[0],
-    #     df_pscanU.shape[0],
-    #     df_pwr.shape[0]
-    # )
-    # print("Sample Size:", sample_sz)
-    # #
-    # df_apsp = df_apsp.sample(sample_sz)
-    # df_bl = df_bl.sample(sample_sz)
-    # df_ce = df_ce.sample(sample_sz)
-    # df_lrssi = df_lrssi.sample(sample_sz)
-    # df_pscanA = df_pscanA.sample(sample_sz)
-    # df_pscanU = df_pscanU.sample(sample_sz)
-    # df_pwr = df_pwr.sample(sample_sz)
+    sample_sz = min(
+        df_apsp.shape[0],
+        df_bl.shape[0],
+        df_ce.shape[0],
+        df_lrssi.shape[0],
+        df_pscanA.shape[0],
+        df_pscanU.shape[0],
+        df_pwr.shape[0]
+    )
+    print("Sample Size:", sample_sz)
+    #
+    df_apsp = df_apsp.sample(sample_sz)
+    df_bl = df_bl.sample(sample_sz)
+    df_ce = df_ce.sample(sample_sz)
+    df_lrssi = df_lrssi.sample(sample_sz)
+    df_pscanA = df_pscanA.sample(sample_sz)
+    df_pscanU = df_pscanU.sample(sample_sz)
+    df_pwr = df_pwr.sample(sample_sz)
     #
     df = pd.concat((df_apsp, df_bl, df_ce, df_lrssi, df_pscanA, df_pscanU, df_pwr))
-    df = shuffle(df).reset_index(drop = True)
+    df[tl] = df[tl].astype(int)
+    # df = shuffle(df).reset_index(drop = True)
     #
     X = np.asarray(df[required_feature_values])
     y = np.asarray(df[tl])
     #
-    np.save(path.join(destination_dir, "fullFeatureSet_unsampled_featureMatrix.npy"), X)
-    np.save(path.join(destination_dir, "fullFeatureSet_unsampled_targetVector.npy"), y)
+    fname = 'fullFeatureSet_equalSampling_noFilter'
+    np.save(path.join(destination_dir, fname + "_featureMatrix.npy"), X)
+    np.save(path.join(destination_dir, fname + "_targetVector.npy"), y)
+    np.savetxt(path.join(destination_dir, fname + "_featureMatrix.csv"), X, delimiter = '|', header = '|'.join(required_feature_values))
+    np.savetxt(path.join(destination_dir, fname + "_targetVector.csv"), y, delimiter = '|', header = tl)
     #
     df.to_csv(
-        path.join(destination_dir, "fullFeatureSet_unsampled_dataframe.csv"),
+        path.join(destination_dir, fname + "_completeDataframe.csv"),
         sep = '|',
         header = True,
         index = False,

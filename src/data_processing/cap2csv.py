@@ -111,8 +111,8 @@ def cap2csv(
 
 
 if __name__ == '__main__':
-    __source_dir = path.join(ProjectDirectory["data.cap"], "ce")
-    __destination_dir = path.join(ProjectDirectory["data.csv"], "ce")
+    __source_dir = ProjectDirectory["data.cap"]
+    __destination_dir = ProjectDirectory["data.csv"]
 
     envSetup(__source_dir, __destination_dir)
-    cap2csv(__source_dir, __destination_dir, createShellCommandFormatString(), createCsvHeader(), True)
+    cap2csv(__source_dir, __destination_dir, createShellCommandFormatString(), createCsvHeader(), False)

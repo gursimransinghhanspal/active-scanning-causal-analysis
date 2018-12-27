@@ -324,11 +324,11 @@ def allClientsIn(dataframe):
     sa_df = probe_request_df[FrameFields.wlan_sa.v].copy()
     sa_df = sa_df[sa_df.notna()]
     sa_df = sa_df.apply(lambda a: str(a).lower(), 0).unique()
-    mac_addrs.update(sa_df.values)
+    mac_addrs.update(sa_df.tolist())
     ta_df = probe_request_df[FrameFields.wlan_ta.v].copy()
     ta_df = ta_df[ta_df.notna()]
     ta_df = ta_df.apply(lambda a: str(a).lower(), 0).unique()
-    mac_addrs.update(ta_df.values)
+    mac_addrs.update(ta_df.tolist())
     # remove broadcast address
     mac_addrs = mac_addrs.difference({__broadcast_bssid, })
     return sorted(mac_addrs)
@@ -547,19 +547,19 @@ def computeFeaturesUsingIsolatedWindowsAndEpisodes(
     # ***** helper functions *****
 
     def f__rssi__mean():
-        ssi_series = np.asarray(_from_client_df[FrameFields.radiotap_dbmAntsignal.v], dtype = np.float64)
+        ssi_series = np.asarray(_from_client_df[FrameFields.antenna_signal.v], dtype = np.float64)
         if ssi_series.shape[0] == 0:
             return np.NaN  # drop this record
         return np.nanmean(ssi_series)
 
     def f__rssi__stddev():
-        ssi_series = np.asarray(_from_client_df[FrameFields.radiotap_dbmAntsignal.v], dtype = np.float64)
+        ssi_series = np.asarray(_from_client_df[FrameFields.antenna_signal.v], dtype = np.float64)
         if ssi_series.shape[0] == 0:
             return np.NaN  # drop this record
         return np.nanstd(ssi_series)
 
     def f__rssi__linslope():
-        ssi_series = np.asarray(_from_client_df[FrameFields.radiotap_dbmAntsignal.v], dtype = np.float64)
+        ssi_series = np.asarray(_from_client_df[FrameFields.antenna_signal.v], dtype = np.float64)
         epoch_series = np.asarray(_from_client_df[FrameFields.frame_timeEpoch.v], dtype = np.float64)
         if ssi_series.shape[0] == 0 or epoch_series.shape[0] == 0:
             return np.NaN  # drop this record
@@ -1104,13 +1104,13 @@ def readCsvFile(filepath, error_bad_lines: bool = False, warn_bad_lines: bool = 
         ssi_values = [float(ssi) for ssi in ssi_values_as_string]
         return np.nanmean(ssi_values, dtype = np.float64)
 
-    csv_dataframe[FrameFields.radiotap_dbmAntsignal.v] = \
-        csv_dataframe[FrameFields.radiotap_dbmAntsignal.v].apply(combineAntennaRssi, 0)
+    csv_dataframe[FrameFields.antenna_signal.v] = \
+        csv_dataframe[FrameFields.antenna_signal.v].apply(combineAntennaRssi, 0)
 
     # • Handle null values
     drop_na_fields = [
         FrameFields.frame_timeEpoch.v,
-        FrameFields.radiotap_dbmAntsignal.v,
+        FrameFields.antenna_signal.v,
     ]
     replace_na = [
         (FrameFields.data_len, -1),
@@ -1134,7 +1134,7 @@ def readCsvFile(filepath, error_bad_lines: bool = False, warn_bad_lines: bool = 
     # • Optimize memory usage
     floats = [
         FrameFields.frame_timeEpoch,
-        FrameFields.radiotap_dbmAntsignal,
+        FrameFields.antenna_signal,
     ]
     ints = [
         FrameFields.data_len,
